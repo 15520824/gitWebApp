@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "226566755487",
+    "firebase_url": "https://labdaiminhbsc.firebaseio.com",
+    "project_id": "labdaiminhbsc",
+    "storage_bucket": "labdaiminhbsc.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:226566755487:android:b007dc93a7198df49dfeaa",
+        "android_client_info": {
+          "package_name": "com.reactnativewebapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "226566755487-oqtflla6lpm8vtia0e2ipa56nl0n87ho.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBuFAxXVwYD2vk18VZajJK1lbXqioj4Y04"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "226566755487-oqtflla6lpm8vtia0e2ipa56nl0n87ho.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
