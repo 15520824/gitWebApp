@@ -30,6 +30,13 @@
             {
               "client_id": "226566755487-oqtflla6lpm8vtia0e2ipa56nl0n87ho.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "226566755487-0d3qmamsnia5mnrgft4p221cdog8j40i.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.reactnativewebapp"
+              }
             }
           ]
         }

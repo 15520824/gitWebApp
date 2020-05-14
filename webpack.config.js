@@ -1,8 +1,10 @@
 const path = require('path');
 const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const rootDir = path.join(__dirname, '..');
+const rootDir = path.join(__dirname, '.');
 const webpackEnv = process.env.NODE_ENV || 'development';
+
+console.log(path.join(rootDir, './index.web.ts'));
 
 module.exports = {
   mode: webpackEnv,
@@ -17,7 +19,13 @@ module.exports = {
   module: {
     rules: [
       {
-        test: /\.(tsx|ts|jsx|js|mjs)$/,
+        test: /\.js$/,
+        exclude: /node_modules/,
+        loader: 'babel-loader',
+        options: {presets: [['@babel/preset-env', {modules: false}]]},
+      },
+      {
+        test: /\.(tsx|ts|jsx|mjs)$/,
         exclude: /node_modules/,
         loader: 'ts-loader',
       },
@@ -29,7 +37,7 @@ module.exports = {
   },
   plugins: [
     new HtmlWebpackPlugin({
-      template: path.join(__dirname, './index.html'),
+      template: path.join(__dirname, './web/index.html'),
     }),
     new webpack.HotModuleReplacementPlugin(),
   ],

@@ -4,11 +4,23 @@ import android.app.Application;
 import android.content.Context;
 import com.facebook.react.PackageList;
 import com.facebook.react.ReactApplication;
-import com.dieam.reactnativepushnotification.ReactNativePushNotificationPackage;
+import com.reactnativecommunity.webview.RNCWebViewPackage;
+
+import android.os.Build;
+import android.webkit.WebView;
+
+import androidx.annotation.RequiresApi;
+
+import io.invertase.firebase.RNFirebasePackage;
+import io.invertase.firebase.messaging.RNFirebaseMessagingPackage;
+import io.invertase.firebase.notifications.RNFirebaseNotificationsPackage;
+
 import com.facebook.react.ReactNativeHost;
 import com.facebook.react.ReactPackage;
+import com.facebook.react.shell.MainReactPackage;
 import com.facebook.soloader.SoLoader;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Arrays;
 import java.util.List;
 
 public class MainApplication extends Application implements ReactApplication {
@@ -22,11 +34,13 @@ public class MainApplication extends Application implements ReactApplication {
 
         @Override
         protected List<ReactPackage> getPackages() {
-          @SuppressWarnings("UnnecessaryLocalVariable")
-          List<ReactPackage> packages = new PackageList(this).getPackages();
-          // Packages that cannot be autolinked yet can be added manually here, for example:
-          // packages.add(new MyReactNativePackage());
-          return packages;
+            return Arrays.<ReactPackage>asList(
+                    new MainReactPackage(),
+            new RNCWebViewPackage(),
+                    new RNFirebasePackage(),
+                    new RNFirebaseMessagingPackage(),
+                    new RNFirebaseNotificationsPackage()
+            );
         }
 
         @Override
@@ -40,11 +54,13 @@ public class MainApplication extends Application implements ReactApplication {
     return mReactNativeHost;
   }
 
+  @RequiresApi(api = Build.VERSION_CODES.KITKAT)
   @Override
   public void onCreate() {
     super.onCreate();
     SoLoader.init(this, /* native exopackage */ false);
     initializeFlipper(this); // Remove this line if you don't want Flipper enabled
+      WebView.setWebContentsDebuggingEnabled(true);
   }
 
   /**
