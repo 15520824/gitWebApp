@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {Platform, AsyncStorage, Alert} from 'react-native';
+import {Platform, AsyncStorage, StyleSheet, Alert, View} from 'react-native';
 import {WebView} from 'react-native-webview';
 import firebase from 'react-native-firebase';
 
@@ -12,6 +12,13 @@ try {
 } catch (error) {
   console.log(error);
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+});
 
 class App extends Component {
   [x: string]: any;
@@ -111,18 +118,24 @@ class App extends Component {
     }
   }
 
-  // onMessage(WebViewMessageEvent: any) {
-  //   console.log(WebViewMessageEvent);
-  // }
-
   render() {
     return (
-      <WebView
-        source={{uri: indexfile}}
-        keyboardDisplayRequiresUserAction={false}
-        originWhitelist={['*']}
-        // onMessage={this.onMessage}
-      />
+      <View style={styles.container}>
+        <WebView
+          source={{uri: indexfile}}
+          keyboardDisplayRequiresUserAction={false} //ios
+          automaticallyAdjustContentInsets={false}
+          allowFileAccessFromFileURLs={true}
+          scalesPageToFit={false}
+          mixedContentMode={'always'}
+          javaScriptEnabled={true}
+          startInLoadingState={true}
+          onMessage={event => {
+            console.log(event.nativeEvent.data);
+          }}
+          onLoad={() => {}}
+        />
+      </View>
     );
   }
 }

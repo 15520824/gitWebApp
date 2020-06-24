@@ -764,7 +764,6 @@ Sudoku.prototype.gameOver = function() {
   */
 Sudoku.prototype.run = function() {
   this.status = this.RUNNING;
-
   var t = this;
   this.drawBoard();
 
