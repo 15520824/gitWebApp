@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {Platform, AsyncStorage, StyleSheet, Alert, View} from 'react-native';
+import {Platform, StyleSheet, Alert, View} from 'react-native';
 import {WebView} from 'react-native-webview';
 import firebase from 'react-native-firebase';
 
@@ -19,6 +19,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 });
+
 
 class App extends Component {
   [x: string]: any;
@@ -85,37 +86,70 @@ class App extends Component {
       {cancelable: true},
     );
   }
-  async checkPermission() {
-    const enabled = await firebase.messaging().hasPermission();
-    if (enabled) {
-      this.getToken();
-    } else {
-      this.requestPermission();
-    }
+  checkPermission() {
+    var self = this;
+     return new Promise(function(resolve,reject){
+        firebase.messaging().hasPermission().then(function(enable){
+          if (enable) {
+            self.getToken().then(function(value){
+              resolve(value);
+            }).catch(function(err){
+              console.log('permission rejected');
+              reject();
+            })
+          } else {
+            self.requestPermission().then(function(value){
+              resolve(value);
+            }).catch(function(err){
+              console.log('permission rejected');
+              reject();
+            })
+          }
+        })
+    })
+    
   }
 
   async getToken() {
-    let fcmToken = await AsyncStorage.getItem('fcmToken');
-    console.log(fcmToken);
-    if (!fcmToken) {
-      fcmToken = await firebase.messaging().getToken();
-      console.log(fcmToken);
-      if (fcmToken) {
-        // user has a device token
-        await AsyncStorage.setItem('fcmToken', fcmToken);
+    var self = this;
+    return new Promise(function(resolve,reject){
+      let fcmToken = self.fcmToken
+      if (!fcmToken) {
+      firebase.messaging().getToken().then(function(value){
+          if (value) {
+            // user has a device token
+            self.fcmToken = value;
+            console.log(value);
+            resolve(value);
+          }
+        })
+        .catch(function(err){
+          console.log('permission rejected');
+          reject();
+        })
+        
       }
-    }
+    })
+    
   }
 
-  async requestPermission() {
-    try {
-      await firebase.messaging().requestPermission();
-      // User has authorised
-      this.getToken();
-    } catch (error) {
-      // User has rejected permissions
-      console.log('permission rejected');
-    }
+  requestPermission() {
+    var self = this;
+    return new Promise(function(resolve,reject){
+      try {
+        firebase.messaging().requestPermission().then(function(){
+          self.getToken().then(function(value){
+            return resolve(value);
+          })
+        })
+        // User has authorised
+      } catch (error) {
+        // User has rejected permissions
+        console.log('permission rejected');
+        reject();
+      }
+    })
+    
   }
 
   render() {
@@ -123,6 +157,7 @@ class App extends Component {
       <View style={styles.container}>
         <WebView
           source={{uri: indexfile}}
+          ref={(webView) => this.webView = webView}
           keyboardDisplayRequiresUserAction={false} //ios
           automaticallyAdjustContentInsets={false}
           allowFileAccessFromFileURLs={true}
@@ -131,7 +166,37 @@ class App extends Component {
           javaScriptEnabled={true}
           startInLoadingState={true}
           onMessage={event => {
-            console.log(event.nativeEvent.data);
+            var data = JSON.parse(event.nativeEvent.data);
+            var self = this;
+            switch(data.name){
+              case "getUserToken":
+                if(self.fcmToken===undefined){
+                  self.checkPermission().then(function(value){
+                    const clientResponseCode = `
+                    window.postMessage(${JSON.stringify({name:"getUserToken", token:value})}, "*");
+                    true;
+                    `;
+                    if (self.webView) {
+                      self.webView.injectJavaScript(clientResponseCode);
+                    }
+                  });
+                }
+                else{
+                  const clientResponseCode = `
+                    window.postMessage(${JSON.stringify({name:"getUserToken",token:self.fcmToken})}, "*");
+                    true;
+                  `;
+                  if (self.webView) {
+                    self.webView.injectJavaScript(clientResponseCode);
+                  }
+                }
+
+                
+                break;
+              case "saveDomain":
+
+                break;
+            }
           }}
           onLoad={() => {}}
         />

@@ -3,7 +3,6 @@ package com.reactnativewebapp;
 import android.app.Application;
 import android.content.Context;
 import com.facebook.react.PackageList;
-import com.facebook.react.ReactApplication;
 import com.reactnativecommunity.webview.RNCWebViewPackage;
 
 import android.os.Build;
@@ -12,8 +11,9 @@ import android.webkit.WebView;
 import androidx.annotation.RequiresApi;
 
 import io.invertase.firebase.RNFirebasePackage;
-import io.invertase.firebase.messaging.RNFirebaseMessagingPackage;
-import io.invertase.firebase.notifications.RNFirebaseNotificationsPackage;
+import com.facebook.react.ReactApplication; //<- Dòng này
+import io.invertase.firebase.messaging.RNFirebaseMessagingPackage;//<- Dòng này
+import io.invertase.firebase.notifications.RNFirebaseNotificationsPackage;//<- Dòng này
 
 import com.facebook.react.ReactNativeHost;
 import com.facebook.react.ReactPackage;
@@ -36,7 +36,7 @@ public class MainApplication extends Application implements ReactApplication {
         protected List<ReactPackage> getPackages() {
             return Arrays.<ReactPackage>asList(
                     new MainReactPackage(),
-            new RNCWebViewPackage(),
+                    new RNCWebViewPackage(),
                     new RNFirebasePackage(),
                     new RNFirebaseMessagingPackage(),
                     new RNFirebaseNotificationsPackage()
