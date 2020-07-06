@@ -129,8 +129,6 @@
                 cards: {},
                 company: {},
                 contact: {},
-				activities: {},
-				my_calendar: {},
 				reminder: {}
             };
             var data_module = {};
@@ -153,9 +151,6 @@
 		<script src="cards.js"></script>
 		<script src="company.js"></script>
 		<script src="contact.js"></script>
-		<script src="activities.js"></script>
-		<script src="reminder.js"></script>
-		<script src="my_calendar.js"></script>
 
 		<script src="theme/mobile/absol_module_view.js"></script>
 		<script src="theme/mobile/button.js"></script>
@@ -166,25 +161,24 @@
 		<script src="theme/mobile/cards_view.js"></script>
 		<script src="theme/mobile/company_view.js"></script>
 		<script src="theme/mobile/contact_view.js"></script>
-		<script src="theme/mobile/activities_view.js"></script>
-		<script src="theme/mobile/reminder_view.js"></script>
 		<script type="text/javascript">
             var initUI = function () {
                 carddone.menu.init(window.holderMain);
-				var hostName = window.domain;
-				var x = hostName.indexOf("://");
-				if (x >= 0) hostName = hostName.substr(x + 3);
-				x = hostName.indexOf("/");
-				hostName = hostName.substr(0, x);
-				var x = window.domain.indexOf(hostName);
-				var y = window.domain.indexOf("/carddone");
-				var channel = window.domain.substr(x + hostName.length + 1, y - (x + hostName.length + 1));
+                var host = window.domain;
+                var x = host.indexOf("://");
+                if (x >= 0) host = host.substr(x + 3);
+                x = host.indexOf("/");
+                host = host.substr(0, x);
+                var x = window.domain.indexOf(host);
+                var y = window.domain.indexOf("/carddone");
+                var channel = window.domain.substr(x + host.length + 1, y - (x + host.length + 1));
+                console.log(host, channel);
                 var connector = ChatClass.connect({
-                    host: hostName,
+                    host: host,
                     channel: channel,
                     onMessage: function (message) {
-                        if (message.content.type == "card_maintenance"){
-                            window.location.href = window.location.href;
+                        if (message.content.type == "carddone_maintenance"){
+                            window.location.reload();
                         }
                     }
                 });

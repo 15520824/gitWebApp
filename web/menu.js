@@ -168,12 +168,22 @@ carddone.menu.loadPagePC = function (taskid, hostid) {
         case 7:
             host.funcs = {
                 closeButton:  theme.closeButton,
-                formChatsInit: theme.formChatsInit
+                formChatsInit: theme.formChatsInit,
+                sendMessage: carddone.sendMessageFunc
             }
             host.cardid = hostid;
             holder.name = LanguageModule.text("txt_chat");
             carddone.menu.tabPanel.addChild(holder);
             carddone.chats.init(host);
+            carddone.listTabChat.push(host);
+            holder.on("remove", function(event){
+                for (var i = 0; i < carddone.listTabChat.length; i++){
+                    if (carddone.listTabChat[i].holder.id == this.id){
+                        carddone.listTabChat.splice(i, 1);
+                        break;
+                    }
+                }
+            });
             break;
         case 8:
             host.funcs = {
@@ -690,10 +700,12 @@ carddone.menu.loadPageMobile = function (taskid, hostid) {
         case 7:
             host.funcs = {
                 closeButton:  theme.closeButton,
-                formChatsInit: theme.formChatsInit
+                formChatsInit: theme.formChatsInit,
+                sendMessage: carddone.sendMessageFunc
             }
             host.cardid = hostid;
             carddone.chats.init(host);
+            carddone.listTabChat.push(host);
             break;
         case 8:
             host.funcs = {
@@ -1220,11 +1232,12 @@ carddone.menu.userprofile_update_submit = function (host, typesubmit) {
 carddone.menu.logout = function(){
     FormClass.api_call({
         url: "logout.php",
-        params: [],
+        params: [{name: "storage", value: window.userToken}],
         func: function(success, message) {
             if (success){
                 if (message.substr(0,2) == "ok"){
-                    window.location.href = window.location.href;
+                    window.session = EncodingClass.string.fromVariable({});
+                    task.showLoginBox();
                 }
                 else {
                     ModalElement.alert({
@@ -1373,6 +1386,42 @@ carddone.menu.init = function(holder){
         });
         window.iBridge = iBridge;
         DOMElement.removeAllChildren(holder);
+        carddone.listTabChat = [];
+        var hostName = window.domain;
+        var x = hostName.indexOf("://");
+        if (x >= 0) hostName = hostName.substr(x + 3);
+        x = hostName.indexOf("/");
+        hostName = hostName.substr(0, x);
+        var x = window.domain.indexOf(hostName);
+        var y = window.domain.indexOf("/carddone");
+        var channel = window.domain.substr(x + hostName.length + 1, y - (x + hostName.length + 1));
+        var connectorChat = ChatClass.connect({
+           host: hostName,
+           channel: channel + "/carddone",
+           onMessage: function(message){
+               console.log(message);
+               for (var i = 0; i < carddone.listTabChat.length; i++){
+                   carddone.listTabChat[i].resolveMessage(message);
+               }
+           },
+           onConnectionLost: function(message){
+               console.log("onConnectionLost");
+           },
+           onConnect: function(){
+               console.log("connect_" + (new Date()).getTime());
+           },
+           onClosed: function(message){
+               console.log("onClosed");
+           }
+        });
+        carddone.sendMessageFunc = function(content){
+            connectorChat.send({
+                content: content,
+                receivertype: "all", onsent: function () {
+                    console.log("send mess");
+                }
+            });
+        };
         carddone.menu.menuHeader = theme.menuHeader({
             serviceLogo: "../logo-card-15-11.png",
             serviceActiveList: serviceActiveList,

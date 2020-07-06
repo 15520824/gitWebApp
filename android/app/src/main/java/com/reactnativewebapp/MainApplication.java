@@ -11,7 +11,8 @@ import android.webkit.WebView;
 import androidx.annotation.RequiresApi;
 
 import io.invertase.firebase.RNFirebasePackage;
-import com.facebook.react.ReactApplication; //<- Dòng này
+import com.facebook.react.ReactApplication;
+import com.reactnativecommunity.asyncstorage.AsyncStoragePackage; //<- Dòng này
 import io.invertase.firebase.messaging.RNFirebaseMessagingPackage;//<- Dòng này
 import io.invertase.firebase.notifications.RNFirebaseNotificationsPackage;//<- Dòng này
 
@@ -36,6 +37,7 @@ public class MainApplication extends Application implements ReactApplication {
         protected List<ReactPackage> getPackages() {
             return Arrays.<ReactPackage>asList(
                     new MainReactPackage(),
+            new AsyncStoragePackage(),
                     new RNCWebViewPackage(),
                     new RNFirebasePackage(),
                     new RNFirebaseMessagingPackage(),

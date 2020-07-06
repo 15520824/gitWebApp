@@ -2,6 +2,7 @@ import React, {Component} from 'react';
 import {Platform, StyleSheet, Alert, View} from 'react-native';
 import {WebView} from 'react-native-webview';
 import firebase from 'react-native-firebase';
+import AsyncStorage from '@react-native-community/async-storage';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -113,22 +114,29 @@ class App extends Component {
   async getToken() {
     var self = this;
     return new Promise(function(resolve,reject){
-      let fcmToken = self.fcmToken
-      if (!fcmToken) {
-      firebase.messaging().getToken().then(function(value){
-          if (value) {
-            // user has a device token
+      AsyncStorage.getItem("fcmToken").then(function(value){
+        let fcmToken = value;
+        if (!fcmToken) {
+          firebase.messaging().getToken().then(function(value){
+              if (value) {
+                // user has a device token
+                self.fcmToken = value;
+                AsyncStorage.setItem("fcmToken",value).then(function(){
+                  resolve(value);
+                });
+              }
+            })
+            .catch(function(err){
+              console.log('permission rejected');
+              reject();
+            })
+            
+          }else
+          {
             self.fcmToken = value;
-            console.log(value);
-            resolve(value);
           }
-        })
-        .catch(function(err){
-          console.log('permission rejected');
-          reject();
-        })
-        
-      }
+      })
+      
     })
     
   }
@@ -150,6 +158,23 @@ class App extends Component {
       }
     })
     
+  }
+  
+  saveStorage = async (name: string,value: string) => {
+    try {
+      await AsyncStorage.setItem(name, value);
+    } catch (e) {
+      // saving error
+    }
+  }
+
+  getStorage = async (name: string) => {
+    try {
+      const value = await AsyncStorage.getItem(name)
+      return value;
+    } catch(e) {
+      // error reading value
+    }
   }
 
   render() {
@@ -173,7 +198,7 @@ class App extends Component {
                 if(self.fcmToken===undefined){
                   self.checkPermission().then(function(value){
                     const clientResponseCode = `
-                    window.postMessage(${JSON.stringify({name:"getUserToken", token:value})}, "*");
+                    window.postMessage(${JSON.stringify({name:"getUserToken", value:value})}, "*");
                     true;
                     `;
                     if (self.webView) {
@@ -183,7 +208,7 @@ class App extends Component {
                 }
                 else{
                   const clientResponseCode = `
-                    window.postMessage(${JSON.stringify({name:"getUserToken",token:self.fcmToken})}, "*");
+                    window.postMessage(${JSON.stringify({name:"getUserToken",value:self.fcmToken})}, "*");
                     true;
                   `;
                   if (self.webView) {
@@ -194,7 +219,42 @@ class App extends Component {
                 
                 break;
               case "saveDomain":
-
+                var promiseall = [];
+                promiseall.push(self.saveStorage(data.value.domain.name, data.value.domain.value));
+                promiseall.push(self.saveStorage(data.value.token.name, data.value.token.value));
+                Promise.all(promiseall).then(function(){
+                  const clientResponseCode = `
+                    window.postMessage(${JSON.stringify({name:"saveDomain", value: true})}, "*");
+                    true;
+                  `;
+                  if (self.webView) {
+                    self.webView.injectJavaScript(clientResponseCode);
+                  }
+                }).catch(function(err){
+                  const clientResponseCode = `
+                    window.postMessage(${JSON.stringify({name:"saveDomain", value: false})}, "*");
+                    true;
+                  `;
+                  if (self.webView) {
+                    self.webView.injectJavaScript(clientResponseCode);
+                  }
+                });
+                break;
+              case "getDomain":
+                self.getStorage(data.value).then(function(value){
+                  const clientResponseCode = `
+                    window.postMessage(${JSON.stringify({name:"getDomain", value: value})}, "*");
+                    true;
+                  `;
+                  if (self.webView) {
+                    self.webView.injectJavaScript(clientResponseCode);
+                  }
+                });
+                break;
+              case "reload":
+                if (self.webView) {
+                  self.webView.reload();
+                }
                 break;
             }
           }}
