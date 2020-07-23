@@ -1,3 +1,155 @@
+
+theme.showForm = function(params){
+    var bodycontent;
+    var h = DOMElement.div({});
+    if (params.title !== undefined){
+        h.appendChild(DOMElement.div({
+            attrs: {
+                style: {
+                    textAlign: "center",
+                    fontWeight: "bold",
+                    paddingBottom: "20px"
+                }
+            },
+            text: params.title
+        }));
+    }
+    if (params.message !== undefined){
+        h.appendChild(DOMElement.div({
+            attrs: {
+                style: {
+                    textAlign: "center"
+                }
+            },
+            text: params.message
+        }));
+    }
+    var buttonElt = DOMElement.div({
+        attrs: {
+            align: "right",
+            style: {
+                paddingTop: "20px"
+            }
+        }
+    });
+    if (params.buttonList === undefined) params.buttonList = [];
+    for (var i = 0; i < params.buttonList.length; i++){
+        buttonElt.appendChild(DOMElement.span({
+            attrs: {
+                style: {
+                    color: params.buttonList[i].color,
+                    fontWeight: "bold",
+                    marginLeft: "20px"
+                },
+                onclick: function(i) {
+                    return function (event, me) {
+                        bodycontent.remove();
+                        params.func(i);
+                    }
+                } (i)
+            },
+            text: params.buttonList[i].text.toUpperCase()
+        }));
+    }
+    if (params.buttonList.length > 0) h.appendChild(buttonElt);
+    bodycontent = DOMElement.div({
+        attrs: {
+            style: {
+                width: "100vw",
+                height: "100vh",
+                top: 0,
+                position: "fixed",
+                background: "#0000001a",
+                zIndex: 888888
+            }
+        },
+        children: [DOMElement.div({
+            attrs: {
+                style: {
+                    width: "calc(100vw - 60px)",
+                    maxWidth: "400px",
+                    paddingTop: "20px",
+                    paddingBottom: "10px",
+                    backgroundColor: "white",
+                    padding: "30px",
+                    borderRadius: "15px",
+                    margin: "50% auto",
+                    boxShadow: "2px 2px 2px 0px #908787"
+                }
+            },
+            children: [h]
+        })]
+    });
+    document.body.appendChild(bodycontent);
+};
+
+ModalElement.alert = function (params) {
+    var message, func;
+    if (typeof params === 'string'){
+        message = params;
+    }
+    else {
+        message = params.message;
+        func = params.func;
+    }
+    if (message === undefined) message = "";
+    if (func === undefined) func = function () {};
+    theme.showForm({
+        message: message,
+        buttonList: [
+            {
+                text: LanguageModule.text("txt_ok"),
+                color: "var(--a-color)"
+            }
+        ],
+        func: func
+    });
+};
+
+ModalElement.question = function (params) {
+    var message = params.message,title = params.title, h, func = params.onclick;
+    if (message === undefined) message = "";
+    if (title === undefined) title = "Question";
+    if (func === undefined) func = function(){};
+    theme.showForm({
+        title: title,
+        message: message,
+        buttonList: [
+            {
+                text: LanguageModule.text("txt_yes"),
+                color: "var(--a-color)"
+            },
+            {
+                text: LanguageModule.text("txt_no"),
+                color: "#aaaaaa"
+            }
+        ],
+        func: func
+    });
+};
+
+ModalElement.question2 = function (params) {
+    var message = params.message,title = params.title, h, func = params.onclick;
+    if (message === undefined) message = "";
+    if (title === undefined) title = "Question";
+    if (func === undefined) func = function(){};
+    theme.showForm({
+        title: title,
+        message: message,
+        buttonList: [
+            {
+                text: LanguageModule.text("txt_ok"),
+                color: "var(--a-color)"
+            },
+            {
+                text: LanguageModule.text("txt_cancel"),
+                color: "#aaaaaa"
+            }
+        ],
+        func: func
+    });
+};
+
 theme.quickmenu = function(menuItems){
     var trigger = DOMElement.i({
         attrs: {

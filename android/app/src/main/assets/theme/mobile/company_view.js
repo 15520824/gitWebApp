@@ -190,7 +190,7 @@ theme.formCompanyEdit = function(params){
        value: params.data.taxcode
     });
     var owner_select = absol.buildDom({
-         tag: "selectbox",
+         tag: "mselectbox",
          style: {
              display: "block",
              width: "100%",
@@ -409,45 +409,6 @@ theme.formCompanyEdit = function(params){
 };
 
 theme.formCompanyGetRow = function(content){
-    var editIcon = DOMElement.div({
-        attrs: {
-            className: "card-icon-cover",
-            style: {
-                marginRight: "var(--control-horizontal-distance-1)"
-            }
-        },
-        children: [DOMElement.i({
-            attrs: {
-                className: "material-icons bsc-icon-hover-black"
-            },
-            text: "create"
-        })]
-    });
-    var viewIcon = DOMElement.div({
-        attrs: {
-            className: "card-icon-cover",
-            style: {
-                marginRight: "var(--control-horizontal-distance-1)"
-            }
-        },
-        children: [DOMElement.i({
-            attrs: {
-                className: "material-icons bsc-icon-hover-black"
-            },
-            text: "visibility"
-        })]
-    });
-    var deleteIcon = DOMElement.div({
-        attrs: {
-            className: "card-icon-remove-cover"
-        },
-        children: [DOMElement.i({
-            attrs: {
-                className: "material-icons card-icon-remove"
-            },
-            text: "remove_circle"
-        })]
-    });
     if (content.address.length > 50) content.address = content.address.substr(0, 50) + "...";
          var company_classValue;
          if (content.company_classid == 0) company_classValue = "...";
@@ -462,9 +423,7 @@ theme.formCompanyGetRow = function(content){
          if (content.districtid == 0) districtValue = "...";
          else districtValue = content.district + "_" + content.districtid;
         var row = [
-            "",
             {
-                style: {whiteSpace: "nowrap"},
                 value: content.name,
                 element: DOMElement.div({
                     attrs: {
@@ -474,7 +433,6 @@ theme.formCompanyGetRow = function(content){
                 })
             },
             {
-                style: {whiteSpace: "nowrap"},
                 value: company_classValue,
                 element: DOMElement.div({
                     attrs: {
@@ -484,7 +442,6 @@ theme.formCompanyGetRow = function(content){
                 })
             },
             {
-                style: {whiteSpace: "nowrap"},
                 value: content.address,
                 element: DOMElement.div({
                     attrs: {
@@ -494,7 +451,6 @@ theme.formCompanyGetRow = function(content){
                 })
             },
            {
-                 style: {whiteSpace: "nowrap"},
                  value: districtValue,
                  element: DOMElement.div({
                      attrs: {
@@ -504,7 +460,6 @@ theme.formCompanyGetRow = function(content){
                  })
              },
              {
-                 style: {whiteSpace: "nowrap"},
                  value: cityValue,
                  element: DOMElement.div({
                      attrs: {
@@ -514,7 +469,6 @@ theme.formCompanyGetRow = function(content){
                  })
              },
              {
-                 style: {whiteSpace: "nowrap"},
                  value: nationValue
              },
             {
@@ -525,47 +479,9 @@ theme.formCompanyGetRow = function(content){
                     },
                     text: content.available
                 })
-            },
-            {
-                functionClick: function(event,me,index,parent,data,row){
-                    var me = event.target;
-                    while (me.parentNode.classList !== undefined && !me.parentNode.classList.contains("sortTable-cell-view-cmd")) {
-                        me = me.parentNode;
-                    }
-                    if (me === editIcon){
-                       content.func.edit().then(function(value){
-                            if (!value){
-                                parent.dropRow(index);
-                            }
-                            else {
-                                var c = theme.formCompanyGetRow(value);
-                                parent.updateRow(c, index);
-                            }
-                        });
-                    }
-                    if (me === viewIcon){
-                       content.func.view().then(function(value){
-                           parent.updateRow(theme.formCompanyGetRow(value), index);
-                       });
-                    }
-                    if (me === deleteIcon){
-                       content.func.delete().then(function(value){
-                           parent.dropRow(index);
-                       });
-                    }
-                },
-                element: DOMElement.div({
-                    attrs: {
-                        className: "sortTable-cell-view-cmd"
-                    },
-                    children: [
-                        editIcon,
-                        viewIcon,
-                        deleteIcon
-                    ]
-                })
             }
         ];
+        row.func = content.func;
         return row;
     };
 
@@ -582,10 +498,10 @@ theme.formCompanyGetRow = function(content){
              }
              x.updatePagination(undefined, false);
              x.addInputSearch(params.inputsearchbox);
-             x.addFilter(params.company_class_select, 2);
-             x.addFilter(params.nations_select, 6);
-             x.addFilter(params.city_select, 5);
-             x.addFilter(params.district_select, 4);
+             x.addFilter(params.company_class_select, 1);
+             x.addFilter(params.nations_select, 5);
+             x.addFilter(params.city_select, 4);
+             x.addFilter(params.district_select, 3);
          }, 1000);
      }
      else {
@@ -596,29 +512,44 @@ theme.formCompanyGetRow = function(content){
      console.log("startrawtable__" + (new Date()).getTime());
      x = pizo.tableView(
          [
-             {type: "dragzone", style: {paddingLeft: "var(--control-verticle-distance-1)", paddingRight: "var(--control-verticle-distance-1)", width: "40px"}},
              {value: LanguageModule.text("txt_name"), sort: true},
              {value: LanguageModule.text("txt_company_class"), sort: true},
              {value: LanguageModule.text("txt_address"), sort: true},
-             {value: LanguageModule.text("txt_district"), sort: true},
-             {value: LanguageModule.text("txt_city"), sort: true},
+             {value: LanguageModule.text("txt_district"), sort: false, hidden: true},
+             {value: LanguageModule.text("txt_city"), sort: false, hidden: true},
              {value: LanguageModule.text("txt_nation"), sort: false, hidden: true},
-             {value: LanguageModule.text("txt_active"), sort: true},
-             {value: ""}
+             {value: LanguageModule.text("txt_active"), sort: false, hidden: true}
          ],
          data,
          false,
          true,
          1
      );
-     console.log("endrawtable__" + (new Date()).getTime());
+     x.addClass('am-gray-table');
      if (params.data.length < 50){
          x.addInputSearch(params.inputsearchbox);
-         x.addFilter(params.company_class_select, 2);
-         x.addFilter(params.nations_select, 6);
-         x.addFilter(params.city_select, 5);
-         x.addFilter(params.district_select, 4);
+         x.addFilter(params.company_class_select, 1);
+         x.addFilter(params.nations_select, 5);
+         x.addFilter(params.city_select, 4);
+         x.addFilter(params.district_select, 3);
      }
+     x.setUpSwipe(true, true);
+     x.swipeCompleteRight = function(event, me, index, data, row, parent){
+         data.func.edit().then(function(value){
+             if (!value){
+                 parent.exactlyDeleteRow(index);
+             }
+             else {
+                 var c = theme.formCompanyGetRow(value);
+                 parent.updateRow(c, index);
+             }
+         });
+     };
+     x.swipeCompleteLeft = function(event, me, index, data, row, parent){
+         data.func.delete().then(function(value){
+             parent.exactlyDeleteRow(index);
+         });
+     };
      return x;
  };
 
@@ -756,7 +687,7 @@ theme.formCompanyInit = function(params){
             }),
             DOMElement.div({
                 attrs: {
-                    className: "card-mobile-content-has-search"
+                    className: "card-mobile-content-has-search absol-single-page-scroller"
                 },
                 children: [params.data_container]
             })

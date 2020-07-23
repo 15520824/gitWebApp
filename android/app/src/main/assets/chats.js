@@ -196,6 +196,10 @@ carddone.chats.sendMess = function (host, sessionid, text, files, images, listId
                         name: "n",
                         value: filesToUpload.length
                     },
+                    {
+                        name: "domain",
+                        value: window.domain
+                    },
                     {name: "listIdLocal", value: EncodingClass.string.fromVariable(listIdLocal)}
                 ],
                 fileuploads: filesToUpload,

@@ -509,7 +509,7 @@ task.showLoginBox = function(){
             })
         ]
     }));
-    document.getElementById("username_input").focus();
+    // document.getElementById("username_input").focus();
 };
 
 task.loadDatabase = function () {
@@ -610,6 +610,7 @@ task.loadDatabase = function () {
                     }
 
                     //systemconfig
+                    systemconfig.userHasApp = st.dataUser.hasApp;
                     systemconfig.userid = st.dataUser.homeid;
                     systemconfig.username = st.dataUser.username;
                     systemconfig.fullname = st.dataUser.fullname;
@@ -674,7 +675,7 @@ task.loadDatabase = function () {
 
 ModuleManagerClass.register({
     name: "main",
-    prerequisites: ["FormClass", "ModalElement", "Absol", "StorageClass"],
+    prerequisites: ["FormClass", "ModalElement", "Absol", "StorageClass", "Common_view"],
     trigger: function () {
         window.session = EncodingClass.string.fromVariable({});
         window.holderMain = DOMElement.div({
@@ -721,11 +722,13 @@ ModuleManagerClass.register({
             children: [window.holderMain]
         }));
         if (window.isApp){
+            console.log(window.ReactNativeWebView);
             if (window.ReactNativeWebView !== undefined && window.ReactNativeWebView.postMessage !== undefined){
                 exe();
             }
             else {
                 var myVar = setInterval(function(){
+                    console.log(window.ReactNativeWebView);
                     if(window.ReactNativeWebView !== undefined && window.ReactNativeWebView.postMessage !== undefined){
                         exe();
                         clearInterval(myVar);
@@ -739,7 +742,6 @@ ModuleManagerClass.register({
                 window.ReactNativeWebView.postMessage(JSON.stringify({name: "getUserToken"}));
                 function GetToken(message){
                     var data = message.data;
-                    console.log(message,data.name == "getUserToken",data.name);
                     if (data.name == "getUserToken"){
                         window.userToken = data.value;
                         window.removeEventListener("message",this);

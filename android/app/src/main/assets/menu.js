@@ -33,7 +33,6 @@ if (carddone.isMobile){
 
     carddone.menu.showMobileTabbar = function (flag) {
         var appDiv = carddone.menu.layoutInit;
-        console.log(appDiv);
         var current = appDiv.containsClass('am-show-tabbar');
         if (current == flag) return;
         if (flag) {
@@ -59,7 +58,7 @@ else {
     });
 }
 
-carddone.menu.loadPagePC = function (taskid, hostid) {
+carddone.menu.loadPagePC = function (taskid, hostid, hostid2) {
     var holder, host;
     holder = absol.buildDom({
         tag: "tabframe",
@@ -174,7 +173,9 @@ carddone.menu.loadPagePC = function (taskid, hostid) {
             host.cardid = hostid;
             holder.name = LanguageModule.text("txt_chat");
             carddone.menu.tabPanel.addChild(holder);
-            carddone.chats.init(host);
+            carddone.chats.init(host).then(function(value){
+                if (hostid2 !== undefined) host.resolveOpenChat(hostid2);
+            });
             carddone.listTabChat.push(host);
             holder.on("remove", function(event){
                 for (var i = 0; i < carddone.listTabChat.length; i++){
@@ -566,7 +567,6 @@ carddone.menu.showMenu = function(host){
             }
         }
     });
-    console.log(profile);
     profile.$avatar.id = "user_avatar_img";
     host.holder.addChild(profile);
     host.holder.addChild(absol.buildDom({
@@ -583,388 +583,393 @@ carddone.menu.showNotification = function(host){
 };
 
 carddone.menu.loadPageMobile = function (taskid, hostid) {
-    var holder;
-    if (carddone.menu.staticFrameTaskIds.indexOf(taskid)>=0 &&carddone.menu.staticFrameTasks[taskid]){
-        holder = carddone.menu.staticFrameTasks[taskid].holder;
+    return new Promise(function(resolveMes, rejectMes){
+        var holder;
+        if (carddone.menu.staticFrameTaskIds.indexOf(taskid) >= 0 && carddone.menu.staticFrameTasks[taskid]){
+            holder = carddone.menu.staticFrameTasks[taskid].holder;
+            holder.requestActive();
+            carddone.menu.mobileTabbar.value = taskid;
+            carddone.menu.showMobileTabbar(true);
+            resolveMes();
+            return ;
+        }
+        holder = absol.buildDom({
+            tag: "tabframe",
+            style: {
+                backgroundColor: "white"
+            }
+        });
+        var frameList =  absol.buildDom({
+            tag: "frameview",
+            class: "main-frame-view",
+            style: {
+                width: "100%",
+                height: "100%"
+            }
+        });
+        var host = {
+            holder: holder,
+            frameList: frameList
+        };
+        carddone.menu.staticFrameTasks[taskid] = host;
+        carddone.menu.tabPanel.addChild(holder);
         holder.requestActive();
-        carddone.menu.mobileTabbar.value = taskid;
-        carddone.menu.showMobileTabbar(true);
-        return ;
-    }
-    holder = absol.buildDom({
-        tag: "tabframe",
-        style: {
-            backgroundColor: "white"
+        switch (taskid) {
+            case 100:
+                host.funcs = {
+                    menuHeader: theme.menuHeader
+                };
+                carddone.menu.showMenu(host);
+                break;
+            case 101:
+                host.funcs = {};
+                carddone.menu.showNotification(host);
+                break;
+            case 1:
+                host.direct = 0;
+                host.funcs = {
+                    closeButton:  theme.closeButton,
+                    saveButton: theme.saveButton,
+                    saveCloseButton: theme.saveCloseButton,
+                    okButton: theme.okButton,
+                    formConfirmPassword: theme.formConfirmPassword,
+                    formPersonalProfile: theme.formPersonalProfile,
+                    input: theme.input
+                };
+                carddone.menu.showProfile(host);
+                break;
+            case 2:
+                host.direct = 1;
+                host.funcs = {
+                    closeButton:  theme.closeButton,
+                    saveButton: theme.saveButton,
+                    saveCloseButton: theme.saveCloseButton,
+                    addButton: theme.addButton,
+                    okButton: theme.okButton,
+                    formConfirmPassword: theme.formConfirmPassword,
+                    formAccountInit: theme.formAccountInit,
+                    formAccountContentData: theme.formAccountContentData,
+                    formAccountEdit: theme.formAccountEdit,
+                    input: theme.input
+                }
+                carddone.account.init(host);
+                break;
+            case 3:
+                host.funcs = {
+                    closeButton:  theme.closeButton,
+                    saveButton: theme.saveButton,
+                    saveCloseButton: theme.saveCloseButton,
+                    addButton: theme.addButton,
+                    okButton: theme.okButton,
+                    input: theme.input,
+                    formDatatypesInit: theme.formDatatypesInit,
+                    formTypeContentData: theme.formTypeContentData,
+                    formDataTypesEdit: theme.formDataTypesEdit,
+                    formDataTypesDataStructure: theme.formDataTypesDataStructure,
+                    formDataTypesDataStructureGetRow: theme.formDataTypesDataStructureGetRow
+                }
+                carddone.datatypes.init(host);
+                break;
+            case 4:
+                host.funcs = {
+                    closeButton:  theme.closeButton,
+                    saveButton: theme.saveButton,
+                    saveCloseButton: theme.saveCloseButton,
+                    addButton: theme.addButton,
+                    okButton: theme.okButton,
+                    input: theme.input,
+                    boardInitForm: theme.boardInitForm,
+                    boardContentDataForm: theme.boardContentDataForm,
+                    boardEditForm: theme.boardEditForm
+                }
+                carddone.boards.init(host);
+                break;
+            case 6:
+                host.funcs = {
+                    closeButton:  theme.closeButton,
+                    saveButton: theme.saveButton,
+                    saveCloseButton: theme.saveCloseButton,
+                    addButton: theme.addButton,
+                    okButton: theme.okButton,
+                    formObjectsInit: theme.formObjectsInit,
+                    formObjectsEdit: theme.formObjectsEdit,
+                    input: theme.input,
+                    formObjectsGetCategory: theme.formObjectsGetCategory,
+                    formObjectContentData: theme.formObjectContentData,
+                    formObjectGetRow: theme.formObjectGetRow
+                }
+                carddone.objects.init(host);
+                break;
+            case 7:
+                host.funcs = {
+                    closeButton:  theme.closeButton,
+                    formChatsInit: theme.formChatsInit,
+                    sendMessage: carddone.sendMessageFunc
+                }
+                host.cardid = hostid;
+                carddone.listTabChat.push(host);
+                carddone.chats.init(host).then(function(value){
+                    resolveMes();
+                });
+                break;
+            case 8:
+                host.funcs = {
+                    closeButton:  theme.closeButton,
+                    saveButton: theme.saveButton,
+                    saveCloseButton: theme.saveCloseButton,
+                    addButton: theme.addButton,
+                    okButton: theme.okButton,
+                    saveAsButton: theme.saveAsButton,
+                    exportButton: theme.exportButton,
+                    viewReportButton: theme.viewReportButton,
+                    input: theme.input,
+                    formReportListLayout: theme.formReportListLayout,
+                    editReportForm: theme.editReportForm
+                }
+                carddone.my_report.init(host);
+                break;
+            case 9:
+                host.funcs = {
+                    closeButton:  theme.closeButton,
+                    saveButton: theme.saveButton,
+                    saveCloseButton: theme.saveCloseButton,
+                    addButton: theme.addButton,
+                    okButton: theme.okButton,
+                    input: theme.input,
+                    formChatsInit: theme.formChatsInit
+                }
+                console.log(987654321);
+                // carddone.public_report.init(host);
+                break;
+            case 10:
+                host.funcs = {
+                    closeButton:  theme.closeButton,
+                    saveButton: theme.saveButton,
+                    saveCloseButton: theme.saveCloseButton,
+                    addButton: theme.addButton,
+                    okButton: theme.okButton,
+                    input: theme.input,
+                    formCategoryInit: theme.formCategoryInit,
+                    formCategoryContentData: theme.formCategoryContentData,
+                    formCategoryEdit: theme.formCategoryEdit,
+                    formCategoryGetRow: theme.formCategoryGetRow
+                }
+                carddone.category.init(host);
+                break;
+            case 11:
+                host.funcs = {
+                    closeButton:  theme.closeButton,
+                    saveButton: theme.saveButton,
+                    saveCloseButton: theme.saveCloseButton,
+                    addButton: theme.addButton,
+                    okButton: theme.okButton,
+                    moveButton: theme.moveButton,
+                    archiveButton: theme.archiveButton,
+                    deleteButton: theme.deleteButton,
+                    input: theme.input,
+                    cardInitForm: theme.cardInitForm,
+                    cardEditForm: theme.cardEditForm,
+                    cardAddTaskForm: theme.cardAddTaskForm,
+                    cardAddMeetingForm: theme.cardAddMeetingForm,
+                    cardAddNoteForm: theme.cardAddNoteForm,
+                    cardAddCallForm: theme.cardAddCallForm,
+                    cardAddWaitForm: theme.cardAddWaitForm,
+                    cardAddCheckListForm: theme.cardAddCheckListForm,
+                    cardAddFieldForm: theme.cardAddFieldForm,
+                    formKnowledgeEdit: theme.formKnowledgeEdit
+                }
+                carddone.cards.init(host, hostid.boardid);
+                break;
+            case 13:
+                host.funcs = {
+                    closeButton:  theme.closeButton,
+                    saveButton: theme.saveButton,
+                    saveCloseButton: theme.saveCloseButton,
+                    addButton: theme.addButton,
+                    okButton: theme.okButton,
+                    input: theme.input,
+                    formNationsInit: theme.formNationsInit,
+                    formNationsContentData: theme.formNationsContentData,
+                    formNationEdit: theme.formNationEdit,
+                    formNationGetRow: theme.formNationGetRow
+                }
+                carddone.nations.init(host);
+                break;
+            case 14:
+                host.funcs = {
+                    closeButton:  theme.closeButton,
+                    saveButton: theme.saveButton,
+                    saveCloseButton: theme.saveCloseButton,
+                    addButton: theme.addButton,
+                    okButton: theme.okButton,
+                    input: theme.input,
+                    formCitiesInit: theme.formCitiesInit,
+                    formCitiesContentData: theme.formCitiesContentData,
+                    formCitiesEdit: theme.formCitiesEdit,
+                    formCitiesGetRow: theme.formCitiesGetRow
+                }
+                carddone.cities.init(host);
+                break;
+            case 15:
+                host.funcs = {
+                    closeButton:  theme.closeButton,
+                    saveButton: theme.saveButton,
+                    saveCloseButton: theme.saveCloseButton,
+                    addButton: theme.addButton,
+                    okButton: theme.okButton,
+                    input: theme.input,
+                    formCompanyInit: theme.formCompanyInit,
+                    formCompanyContentData: theme.formCompanyContentData,
+                    formCompanyEdit: theme.formCompanyEdit,
+                    formContactEdit: theme.formContactEdit,
+                    formCompanyGetRow: theme.formCompanyGetRow,
+                    formContactGetRow: theme.formContactGetRow,
+                    formContactContentData: theme.formContactContentData
+                }
+                carddone.company.init(host);
+                break;
+            case 16:
+                host.funcs = {
+                    closeButton:  theme.closeButton,
+                    saveButton: theme.saveButton,
+                    saveCloseButton: theme.saveCloseButton,
+                    addButton: theme.addButton,
+                    okButton: theme.okButton,
+                    input: theme.input,
+                    formContactInit: theme.formContactInit,
+                    formContactContentData: theme.formContactContentData,
+                    formContactEdit: theme.formContactEdit,
+                    formContactGetRow: theme.formContactGetRow
+                }
+                carddone.contact.init(host);
+                break;
+            case 17:
+                host.funcs = {
+                    closeButton:  theme.closeButton,
+                    saveButton: theme.saveButton,
+                    saveCloseButton: theme.saveCloseButton,
+                    addButton: theme.addButton,
+                    okButton: theme.okButton,
+                    input: theme.input,
+                    formCompany_classInit: theme.formCompany_classInit,
+                    formCompany_classContentData: theme.formCompany_classContentData,
+                    formCompany_classEdit: theme.formCompany_classEdit,
+                    formCompany_classGetRow: theme.formCompany_classGetRow
+                }
+                carddone.company_class.init(host);
+                break;
+            case 18:
+                host.funcs = {
+                    closeButton:  theme.closeButton,
+                    saveButton: theme.saveButton,
+                    saveCloseButton: theme.saveCloseButton,
+                    addButton: theme.addButton,
+                    okButton: theme.okButton,
+                    input: theme.input,
+                    masterBoardInitForm: theme.masterBoardInitForm,
+                    masterBoardEditForm: theme.masterBoardEditForm
+                }
+                carddone.master_board.init(host, hostid);
+                break;
+            case 19:
+                host.funcs = {
+                    closeButton:  theme.closeButton,
+                    saveButton: theme.saveButton,
+                    saveCloseButton: theme.saveCloseButton,
+                    addButton: theme.addButton,
+                    okButton: theme.okButton,
+                    input: theme.input,
+                    accountGroupInitForm: theme.accountGroupInitForm,
+                    accountGroupEditForm: theme.accountGroupEditForm
+                }
+                carddone.account_group.init(host);
+                break;
+            case 20:
+                host.funcs = {
+                    closeButton:  theme.closeButton,
+                    saveButton: theme.saveButton,
+                    saveCloseButton: theme.saveCloseButton,
+                    addButton: theme.addButton,
+                    okButton: theme.okButton,
+                    input: theme.input,
+                    formKnowledgeGroupsInit: theme.formKnowledgeGroupsInit,
+                    formKnowledgeGroupsContentData: theme.formKnowledgeGroupsContentData,
+                    formKnowledgeGroupsEdit: theme.formKnowledgeGroupsEdit,
+                    formKnowledgeGroupsGetRow: theme.formKnowledgeGroupsGetRow
+                };
+                carddone.knowledge_groups.init(host);
+                break;
+            case 21:
+                host.funcs = {
+                    closeButton:  theme.closeButton,
+                    saveButton: theme.saveButton,
+                    saveCloseButton: theme.saveCloseButton,
+                    addButton: theme.addButton,
+                    okButton: theme.okButton,
+                    input: theme.input,
+                    formKnowledgeInit: theme.formKnowledgeInit,
+                    formKnowledgeContentData: theme.formKnowledgeContentData,
+                    formKnowledgeGetRow: theme.formKnowledgeGetRow,
+                    formKnowledgeView: theme.formKnowledgeView
+                };
+                carddone.knowledge.init(host);
+                break;
+            case 22:
+                host.funcs = {
+                    closeButton:  theme.closeButton,
+                    saveButton: theme.saveButton,
+                    saveCloseButton: theme.saveCloseButton,
+                    addButton: theme.addButton,
+                    okButton: theme.okButton,
+                    input: theme.input,
+                    formDistrictsInit: theme.formDistrictsInit,
+                    formDistrictsContentData: theme.formDistrictsContentData,
+                    formDistrictsEdit: theme.formDistrictsEdit,
+                    formDistrictsGetRow: theme.formDistrictsGetRow
+                }
+                carddone.districts.init(host);
+                break;
+            case 23:
+                host.funcs = {
+                    formMy_calendarInit: theme.formMy_calendarInit
+                }
+                carddone.my_calendar.init(host);
+                break;
+            case 24:
+                host.funcs = {
+                    formActivitiesInit: theme.formActivitiesInit,
+                    formActivitiesContentData: theme.formActivitiesContentData
+                }
+                carddone.activities.init(host);
+                break;
+            case 25:
+                host.funcs = {
+                    formBoardGroupsInit: theme.formBoardGroupsInit,
+                    formBoardGroupsContentData: theme.formBoardGroupsContentData,
+                    formBoardGroupsEdit: theme.formBoardGroupsEdit,
+                    formBoardGroupsGetRow: theme.formBoardGroupsGetRow
+                }
+                carddone.board_groups.init(host);
+                break;
+            case 27:
+                host.funcs = {
+                    formReminderInit: theme.formReminderInit
+                }
+                carddone.reminder.init(host);
+                break;
+            default:
+                holder.innerHTML = "under construction (" + taskid + ")";
+                break;
         }
-    });
-    var frameList =  absol.buildDom({
-        tag: "frameview",
-        class: "main-frame-view",
-        style: {
-            width: "100%",
-            height: "100%"
-        }
-    });
-    var host = {
-        holder: holder,
-        frameList: frameList
-    };
-    carddone.menu.staticFrameTasks[taskid] = host;
-    carddone.menu.tabPanel.addChild(holder);
-    holder.requestActive();
-    switch (taskid) {
-        case 100:
-            host.funcs = {
-                menuHeader: theme.menuHeader
-            };
-            carddone.menu.showMenu(host);
-            break;
-        case 101:
-            host.funcs = {};
-            carddone.menu.showNotification(host);
-            break;
-        case 1:
-            host.direct = 0;
-            host.funcs = {
-                closeButton:  theme.closeButton,
-                saveButton: theme.saveButton,
-                saveCloseButton: theme.saveCloseButton,
-                okButton: theme.okButton,
-                formConfirmPassword: theme.formConfirmPassword,
-                formPersonalProfile: theme.formPersonalProfile,
-                input: theme.input
-            };
-            carddone.menu.showProfile(host);
-            break;
-        case 2:
-            host.direct = 1;
-            host.funcs = {
-                closeButton:  theme.closeButton,
-                saveButton: theme.saveButton,
-                saveCloseButton: theme.saveCloseButton,
-                addButton: theme.addButton,
-                okButton: theme.okButton,
-                formConfirmPassword: theme.formConfirmPassword,
-                formAccountInit: theme.formAccountInit,
-                formAccountContentData: theme.formAccountContentData,
-                formAccountEdit: theme.formAccountEdit,
-                input: theme.input
-            }
-            carddone.account.init(host);
-            break;
-        case 3:
-            host.funcs = {
-                closeButton:  theme.closeButton,
-                saveButton: theme.saveButton,
-                saveCloseButton: theme.saveCloseButton,
-                addButton: theme.addButton,
-                okButton: theme.okButton,
-                input: theme.input,
-                formDatatypesInit: theme.formDatatypesInit,
-                formTypeContentData: theme.formTypeContentData,
-                formDataTypesEdit: theme.formDataTypesEdit,
-                formDataTypesDataStructure: theme.formDataTypesDataStructure,
-                formDataTypesDataStructureGetRow: theme.formDataTypesDataStructureGetRow
-            }
-            carddone.datatypes.init(host);
-            break;
-        case 4:
-            host.funcs = {
-                closeButton:  theme.closeButton,
-                saveButton: theme.saveButton,
-                saveCloseButton: theme.saveCloseButton,
-                addButton: theme.addButton,
-                okButton: theme.okButton,
-                input: theme.input,
-                boardInitForm: theme.boardInitForm,
-                boardContentDataForm: theme.boardContentDataForm,
-                boardEditForm: theme.boardEditForm
-            }
-            carddone.boards.init(host);
-            break;
-        case 6:
-            host.funcs = {
-                closeButton:  theme.closeButton,
-                saveButton: theme.saveButton,
-                saveCloseButton: theme.saveCloseButton,
-                addButton: theme.addButton,
-                okButton: theme.okButton,
-                formObjectsInit: theme.formObjectsInit,
-                formObjectsEdit: theme.formObjectsEdit,
-                input: theme.input,
-                formObjectsGetCategory: theme.formObjectsGetCategory,
-                formObjectContentData: theme.formObjectContentData,
-                formObjectGetRow: theme.formObjectGetRow
-            }
-            carddone.objects.init(host);
-            break;
-        case 7:
-            host.funcs = {
-                closeButton:  theme.closeButton,
-                formChatsInit: theme.formChatsInit,
-                sendMessage: carddone.sendMessageFunc
-            }
-            host.cardid = hostid;
-            carddone.chats.init(host);
-            carddone.listTabChat.push(host);
-            break;
-        case 8:
-            host.funcs = {
-                closeButton:  theme.closeButton,
-                saveButton: theme.saveButton,
-                saveCloseButton: theme.saveCloseButton,
-                addButton: theme.addButton,
-                okButton: theme.okButton,
-                saveAsButton: theme.saveAsButton,
-                exportButton: theme.exportButton,
-                viewReportButton: theme.viewReportButton,
-                input: theme.input,
-                formReportListLayout: theme.formReportListLayout,
-                editReportForm: theme.editReportForm
-            }
-            carddone.my_report.init(host);
-            break;
-        case 9:
-            host.funcs = {
-                closeButton:  theme.closeButton,
-                saveButton: theme.saveButton,
-                saveCloseButton: theme.saveCloseButton,
-                addButton: theme.addButton,
-                okButton: theme.okButton,
-                input: theme.input,
-                formChatsInit: theme.formChatsInit
-            }
-            console.log(987654321);
-            // carddone.public_report.init(host);
-            break;
-        case 10:
-            host.funcs = {
-                closeButton:  theme.closeButton,
-                saveButton: theme.saveButton,
-                saveCloseButton: theme.saveCloseButton,
-                addButton: theme.addButton,
-                okButton: theme.okButton,
-                input: theme.input,
-                formCategoryInit: theme.formCategoryInit,
-                formCategoryContentData: theme.formCategoryContentData,
-                formCategoryEdit: theme.formCategoryEdit,
-                formCategoryGetRow: theme.formCategoryGetRow
-            }
-            carddone.category.init(host);
-            break;
-        case 11:
-            host.funcs = {
-                closeButton:  theme.closeButton,
-                saveButton: theme.saveButton,
-                saveCloseButton: theme.saveCloseButton,
-                addButton: theme.addButton,
-                okButton: theme.okButton,
-                moveButton: theme.moveButton,
-                archiveButton: theme.archiveButton,
-                deleteButton: theme.deleteButton,
-                input: theme.input,
-                cardInitForm: theme.cardInitForm,
-                cardEditForm: theme.cardEditForm,
-                cardAddTaskForm: theme.cardAddTaskForm,
-                cardAddMeetingForm: theme.cardAddMeetingForm,
-                cardAddNoteForm: theme.cardAddNoteForm,
-                cardAddCallForm: theme.cardAddCallForm,
-                cardAddWaitForm: theme.cardAddWaitForm,
-                cardAddCheckListForm: theme.cardAddCheckListForm,
-                cardAddFieldForm: theme.cardAddFieldForm,
-                formKnowledgeEdit: theme.formKnowledgeEdit
-            }
-            carddone.cards.init(host, hostid.boardid);
-            break;
-        case 13:
-            host.funcs = {
-                closeButton:  theme.closeButton,
-                saveButton: theme.saveButton,
-                saveCloseButton: theme.saveCloseButton,
-                addButton: theme.addButton,
-                okButton: theme.okButton,
-                input: theme.input,
-                formNationsInit: theme.formNationsInit,
-                formNationsContentData: theme.formNationsContentData,
-                formNationEdit: theme.formNationEdit,
-                formNationGetRow: theme.formNationGetRow
-            }
-            carddone.nations.init(host);
-            break;
-        case 14:
-            host.funcs = {
-                closeButton:  theme.closeButton,
-                saveButton: theme.saveButton,
-                saveCloseButton: theme.saveCloseButton,
-                addButton: theme.addButton,
-                okButton: theme.okButton,
-                input: theme.input,
-                formCitiesInit: theme.formCitiesInit,
-                formCitiesContentData: theme.formCitiesContentData,
-                formCitiesEdit: theme.formCitiesEdit,
-                formCitiesGetRow: theme.formCitiesGetRow
-            }
-            carddone.cities.init(host);
-            break;
-        case 15:
-            host.funcs = {
-                closeButton:  theme.closeButton,
-                saveButton: theme.saveButton,
-                saveCloseButton: theme.saveCloseButton,
-                addButton: theme.addButton,
-                okButton: theme.okButton,
-                input: theme.input,
-                formCompanyInit: theme.formCompanyInit,
-                formCompanyContentData: theme.formCompanyContentData,
-                formCompanyEdit: theme.formCompanyEdit,
-                formContactEdit: theme.formContactEdit,
-                formCompanyGetRow: theme.formCompanyGetRow,
-                formContactGetRow: theme.formContactGetRow,
-                formContactContentData: theme.formContactContentData
-            }
-            carddone.company.init(host);
-            break;
-        case 16:
-            host.funcs = {
-                closeButton:  theme.closeButton,
-                saveButton: theme.saveButton,
-                saveCloseButton: theme.saveCloseButton,
-                addButton: theme.addButton,
-                okButton: theme.okButton,
-                input: theme.input,
-                formContactInit: theme.formContactInit,
-                formContactContentData: theme.formContactContentData,
-                formContactEdit: theme.formContactEdit,
-                formContactGetRow: theme.formContactGetRow
-            }
-            carddone.contact.init(host);
-            break;
-        case 17:
-            host.funcs = {
-                closeButton:  theme.closeButton,
-                saveButton: theme.saveButton,
-                saveCloseButton: theme.saveCloseButton,
-                addButton: theme.addButton,
-                okButton: theme.okButton,
-                input: theme.input,
-                formCompany_classInit: theme.formCompany_classInit,
-                formCompany_classContentData: theme.formCompany_classContentData,
-                formCompany_classEdit: theme.formCompany_classEdit,
-                formCompany_classGetRow: theme.formCompany_classGetRow
-            }
-            carddone.company_class.init(host);
-            break;
-        case 18:
-            host.funcs = {
-                closeButton:  theme.closeButton,
-                saveButton: theme.saveButton,
-                saveCloseButton: theme.saveCloseButton,
-                addButton: theme.addButton,
-                okButton: theme.okButton,
-                input: theme.input,
-                masterBoardInitForm: theme.masterBoardInitForm,
-                masterBoardEditForm: theme.masterBoardEditForm
-            }
-            carddone.master_board.init(host, hostid);
-            break;
-        case 19:
-            host.funcs = {
-                closeButton:  theme.closeButton,
-                saveButton: theme.saveButton,
-                saveCloseButton: theme.saveCloseButton,
-                addButton: theme.addButton,
-                okButton: theme.okButton,
-                input: theme.input,
-                accountGroupInitForm: theme.accountGroupInitForm,
-                accountGroupEditForm: theme.accountGroupEditForm
-            }
-            carddone.account_group.init(host);
-            break;
-        case 20:
-            host.funcs = {
-                closeButton:  theme.closeButton,
-                saveButton: theme.saveButton,
-                saveCloseButton: theme.saveCloseButton,
-                addButton: theme.addButton,
-                okButton: theme.okButton,
-                input: theme.input,
-                formKnowledgeGroupsInit: theme.formKnowledgeGroupsInit,
-                formKnowledgeGroupsContentData: theme.formKnowledgeGroupsContentData,
-                formKnowledgeGroupsEdit: theme.formKnowledgeGroupsEdit,
-                formKnowledgeGroupsGetRow: theme.formKnowledgeGroupsGetRow
-            };
-            carddone.knowledge_groups.init(host);
-            break;
-        case 21:
-            host.funcs = {
-                closeButton:  theme.closeButton,
-                saveButton: theme.saveButton,
-                saveCloseButton: theme.saveCloseButton,
-                addButton: theme.addButton,
-                okButton: theme.okButton,
-                input: theme.input,
-                formKnowledgeInit: theme.formKnowledgeInit,
-                formKnowledgeContentData: theme.formKnowledgeContentData,
-                formKnowledgeGetRow: theme.formKnowledgeGetRow,
-                formKnowledgeView: theme.formKnowledgeView
-            };
-            carddone.knowledge.init(host);
-            break;
-        case 22:
-            host.funcs = {
-                closeButton:  theme.closeButton,
-                saveButton: theme.saveButton,
-                saveCloseButton: theme.saveCloseButton,
-                addButton: theme.addButton,
-                okButton: theme.okButton,
-                input: theme.input,
-                formDistrictsInit: theme.formDistrictsInit,
-                formDistrictsContentData: theme.formDistrictsContentData,
-                formDistrictsEdit: theme.formDistrictsEdit,
-                formDistrictsGetRow: theme.formDistrictsGetRow
-            }
-            carddone.districts.init(host);
-            break;
-        case 23:
-            host.funcs = {
-                formMy_calendarInit: theme.formMy_calendarInit
-            }
-            carddone.my_calendar.init(host);
-            break;
-        case 24:
-            host.funcs = {
-                formActivitiesInit: theme.formActivitiesInit,
-                formActivitiesContentData: theme.formActivitiesContentData
-            }
-            carddone.activities.init(host);
-            break;
-        case 25:
-            host.funcs = {
-                formBoardGroupsInit: theme.formBoardGroupsInit,
-                formBoardGroupsContentData: theme.formBoardGroupsContentData,
-                formBoardGroupsEdit: theme.formBoardGroupsEdit,
-                formBoardGroupsGetRow: theme.formBoardGroupsGetRow
-            }
-            carddone.board_groups.init(host);
-            break;
-        case 27:
-            host.funcs = {
-                formReminderInit: theme.formReminderInit
-            }
-            carddone.reminder.init(host);
-            break;
-        default:
-            holder.innerHTML = "under construction (" + taskid + ")";
-            break;
-    }
 
-    if (carddone.menu.staticFrameTaskIds.indexOf(taskid)>=0){
-        carddone.menu.mobileTabbar.value = taskid;
-        carddone.menu.showMobileTabbar(true);
-    }
-    else {
-        carddone.menu.showMobileTabbar(false);
-    }
+        if (carddone.menu.staticFrameTaskIds.indexOf(taskid)>=0){
+            carddone.menu.mobileTabbar.value = taskid;
+            carddone.menu.showMobileTabbar(true);
+        }
+        else {
+            carddone.menu.showMobileTabbar(false);
+        }
+    });
 };
 
 carddone.menu.nonAccentVietnamese = function (s) {
@@ -1323,8 +1328,44 @@ carddone.menu.toggleSupportOnline = function(holder, iBridge){
     }
 };
 
+carddone.menu.removeNotificationQueue = function(content){
+    if (!systemconfig.userHasApp) return;
+    var data = {
+        sessionid: content.sessionid,
+        localid: content.dataDraw[content.dataDraw.length - 1].localid
+    };
+    FormClass.api_call({
+        url: "chat_remove_notitication_queue.php",
+        params: [{name: "data", value: EncodingClass.string.fromVariable(data)}],
+        func: function(success, message){
+            if (success){
+                if (message.substr(0,2) == "ok"){
+                    console.log("success removeNotificationQueue: ", content);
+                }
+                else {
+                    console.log("Failed removeNotificationQueue: " + message);
+                }
+            }
+            else {
+                console.log("Failed removeNotificationQueue: " + message);
+            }
+        }
+    });
+};
+
+carddone.menu.openChatMobile = function(sessionid){
+    console.log("wait");
+    if (carddone.listTabChat.length == 0 || !carddone.listTabChat.status){
+        setTimeout(function(){
+            carddone.menu.openChatMobile(sessionid);
+        }, 100);
+        return;
+    }
+    console.log(777777777777);
+    carddone.listTabChat[0].resolveOpenChat(sessionid);
+};
+
 carddone.menu.init = function(holder){
-    console.log(44444444444444444);
     if (carddone.isMobile){
         carddone.menu.loadPage = carddone.menu.loadPageMobile;
     }
@@ -1426,7 +1467,177 @@ carddone.menu.init = function(holder){
         });
         window.iBridge = iBridge;
         DOMElement.removeAllChildren(holder);
-        carddone.listTabChat = [];
+        var checkIdIsTabChat = function(id){
+            for (var i = 0; i < carddone.listTabChat.length; i++){
+                if (carddone.listTabChat[i].holder.id == id){
+                    return carddone.listTabChat[i];
+                }
+            }
+            return null;
+        };
+        var notifyMePC = function(content){
+            console.log(content);
+            var noticontent, title = "Carddone";
+            title = contentModule.getUsernameFullnameByhomeid(data_module.users, content.userid);
+            switch (content.dataDraw[content.dataDraw.length - 1].content_type) {
+                case "text":
+                case "file":
+                    noticontent = content.dataDraw[content.dataDraw.length - 1].content;
+                    break;
+                case "img":
+                    noticontent = "[photo]";
+                    break;
+                default:
+                    noticontent = "";
+
+            }
+            if (!("Notification" in window)) {
+                alert("This browser does not support system notifications");
+            }
+            else if (Notification.permission === "granted") {
+                var notification = new Notification(title, {
+                    body: noticontent,
+                    image: "https://www.google.com/search?q=image&rlz=1C1CHBF_enVN819VN819&sxsrf=ALeKk008K94DLKwX8J5baWt_VbyLi6bPNQ:1594883944456&source=lnms&tbm=isch&sa=X&ved=2ahUKEwj1ld7XndHqAhWabn0KHaWfC5AQ_AUoAXoECAwQAw&biw=1920&bih=937#imgrc=saXt3gObqm30jM",
+                    data: {
+                        content: content
+                    },
+                    icon: "../images2/carddone_favicon.ico"
+                });
+            }
+            else if (Notification.permission !== 'denied') {
+                Notification.requestPermission(function (permission) {
+                    if (permission === "granted") {
+                        var notification = new Notification(title, {
+                            body: noticontent,
+                            image: "https://www.google.com/search?q=image&rlz=1C1CHBF_enVN819VN819&sxsrf=ALeKk008K94DLKwX8J5baWt_VbyLi6bPNQ:1594883944456&source=lnms&tbm=isch&sa=X&ved=2ahUKEwj1ld7XndHqAhWabn0KHaWfC5AQ_AUoAXoECAwQAw&biw=1920&bih=937#imgrc=saXt3gObqm30jM",
+                            data: {
+                                content: content
+                            },
+                            icon: "../images2/carddone_favicon.ico"
+                        });
+                    }
+                });
+            }
+            notification.onclick = function(){
+                if (window.focus) window.focus();
+                if (carddone.listTabChat.length == 0){
+                    carddone.menu.loadPage(7, undefined, notification.data.content.sessionid);
+                }
+                else {
+                    var tabChatLast;
+                    for (var i = carddone.menu.tabPanel.historyOfTab.length - 1; i >= 0; i --){
+                        tabChatLast = checkIdIsTabChat(carddone.menu.tabPanel.historyOfTab[i]);
+                        if (tabChatLast !== null){
+                            carddone.menu.tabPanel.activeTab(carddone.menu.tabPanel.historyOfTab[i]);
+                            tabChatLast.resolveOpenChat(notification.data.content.sessionid);
+                            break;
+                        }
+                    }
+                }
+            };
+        };
+        var onMessageFunc = function(message){
+            for (var i = 0; i < carddone.listTabChat.length; i++){
+                if (message.content.tabid == carddone.listTabChat[i].holder.id) continue;
+                carddone.listTabChat[i].resolveMessage(message);
+            }
+            if (message.content.userid == systemconfig.userid) return;
+            if (message.content.listMember.indexOf(systemconfig.userid) < 0) return;
+            if (message.content.type != "addmessage") return;
+            if (!carddone.isMobile){
+                carddone.menu.removeNotificationQueue(message.content);
+                var isActive = false;
+                if (document.hasFocus()){
+                    var activetabid = carddone.menu.tabPanel.getActiveTabId();
+                    if (activetabid !== null){
+                        for (var i = 0; i < carddone.listTabChat.length; i++){
+                            if (carddone.listTabChat[i].holder.id == activetabid){
+                                isActive = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (!isActive){
+                    notifyMePC(message.content);
+                    //carddone.audioChatElt.firstChild.play();
+                }
+            }
+            else {
+                var viewNotificationInMobile = function(content){
+                    carddone.menu.removeNotificationQueue(content);
+                    if (content.sessionid != carddone.sessionIdActive){
+                        //carddone.audioChatElt.firstChild.play();
+                        var noticontent = "Tin nhắn mới", title = "Carddone", image = "";
+                        title = contentModule.getUsernameFullnameByhomeid(data_module.users, content.userid);
+                        for (var i = 0; i < content.dataDraw.length; i++){
+                            switch (content.dataDraw[i].content_type) {
+                                case "text":
+                                    noticontent = content.dataDraw[i].content;
+                                    break;
+                                case "file":
+                                    noticontent = "Đã gửi tệp đính kèm";
+                                    break;
+                                case "img":
+                                    noticontent = "Đã gửi ảnh";
+                                    break;
+                            }
+                        }
+                        var ctn = DOMElement.div({
+                            children: [
+                                DOMElement.div({
+                                    attrs: {
+                                        style: {
+                                            fontSize: "14px",
+                                            fontWeight: "bold"
+                                        }
+                                    },
+                                    text: title
+                                })
+                            ]
+                        });
+                        ctn.appendChild(DOMElement.div({
+                            attrs: {
+                                style: {
+                                    fontSize: "13px",
+                                    paddingTop: "10px"
+                                }
+                            },
+                            text: noticontent
+                        }));
+                        var myBlinkModalInstance = absol.require('mblinkmodal').newInstance({
+                            child: [ctn],
+                            on: {
+                                click: function () {
+                                    myBlinkModalInstance.close();
+                                    carddone.menu.loadPage(7).then(function(value){
+                                        console.log("loadchatend");
+                                        carddone.menu.openChatMobile(content.sessionid);
+                                    });
+                                }
+                            },
+                            duration: 10000
+                        });
+                    }
+                };
+                var content = message.content;
+                if (window.isApp){
+                    window.ReactNativeWebView.postMessage(JSON.stringify({name: "getStatusApp"}));
+                    function GetToken(message){
+                        var data = message.data;
+                        console.log(data);
+                        if (data.name == "getStatusApp"){
+                            if (data.value == "active"){
+                                viewNotificationInMobile(content);
+                            }
+                            window.removeEventListener("message",this);
+                        }
+                    };
+                    window.addEventListener("message", GetToken);
+                }
+
+            }
+        };
         var hostName = window.domain;
         var x = hostName.indexOf("://");
         if (x >= 0) hostName = hostName.substr(x + 3);
@@ -1439,10 +1650,7 @@ carddone.menu.init = function(holder){
            host: hostName,
            channel: channel + "/carddone",
            onMessage: function(message){
-               for (var i = 0; i < carddone.listTabChat.length; i++){
-                   if (message.content.tabid == carddone.listTabChat[i].holder.id) continue;
-                   carddone.listTabChat[i].resolveMessage(message);
-               }
+               onMessageFunc(message);
            },
            onConnectionLost: function(message){
                console.log("onConnectionLost");
@@ -1461,6 +1669,7 @@ carddone.menu.init = function(holder){
         }(connectorChat), 2000);
         carddone.sendMessageFunc = function (connectorChat) {
             return function(content){
+                content.userid = systemconfig.userid;
                 connectorChat.send({
                     content: content,
                     receivertype: "all",
@@ -1563,15 +1772,26 @@ carddone.menu.init = function(holder){
         });
         holder.appendChild(carddone.menu.layoutInit);
         if (carddone.isMobile){
-            console.log((new Date()).getTime());
-            carddone.menu.loadPage(7);
-            carddone.menu.loadPage(101);
-            carddone.menu.loadPage(4);
+            // carddone.menu.loadPage(7);
+            // carddone.menu.loadPage(101);
+            // carddone.menu.loadPage(4);
             carddone.menu.loadPage(100);
         }
         else {
             carddone.menu.loadPage(4);
         }
+        window.loadEvent = true;
+        carddone.audioChatElt = DOMElement.div({
+            attrs: {
+                style: {
+                    display: "none"
+                }
+            },
+            innerHTML: '<audio controls>'+
+                  '<source src="https://lab.daithangminh.vn/home_co/carddone/Nokia-Tune-Nhac-chuong-Nokia-Tune.mp3" type="audio/mpeg">'+
+                '</audio>'
+        });
+        document.body.appendChild(carddone.audioChatElt);
     };
     var prerequisites = [
         "Contact", "Company", "Boards", "Cards", "My_calendar", "Activities", "Reminder",

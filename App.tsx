@@ -1,7 +1,7 @@
-import React, {Component} from 'react';
-import {Platform, StyleSheet, Alert, View} from 'react-native';
+import React, {Component,  useRef, useState, useEffect } from 'react';
+import {Platform, StyleSheet, Alert, View, AppState, Text} from 'react-native';
 import {WebView} from 'react-native-webview';
-import firebase from 'react-native-firebase';
+import firebase, { RNFirebase } from 'react-native-firebase';
 import AsyncStorage from '@react-native-community/async-storage';
 
 const isAndroid = Platform.OS === 'android';
@@ -9,9 +9,9 @@ const isAndroid = Platform.OS === 'android';
 try {
   const draftJsHtml = require('./dist/index.html');
   var indexfile = isAndroid ? 'file:///android_asset/index.html' : draftJsHtml;
-  console.log(indexfile);
+  // console.log(indexfile);
 } catch (error) {
-  console.log(error);
+  // console.log(error);
 }
 
 const styles = StyleSheet.create({
@@ -21,6 +21,51 @@ const styles = StyleSheet.create({
   },
 });
 
+const channel = new firebase.notifications.Android.Channel(
+  'reminder',
+  'Reminders Channel',
+  firebase.notifications.Android.Importance.High
+  ).setDescription("Used for getting reminder notification");
+firebase.notifications().android.createChannel(channel);
+
+function displayNotification(notification: { notificationId: string; title: string; subtitle: string; body: string; moredata: any; })
+{
+  return new Promise(function(resolve,reject){
+    if (Platform.OS === 'android') {
+      const localNotification = new firebase.notifications.Notification({sound: 'default', show_in_foreground: true})
+          .setNotificationId(notification.notificationId)
+          .setTitle(notification.title)
+          .setSubtitle(notification.subtitle)
+          .setBody(notification.body)
+          .setData({moredata: notification.moredata})
+          .android.setChannelId('reminder') // e.g. the id you chose above
+          .android.setColor('#ff0000') // you can set a color here
+          .android.setPriority(firebase.notifications.Android.Priority.High);
+      firebase.notifications()
+          .displayNotification(localNotification)
+          .then(function(){
+            resolve(localNotification)
+          })
+          .catch(err => {reject(err)});
+    } else {
+        const localNotification = new firebase.notifications.Notification()
+            .setNotificationId(notification.notificationId)
+            .setTitle(notification.title)
+            .setSubtitle(notification.subtitle)
+            .setBody(notification.body)
+            .setData(notification.data)
+            .ios.setBadge(1);
+  
+        firebase.notifications()
+            .displayNotification(localNotification)
+            .then(function(){
+              resolve(localNotification)
+            })
+            .catch(err => {reject(err)});
+    }
+  })
+  
+}
 
 class App extends Component {
   [x: string]: any;
@@ -45,19 +90,40 @@ class App extends Component {
      * */
     this.notificationListener = firebase
       .notifications()
-      .onNotification(notification => {
-        const {title, body} = notification;
-        this.showAlert(title, body);
+      .onNotification(async notification => {
+        // console.log("abc", notification);        
+        const clientResponseCode = `
+          window.postMessage(${JSON.stringify({name:"checkShowNotiChat",value:  {
+            notificationId: notification.notificationId, 
+            title: notification.title,
+            body: notification.body, 
+            moredata: notification.data.moredata
+          }})}, "*");
+          true;
+        `;
+          
+        if (this.webView) {
+          this.webView.injectJavaScript(clientResponseCode);
+        }
       });
-
+    this.notificationListener = firebase
+      .notifications().onNotificationOpened(notificationOpen => {
+        const notification = notificationOpen.notification;
+        // console.log(notification);
+        const clientResponseCode = `
+        window.postMessage(${JSON.stringify({name: "openchatMobile", value: notification.data.moredata})}, "*");
+        true;
+      `;
+        this.webView.injectJavaScript(clientResponseCode);
+    });
     /*
      * If your app is in background, you can listen for when a notification is clicked / tapped / opened as follows:
      * */
     this.notificationOpenedListener = firebase
       .notifications()
       .onNotificationOpened(notificationOpen => {
-        const {title, body} = notificationOpen.notification;
-        this.showAlert(title, body);
+        var notification = notificationOpen.notification;
+        this.clickNotiChatFuncClose(notification.data.moredata);   
       });
     /*
      * If your app is closed, you can check if it was opened by a notification being clicked / tapped / opened as follows:
@@ -66,30 +132,58 @@ class App extends Component {
       .notifications()
       .getInitialNotification();
     if (notificationOpen) {
-      const {title, body} = notificationOpen.notification;
-      this.showAlert(title, body);
+      var notification = notificationOpen.notification;
+      this.clickNotiChatFuncClose(notification.data.moredata);      
     }
     /*
      * Triggered for data only payload in foreground
      * */
     this.messageListener = firebase.messaging().onMessage(message => {
       //process data message
-      console.log(message);
+      // console.log(message);
       console.log(JSON.stringify(message));
     });
   }
 
-  showAlert(title: string, body: string) {
-    Alert.alert(
-      title,
-      body,
-      [{text: 'OK', onPress: () => console.log('OK Pressed')}],
-      {cancelable: true},
-    );
+  clickNotiChatFuncClose(moredata, count = 0) {
+    var self = this;
+    if (self.webView) {
+      const clientResponseCode = `
+        if(window.loadEvent === true){
+          window.postMessage(${JSON.stringify({name: "openchatMobile", value: moredata})}, "*");
+        } 
+        else {
+          var x = setInterval(function(){
+            if (window.loadEvent === true){
+              window.postMessage(${JSON.stringify({name: "openchatMobile", value: moredata})}, "*");
+              clearInterval(x);
+            }
+          }, 100);
+        }
+        true;
+      `;
+        
+      self.webView.injectJavaScript(clientResponseCode);
+      
+    }
+    else {
+      if (count == 100){
+          Alert.alert(
+            "Failed",
+            "Error load webview",
+        [{text: 'OK', onPress: () => console.log('OK Pressed')}],
+        {cancelable: true},
+      );
+        return;
+      }
+      setTimeout(function(){
+        self.clickNotiChatFuncClose(moredata, ++count);
+      }, 100);
+    }
   }
   checkPermission() {
     var self = this;
-     return new Promise(function(resolve,reject){
+     return new Promise(function(resolve, reject){
         firebase.messaging().hasPermission().then(function(enable){
           if (enable) {
             self.getToken().then(function(value){
@@ -113,7 +207,7 @@ class App extends Component {
 
   async getToken() {
     var self = this;
-    return new Promise(function(resolve,reject){
+    return new Promise(function(resolve, reject){
       AsyncStorage.getItem("fcmToken").then(function(value){
         let fcmToken = value;
         if (!fcmToken) {
@@ -121,7 +215,7 @@ class App extends Component {
               if (value) {
                 // user has a device token
                 self.fcmToken = value;
-                AsyncStorage.setItem("fcmToken",value).then(function(){
+                AsyncStorage.setItem("fcmToken", value).then(function(){
                   resolve(value);
                 });
               }
@@ -130,9 +224,8 @@ class App extends Component {
               console.log('permission rejected');
               reject();
             })
-            
-          }else
-          {
+          }
+          else {
             self.fcmToken = value;
           }
       })
@@ -143,7 +236,7 @@ class App extends Component {
 
   requestPermission() {
     var self = this;
-    return new Promise(function(resolve,reject){
+    return new Promise(function(resolve, reject){
       try {
         firebase.messaging().requestPermission().then(function(){
           self.getToken().then(function(value){
@@ -198,7 +291,7 @@ class App extends Component {
                 if(self.fcmToken===undefined){
                   self.checkPermission().then(function(value){
                     const clientResponseCode = `
-                    window.postMessage(${JSON.stringify({name:"getUserToken", value:value})}, "*");
+                    window.postMessage(${JSON.stringify({name: "getUserToken", value: value})}, "*");
                     true;
                     `;
                     if (self.webView) {
@@ -208,7 +301,7 @@ class App extends Component {
                 }
                 else{
                   const clientResponseCode = `
-                    window.postMessage(${JSON.stringify({name:"getUserToken",value:self.fcmToken})}, "*");
+                    window.postMessage(${JSON.stringify({name: "getUserToken", value: self.fcmToken})}, "*");
                     true;
                   `;
                   if (self.webView) {
@@ -224,7 +317,7 @@ class App extends Component {
                 promiseall.push(self.saveStorage(data.value.token.name, data.value.token.value));
                 Promise.all(promiseall).then(function(){
                   const clientResponseCode = `
-                    window.postMessage(${JSON.stringify({name:"saveDomain", value: true})}, "*");
+                    window.postMessage(${JSON.stringify({name: "saveDomain", value: true})}, "*");
                     true;
                   `;
                   if (self.webView) {
@@ -232,7 +325,7 @@ class App extends Component {
                   }
                 }).catch(function(err){
                   const clientResponseCode = `
-                    window.postMessage(${JSON.stringify({name:"saveDomain", value: false})}, "*");
+                    window.postMessage(${JSON.stringify({name: "saveDomain", value: false})}, "*");
                     true;
                   `;
                   if (self.webView) {
@@ -243,7 +336,7 @@ class App extends Component {
               case "getDomain":
                 self.getStorage(data.value).then(function(value){
                   const clientResponseCode = `
-                    window.postMessage(${JSON.stringify({name:"getDomain", value: value})}, "*");
+                    window.postMessage(${JSON.stringify({name: "getDomain", value: value})}, "*");
                     true;
                   `;
                   if (self.webView) {
@@ -256,6 +349,19 @@ class App extends Component {
                   self.webView.reload();
                 }
                 break;
+              case "pushNotification":
+                displayNotification(data.value);
+                break;
+              case "getStatusApp":                
+                  const clientResponseCode = `
+                  window.postMessage(${JSON.stringify({name: "getStatusApp", value: AppState.currentState})}, "*");
+                  true;
+                `;
+                if (self.webView) {
+                  self.webView.injectJavaScript(clientResponseCode);
+                }
+                break;
+                
             }
           }}
           onLoad={() => {}}

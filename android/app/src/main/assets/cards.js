@@ -1,5 +1,394 @@
 'use strict';
 
+carddone.cards.loadArchivedCards = function(host){
+    return new Promise(function(rs){
+        var lists = host.database.lists.items.map(function(elt){
+            return elt.id;
+        });
+        ModalElement.show_loading();
+        FormClass.api_call({
+            url: "database_load.php",
+            params: [
+                {name: "task", value: "card_load_archived_data"},
+                {name: "lists", value: EncodingClass.string.fromVariable(lists)}
+            ],
+            func: function(success, message){
+                ModalElement.close(-1);
+                if (success){
+                    if (message.substr(0, 2) == "ok"){
+                        var content = EncodingClass.string.toVariable(message.substr(2));
+                        var count = 0;
+                        host.currentCardData = host.database.cards.items;
+                        host.database.cards.items = content;
+                        contentModule.makeCardIndex(host);
+                        if (content.length > 0){
+                            content.forEach(function(elt){
+                                if (!data_module.cardList[elt.id]){
+                                    data_module.cardList[elt.id] = {
+                                        heapIndex: data_module.pendingData.length,
+                                        archived: 1
+                                    };
+                                    data_module.pendingData.push({
+                                        type: "card",
+                                        archived: 1,
+                                        id: elt.id,
+                                        boardid: host.boardContent.id,
+                                        onLoad: [],
+                                        isLoaded: false
+                                    });
+                                    count++;
+                                }
+                            });
+                            var t = new Date();
+                            t = t.getTime();
+                            data_module.dataManager[t] = {
+                                startIndex: data_module.pendingData.length - count,
+                                endIndex: data_module.pendingData.length
+                            };
+                            data_module.boardArray.push(t);
+                            data_module.boardActive = t;
+                        }
+                        var cards = content.map(function(elt){
+                            return {
+                                archived: 1,
+                                id: elt.id,
+                                name: elt.name,
+                                userid: elt.userid,
+                                parentid: elt.parentid,
+                                lindex: elt.lindex,
+                                editMode: 'view',
+                                editFunc: function(parentid, id){
+                                    return function(){
+                                        if (data_module.cardList[id].content){
+                                            carddone.cards.prevEditCard(host, parentid, id);
+                                        }
+                                        else {
+                                            data_module.pendingData[data_module.cardList[id].heapIndex].onLoad.push(function(){
+                                                carddone.cards.prevEditCard(host, parentid, id);
+                                            });
+                                            data_module.dataManager[-100] = {
+                                                startIndex: data_module.cardList[id].heapIndex,
+                                                endIndex: data_module.cardList[id].heapIndex + 1
+                                            };
+                                            data_module.boardArray.push(-100);
+                                            data_module.boardActive = -100;
+                                        }
+                                    }
+                                }(elt.parentid, elt.id),
+                                deleteFunc: function(id){
+                                    return function(){
+                                        return carddone.cards.deleteCard(host, id);
+                                    }
+                                }(elt.id),
+                                restoreFunc: function(id){
+                                    return function(){
+                                        return carddone.cards.archiveCard(host, id);
+                                    }
+                                }(elt.id)
+                            }
+                        });
+                        rs(cards);
+                    }
+                    else {
+                        console.log(message);
+                        rs(false);
+                    }
+                }
+                else {
+                    console.log(message);
+                    rs(false);
+                }
+            }
+        });
+    });
+}
+
+carddone.cards.archiveAllCardInListFunc = function(host, listid){
+    return new Promise(function(rs){
+        var index = host.database.lists.getIndex(listid);
+        var cards = host.database.lists.items[index].childrenIdList;
+        ModalElement.show_loading();
+        FormClass.api_call({
+            url: "card_archive_save2.php",
+            params: [{value: EncodingClass.string.fromVariable(cards), name: "cards"}],
+            func: function(success, message){
+                ModalElement.close(-1);
+                if(success){
+                    if (message.substr(0, 2) == "ok"){
+                        host.database.cards.items = host.database.cards.items.filter(function(elt){
+                            return cards.indexOf(elt.id) == -1;
+                        });
+                        host.database.lists.items[index].childrenIdList = [];
+                        rs(true);
+                    }
+                    else {
+                        console.log(message);
+                        rs(false);
+                    }
+                }
+                else {
+                    console.log(message);
+                    rs(false);
+                }
+            }
+        });
+    });
+};
+
+carddone.cards.deleteCard = function(host, id){
+    var parentid = host.database.cards.items[host.database.cards.getIndex(id)].parentid;
+    var index = host.database.lists.getIndex(parentid);
+    var cardDecreaseIndex = [];
+    var cIndex, lindex, max = 0;
+    lindex = host.database.cards.items[host.database.cards.getIndex(id)].lindex;
+    for (var i = 0; i < host.database.lists.items[index].childrenIdList.length; i++){
+        cIndex = host.database.cards.getIndex(host.database.lists.items[index].childrenIdList[i]);
+        if (host.database.cards.items[cIndex].lindex > lindex) {
+            if (max < host.database.cards.items[cIndex].lindex) max = host.database.cards.items[cIndex].lindex;
+            cardDecreaseIndex.push(host.database.lists.items[index].childrenIdList[i]);
+        }
+    }
+    cardDecreaseIndex.sort(function(a, b){
+        var aIndex, bIndex;
+        aIndex = host.database.cards.getIndex(a);
+        bIndex = host.database.cards.getIndex(b);
+        if (host.database.cards.items[aIndex].lindex > host.database.cards.items[bIndex].lindex) return -1;
+        if (host.database.cards.items[aIndex].lindex < host.database.cards.items[bIndex].lindex) return 1;
+        return 0;
+    });
+    return new Promise(function(rs){
+        ModalElement.show_loading();
+        FormClass.api_call({
+            url: "card_delete_save.php",
+            params: [
+                {value: id, name: "cardid"},
+                {value: max, name: "max"},
+                {value: EncodingClass.string.fromVariable(cardDecreaseIndex), name: "cardDecreaseIndex"}
+            ],
+            func: function(success, message){
+                ModalElement.close(-1);
+                if (success){
+                    if (message.substr(0, 2) == "ok"){
+                        var index = host.database.cards.getIndex(id);
+                        var pIndex = host.database.lists.getIndex(parentid);
+                        host.database.lists.items[pIndex].childrenIdList = host.database.lists.items[pIndex].childrenIdList.filter(function(elt){
+                            return elt != id;
+                        });
+                        host.database.cards.items.splice(index, 1);
+                        cardDecreaseIndex.forEach(function(elt){
+                            var cIndex = host.database.cards.getIndex(elt);
+                            host.database.cards.items[cIndex].lindex--;
+                        });
+                        rs(host.database.lists.items[pIndex].childrenIdList.length);
+                    }
+                    else if (message == "knowledge") {
+                        ModalElement.alert({message: LanguageModule.text("war_can_not_delete_card_because_knowledge_of_card")});
+                        rs(-1);
+                    }
+                    else {
+                        ModalElement.alert({message: message});
+                        rs(-1);
+                    }
+                }
+                else {
+                    ModalElement.alert({message: message});
+                    rs(-1);
+                }
+            }
+        });
+    });
+};
+
+carddone.cards.archiveCard = function(host, id){
+    var parentid = host.database.cards.items[host.database.cards.getIndex(id)].parentid;
+    var index = host.database.lists.getIndex(parentid);
+    var cardDecreaseIndex = [];
+    var cIndex, lindex, max = 0;
+    lindex = host.database.cards.items[host.database.cards.getIndex(id)].lindex;
+    for (var i = 0; i < host.database.lists.items[index].childrenIdList.length; i++){
+        cIndex = host.database.cards.getIndex(host.database.lists.items[index].childrenIdList[i]);
+        if (host.database.cards.items[cIndex].lindex > lindex) {
+            if (max < host.database.cards.items[cIndex].lindex) max = host.database.cards.items[cIndex].lindex;
+            cardDecreaseIndex.push(host.database.lists.items[index].childrenIdList[i]);
+        }
+    }
+    cardDecreaseIndex.sort(function(a, b){
+        var aIndex, bIndex;
+        aIndex = host.database.cards.getIndex(a);
+        bIndex = host.database.cards.getIndex(b);
+        if (host.database.cards.items[aIndex].lindex > host.database.cards.items[bIndex].lindex) return -1;
+        if (host.database.cards.items[aIndex].lindex < host.database.cards.items[bIndex].lindex) return 1;
+        return 0;
+    });
+    return new Promise(function(rs){
+        ModalElement.show_loading();
+        FormClass.api_call({
+            url: "card_archive_save.php",
+            params: [
+                {value: id, name: "cardid"},
+                {value: max, name: "max"},
+                {value: EncodingClass.string.fromVariable(cardDecreaseIndex), name: "cardDecreaseIndex"}
+            ],
+            func: function(success, message){
+                ModalElement.close(-1);
+                if (success){
+                    if (message.substr(0, 2) == "ok"){
+                        var index = host.database.cards.getIndex(id);
+                        var pIndex = host.database.lists.getIndex(parentid);
+                        host.database.lists.items[pIndex].childrenIdList = host.database.lists.items[pIndex].childrenIdList.filter(function(elt){
+                            return elt != id;
+                        });
+                        host.database.cards.items.splice(index, 1);
+                        cardDecreaseIndex.forEach(function(elt){
+                            var cIndex = host.database.cards.getIndex(elt);
+                            host.database.cards.items[cIndex].lindex--;
+                        });
+                        rs(host.database.lists.items[pIndex].childrenIdList.length);
+                    }
+                    else {
+                        console.log(message);
+                        rs(-1);
+                    }
+                }
+                else {
+                    console.log(message);
+                    rs(-1);
+                }
+            }
+        });
+    });
+};
+
+carddone.cards.moveCard = function(host, id){
+    var parentid = host.database.cards.items[host.database.cards.getIndex(id)].parentid;
+    var index = host.database.lists.getIndex(parentid);
+    var cardDecreaseIndex = [];
+    var cIndex, lindex, max = 0;
+    lindex = host.database.cards.items[host.database.cards.getIndex(id)].lindex;
+    for (var i = 0; i < host.database.lists.items[index].childrenIdList.length; i++){
+        cIndex = host.database.cards.getIndex(host.database.lists.items[index].childrenIdList[i]);
+        if (host.database.cards.items[cIndex].lindex > lindex) {
+            if (max < host.database.cards.items[cIndex].lindex) max = host.database.cards.items[cIndex].lindex;
+            cardDecreaseIndex.push(host.database.lists.items[index].childrenIdList[i]);
+        }
+    }
+    cardDecreaseIndex.sort(function(a, b){
+        var aIndex, bIndex;
+        aIndex = host.database.cards.getIndex(a);
+        bIndex = host.database.cards.getIndex(b);
+        if (host.database.cards.items[aIndex].lindex > host.database.cards.items[bIndex].lindex) return -1;
+        if (host.database.cards.items[aIndex].lindex < host.database.cards.items[bIndex].lindex) return 1;
+        return 0;
+    });
+    return new Promise(function(rs){
+        ModalElement.show_loading();
+        FormClass.api_call({
+            url: "database_load.php",
+            params: [
+                {name: "task", value: "card_move_load_data"}
+            ],
+            func: function(success, message){
+                ModalElement.close(-1);
+                if (success){
+                    if (message.substr(0, 2) == "ok"){
+                        var content = EncodingClass.string.toVariable(message.substr(2));
+                        for (var i = 0; i < content.boards.length; i++){
+                            content.boards[i].lists = [];
+                        }
+                        content.boards.getIndex = function(id){
+                            for (var i = 0; i < content.boards.length; i++){
+                                if (content.boards[i].id == id) return i;
+                            }
+                            return -1;
+                        }
+                        content.lists.getIndex = function(id){
+                            for (var i = 0; i < content.lists.length; i++){
+                                if (content.lists[i].id == id) return i;
+                            }
+                            return -1;
+                        }
+                        for (var i = 0; i < content.lists.length; i++){
+                            var index = content.boards.getIndex(content.lists[i].parentid);
+                            if (index != -1) content.lists[i].boardid = content.boards[index].id;
+                        }
+                        for (var i = 0; i < content.lists.length; i++){
+                            var index = content.lists.getIndex(content.lists[i].parentid);
+                            if (index != -1) {
+                                content.boards[content.boards.getIndex(content.lists[index].boardid)].lists.push({value: content.lists[i].id, text: content.lists[i].name});
+                            }
+                        }
+                        var list = content.boards.map(function(elt){
+                            return {
+                                value: elt.id,
+                                text: elt.name,
+                                lists: elt.lists
+                            };
+                        });
+
+                        list = list.filter(function(elt){
+                            return elt.value != host.boardContent.id;
+                        });
+
+                        list.sort(function(a, b){
+                            if (absol.string.nonAccentVietnamese(a.text) > absol.string.nonAccentVietnamese(b.text)) return 1;
+                            if (absol.string.nonAccentVietnamese(a.text) < absol.string.nonAccentVietnamese(b.text)) return -1;
+                            return 0;
+                        });
+
+                        host.funcs.moveCard(list).then(function(value){
+                            ModalElement.show_loading();
+                            FormClass.api_call({
+                                url: "card_move_save2.php",
+                                params: [
+                                    {value: id, name: "cardid"},
+                                    {value: value.listid, name: "listid"},
+                                    {value: max, name: "max"},
+                                    {value: EncodingClass.string.fromVariable(cardDecreaseIndex), name: "cardDecreaseIndex"}
+                                ],
+                                func: function(success, message){
+                                    ModalElement.close(-1);
+                                    if (success){
+                                        if (message.substr(0, 2) == "ok"){
+                                            var index = host.database.cards.getIndex(id);
+                                            var pIndex = host.database.lists.getIndex(parentid);
+                                            host.database.lists.items[pIndex].childrenIdList = host.database.lists.items[pIndex].childrenIdList.filter(function(elt){
+                                                return elt != id;
+                                            });
+                                            host.database.cards.items.splice(index, 1);
+                                            cardDecreaseIndex.forEach(function(elt){
+                                                var cIndex = host.database.cards.getIndex(elt);
+                                                host.database.cards.items[cIndex].lindex--;
+                                            });
+                                            rs(host.database.lists.items[pIndex].childrenIdList.length);
+                                        }
+                                        else {
+                                            console.log(message);
+                                            rs(-1);
+                                        }
+                                    }
+                                    else {
+                                        console.log(message);
+                                        rs(-1);
+                                    }
+                                }
+                            });
+                        });
+
+                    }
+                    else {
+                        ModalElement.alert({message: message});
+                        rs(-1);
+                    }
+                }
+                else {
+                    ModalElement.alert({message: message});
+                    rs(-1);
+                }
+            }
+        });
+    });
+};
+
 carddone.cards.prepareDataDeleteActivity = function(host, cardid, id, type_activity){
     var data = {};
     var valueid = host.database.objects.items[host.database.objects.getIndex(id)].valueid;
@@ -190,27 +579,24 @@ carddone.cards.prepareDataEditActivitiesSave = function(host, boardid, cardid, i
                             valueIndex = host.database.values.getIndex(content[i].valueid);
                             due_dateOld = EncodingClass.string.toVariable(host.database.values.items[valueIndex].content);
                             data.listTimeCalOld.push({
-                                year: due_dateOld.getFullYear(),
-                                month: due_dateOld.getMonth(),
-                                time: due_dateOld
+                                "year": due_dateOld.getFullYear(),
+                                "month": due_dateOld.getMonth()
                             });
                             break;
                         case "type_meeting_start_date":
                             valueIndex = host.database.values.getIndex(content[i].valueid);
                             due_dateOld = EncodingClass.string.toVariable(host.database.values.items[valueIndex].content);
                             data.listTimeCalOld.push({
-                                year: due_dateOld.getFullYear(),
-                                month: due_dateOld.getMonth(),
-                                timestart: due_dateOld
+                                "year": due_dateOld.getFullYear(),
+                                "month": due_dateOld.getMonth()
                             });
                             break;
                         case "type_meeting_end_date":
                             valueIndex = host.database.values.getIndex(content[i].valueid);
                             due_dateOld = EncodingClass.string.toVariable(host.database.values.items[valueIndex].content);
                             data.listTimeCalOld.push({
-                                year: due_dateOld.getFullYear(),
-                                month: due_dateOld.getMonth(),
-                                timeend: due_dateOld
+                                "year": due_dateOld.getFullYear(),
+                                "month": due_dateOld.getMonth()
                             });
                             break;
                         default:
@@ -251,8 +637,7 @@ carddone.cards.prepareDataEditActivitiesSave = function(host, boardid, cardid, i
                             data.dataCalOld.push({
                                 userid: assigned_toOld,
                                 month: due_dateOld.getMonth(),
-                                year: due_dateOld.getFullYear(),
-                                time: due_dateOld
+                                year: due_dateOld.getFullYear()
                             });
                         }
                         break;
@@ -263,7 +648,7 @@ carddone.cards.prepareDataEditActivitiesSave = function(host, boardid, cardid, i
                 break;
         }
     }
-    var assigned_toNew, participantNewList = [], due_dateNew, timestartNew, timeendNew, nameActivity, status, reminder;
+    var assigned_toNew, participantNewList = [], due_dateNew, timestartNew, timeendNew, nameActivity, status;
     data.dataCal = [];
     switch (activity.name) {
         case "task":
@@ -283,9 +668,6 @@ carddone.cards.prepareDataEditActivitiesSave = function(host, boardid, cardid, i
                     case "type_"+activity.name+"_status":
                         status = data.value[i].value;
                         break;
-                    case "type_"+activity.name+"_reminder":
-                        reminder = data.value[i].value;
-                        break;
                     case "type_"+activity.name+"_assigned_to":
                         assigned_toNew = parseInt(data.value[i].value, 10);
                         break;
@@ -295,29 +677,31 @@ carddone.cards.prepareDataEditActivitiesSave = function(host, boardid, cardid, i
                     case "type_"+activity.name+"_due_date":
                         due_dateNew = data.value[i].value;
                         data.dataCal.push({
-                            year: due_dateNew.getFullYear(),
-                            month: due_dateNew.getMonth(),
-                            time: due_dateNew
+                            "year": due_dateNew.getFullYear(),
+                            "month": due_dateNew.getMonth()
                         });
                         break;
                     case "type_meeting_start_date":
                         timestartNew = data.value[i].value;
                         data.dataCal.push({
-                            year: timestartNew.getFullYear(),
-                            month: timestartNew.getMonth(),
-                            time: timestartNew
+                            "year": timestartNew.getFullYear(),
+                            "month": timestartNew.getMonth()
                         });
                         break;
                     case "type_meeting_end_date":
                         timeendNew = data.value[i].value;
                         data.dataCal.push({
-                            year: timeendNew.getFullYear(),
-                            month: timeendNew.getMonth(),
-                            time: timeendNew
+                            "year": timeendNew.getFullYear(),
+                            "month": timeendNew.getMonth()
                         });
                         break;
                     default:
                         break;
+                }
+            }
+            if (data.dataCal.length == 2){
+                if (data.dataCal[0].year == data.dataCal[1].year && data.dataCal[0].month == data.dataCal[1].month){
+                    data.dataCal.splice(1, 1);
                 }
             }
             for (var i = 0; i < data.dataCal.length; i++){
@@ -325,7 +709,6 @@ carddone.cards.prepareDataEditActivitiesSave = function(host, boardid, cardid, i
                     data.dataCal[i].content = {
                         status: status,
                         cardid: cardid,
-                        reminder: reminder,
                         boardid: boardid,
                         timestart: timestartNew,
                         timeend: timeendNew,
@@ -338,7 +721,6 @@ carddone.cards.prepareDataEditActivitiesSave = function(host, boardid, cardid, i
                 else {
                     data.dataCal[i].content = {
                         status: status,
-                        reminder: reminder,
                         cardid: cardid,
                         boardid: boardid,
                         time: due_dateNew,
@@ -347,11 +729,6 @@ carddone.cards.prepareDataEditActivitiesSave = function(host, boardid, cardid, i
                         nameActivity: nameActivity,
                         assigned_to: assigned_toNew
                     };
-                }
-            }
-            if (data.dataCal.length == 2){
-                if (data.dataCal[0].year == data.dataCal[1].year && data.dataCal[0].month == data.dataCal[1].month){
-                    data.dataCal.splice(1, 1);
                 }
             }
             break;
@@ -375,9 +752,6 @@ carddone.cards.prepareDataEditActivitiesSave = function(host, boardid, cardid, i
                                 case "type_check_list_item_success":
                                     status = data.value[i].value[j].value[k].value;
                                     break;
-                                case "type_check_list_item_reminder":
-                                    reminder = data.value[i].value[j].value[k].value;
-                                    break;
                                 case "type_check_list_item_due_date":
                                     due_dateNew = data.value[i].value[j].value[k].value;
                                     break;
@@ -395,7 +769,6 @@ carddone.cards.prepareDataEditActivitiesSave = function(host, boardid, cardid, i
                             year: due_dateNew.getFullYear(),
                             content: {
                                 status: status,
-                                reminder: reminder,
                                 nameActivity: itemName + " ("+nameActivity+")",
                                 cardid: cardid,
                                 boardid: boardid,
@@ -447,7 +820,6 @@ carddone.cards.prepareDataEditActivitiesSave = function(host, boardid, cardid, i
 carddone.cards.editActivitiesSave = function(host, cardid, id, typeid, value, activity, mode){
     return new Promise(function(rs, rj){
         var data = carddone.cards.prepareDataEditActivitiesSave(host, host.boardContent.id, cardid, id, typeid, value, activity, mode);
-        console.log(data);
         ModalElement.show_loading();
         FormClass.api_call({
             url: "card_activities_edit_save.php",
@@ -460,7 +832,6 @@ carddone.cards.editActivitiesSave = function(host, cardid, id, typeid, value, ac
                 if (success){
                     if (message.substr(0, 2) == "ok"){
                         var content = EncodingClass.string.toVariable(message.substr(2));
-                        console.log(content);
                         if (id == 0){
                             id = content.id;
                             host.database.objects.items.push(content.object);
@@ -487,7 +858,7 @@ carddone.cards.editActivitiesSave = function(host, cardid, id, typeid, value, ac
                             else host.database.values.items[index] = elt;
                         });
                         data_module.cardList[cardid].content.values = host.database.values.items;
-                        rs({mode: mode, id: id, objects: host.database.objects, values: host.database.values, data: content.object});
+                        rs({id: id, objects: host.database.objects, values: host.database.values, data: content.object});
                     }
                     else {
                         rj(message);
@@ -503,13 +874,13 @@ carddone.cards.editActivitiesSave = function(host, cardid, id, typeid, value, ac
 
 carddone.cards.moveCardSave = function(host, cardElt, body, listid, from, to){
     var cardid, max, min, cardIncreaseIndex, cardDecreaseIndex, index, mode;
-    var cardEltArray = body.getAllBoards();
+    var cardList = body.getAllBoards();
     cardid = cardElt.ident;
     cardIncreaseIndex = [];
     cardDecreaseIndex = [];
     if (from > to){
-        max = host.database.cards.items[host.database.cards.getIndex(cardEltArray[to + 1].ident)].lindex;
-        min = host.database.cards.items[host.database.cards.getIndex(cardEltArray[from].ident)].lindex;
+        max = host.database.cards.items[host.database.cards.getIndex(cardList[to + 1].ident)].lindex;
+        min = host.database.cards.items[host.database.cards.getIndex(cardList[from].ident)].lindex;
         index = max;
         host.database.lists.items[host.database.lists.getIndex(listid)].childrenIdList.forEach(function(elt){
             var lindex = host.database.cards.items[host.database.cards.getIndex(elt)].lindex;
@@ -527,8 +898,8 @@ carddone.cards.moveCardSave = function(host, cardElt, body, listid, from, to){
         });
     }
     else{
-        max = host.database.cards.items[host.database.cards.getIndex(cardEltArray[from].ident)].lindex;
-        min = host.database.cards.items[host.database.cards.getIndex(cardEltArray[to - 1].ident)].lindex;
+        max = host.database.cards.items[host.database.cards.getIndex(cardList[from].ident)].lindex;
+        min = host.database.cards.items[host.database.cards.getIndex(cardList[to - 1].ident)].lindex;
         index = min;
         host.database.lists.items[host.database.lists.getIndex(listid)].childrenIdList.forEach(function(elt){
             var lindex = host.database.cards.items[host.database.cards.getIndex(elt)].lindex;
@@ -575,6 +946,7 @@ carddone.cards.moveCardSave = function(host, cardElt, body, listid, from, to){
 carddone.cards.moveCardToOtherListSave = function(host, cardid, target, from, to, body){
     var parentid, oldIndex, newIndex, fromElt;
     var oldListId, cIndex, lindex, lindex2, cardDecreaseIndex, cardIncreaseIndex;
+    var cardList = body.getAllBoards();
     parentid = target.ident;
     oldIndex = from.index;
     newIndex = to.index;
@@ -595,8 +967,7 @@ carddone.cards.moveCardToOtherListSave = function(host, cardid, target, from, to
         if (host.database.cards.items[aIndex].lindex > host.database.cards.items[bIndex].lindex) return -1;
         return 0;
     });
-    var cardEltArray = body.getAllBoards();
-    if (newIndex > 0) lindex = host.database.cards.items[host.database.cards.getIndex(cardEltArray[newIndex - 1].ident)].lindex;
+    if (newIndex > 0) lindex = host.database.cards.items[host.database.cards.getIndex(cardList[newIndex - 1].ident)].lindex;
     else lindex = host.database.lists.items[host.database.lists.getIndex(parentid)].childrenIdList.length;
     host.database.lists.items[host.database.lists.getIndex(parentid)].childrenIdList.forEach(function(elt){
         if (host.database.cards.items[host.database.cards.getIndex(elt)].lindex >= lindex) cardIncreaseIndex.push(elt);
@@ -630,10 +1001,9 @@ carddone.cards.moveCardToOtherListSave = function(host, cardid, target, from, to
                         return elt != cardid;
                     });
                     host.database.lists.items[host.database.lists.getIndex(oldParentid)].childrenIdList = temp;
-                    fromElt.title = fromElt.listName + "(" + temp.length + ")";
+                    fromElt.title = fromElt.listName + " (" + temp.length + ")";
                     host.database.lists.items[host.database.lists.getIndex(parentid)].childrenIdList.push(cardid);
-                    target.title = target.listName + "(" + host.database.lists.items[host.database.lists.getIndex(parentid)].childrenIdList.length + ")";
-                    ///
+                    target.title = target.listName + " (" + host.database.lists.items[host.database.lists.getIndex(parentid)].childrenIdList.length + ")";
                     host.database.cards.items[host.database.cards.getIndex(cardid)].lindex = lindex;
                     cardIncreaseIndex.forEach(function(elt){
                         host.database.cards.items[host.database.cards.getIndex(elt)].lindex++;
@@ -648,194 +1018,191 @@ carddone.cards.moveCardToOtherListSave = function(host, cardid, target, from, to
 };
 
 carddone.boards.editCardSave = function(host, id, value, listid, mode){
-    var contactInsert, contactDelete, companiesInsert, companiesDelete, contact_to_del, company_to_del, lindex, cardToUpdateIndex, oindex;
-    cardToUpdateIndex = [];
-    oindex = 0;
-    if (id == 0){
-        companiesDelete = [];
-        contactDelete = [];
-        contactInsert = value.contact;
-        companiesInsert = value.companies;
-        lindex = host.database.lists.items[host.database.lists.getIndex(value.stage)].childrenIdList.length;
-    }
-    else {
-        var index = host.database.cards.getIndex(id);
-        contact_to_del = host.database.cards.items[index].contactList.filter(function(elt){
-            return value.contact.indexOf(elt) == -1;
-        });
-        contactDelete = contact_to_del.map(function(elt){
-            for (var i = 0; i < host.database.contact.items.length; i++){
-                if (host.database.contact_card.items[i].hostid == id && host.database.contact_card.items[i].contactid == elt) return host.database.contact_card.items[i].id;
-            }
-            return -1;
-        });
-        contactInsert = value.contact.filter(function(elt){
-            return host.database.cards.items[index].contactList.indexOf(elt) == -1;
-        });
-        company_to_del = host.database.cards.items[index].companyList.filter(function(elt){
-            return value.companies.indexOf(elt) == -1;
-        });
-        companiesDelete = company_to_del.map(function(elt){
-            for (var i = 0; i < host.database.companies.items.length; i++){
-                if (host.database.companies_card.items[i].hostid == id && host.database.companies_card.items[i].companyid == elt) return host.database.companies_card.items[i].id;
-            }
-            return -1;
-        });
-        companiesInsert = value.companies.filter(function(elt){
-            return host.database.cards.items[index].companyList.indexOf(elt) == -1;
-        });
-        if (listid != value.stage){
-            oindex = host.database.cards.items[index].lindex;
+    return new Promise(function(rs){
+        var contactInsert, contactDelete, companiesInsert, companiesDelete, contact_to_del, company_to_del, lindex, cardToUpdateIndex, oindex;
+        cardToUpdateIndex = [];
+        oindex = 0;
+        if (id == 0){
+            companiesDelete = [];
+            contactDelete = [];
+            contactInsert = value.contact;
+            companiesInsert = value.companies;
             lindex = host.database.lists.items[host.database.lists.getIndex(value.stage)].childrenIdList.length;
-            host.database.lists.items[host.database.lists.getIndex(listid)].childrenIdList.forEach(function(elt){
-                var idx = host.database.cards.getIndex(elt);
-                if (host.database.cards.items[idx].lindex > oindex) {
-                    cardToUpdateIndex.push(elt);
-                    host.database.cards.items[idx].lindex--;
-                }
-            });
-            cardToUpdateIndex.sort(function(a, b){
-                var aIndex, bIndex;
-                aIndex = host.database.cards.getIndex(a);
-                bIndex = host.database.cards.getIndex(b);
-                if (host.database.cards.items[aIndex].lindex > host.database.cards.items[bIndex].lindex) return 1;
-                if (host.database.cards.items[aIndex].lindex < host.database.cards.items[bIndex].lindex) return -1;
-                return 0;
-            });
         }
-        else lindex = host.database.cards.items[index].lindex;
-    }
-    var params = [
-        {name: "id", value: id},
-        {name: "name", value: value.name},
-        {name: "objectid", value: value.objectid},
-        {name: "lindex", value: lindex},
-        {name: "oindex", value: oindex},
-        {name: "stage", value: value.stage},
-        {name: "important", value: value.important},
-        {name: "knowledge", value: value.knowledge},
-        {name: "cardToUpdateIndex", value: EncodingClass.string.fromVariable(cardToUpdateIndex)},
-        {name: "contactInsert", value: EncodingClass.string.fromVariable(contactInsert)},
-        {name: "contactDelete", value: EncodingClass.string.fromVariable(contactDelete)},
-        {name: "companiesDelete", value: EncodingClass.string.fromVariable(companiesDelete)},
-        {name: "companiesInsert", value: EncodingClass.string.fromVariable(companiesInsert)},
-    ];
-    ModalElement.show_loading();
-    FormClass.api_call({
-        url: "card_edit_save.php",
-        params: params,
-        func: function(success, message){
-            ModalElement.close(-1);
-            if (success){
-                if (message.substr(0, 2) == "ok"){
-                    var content = EncodingClass.string.toVariable(message.substr(2));
-                    if (id == 0) {
-                        content.data.boardid = host.boardContent.boardid;
-                        host.database.cards.items.push(content.data);
-                        host.database.lists.items[host.database.lists.getIndex(content.data.parentid)].childrenIdList.push(content.data.id);
-                        var activitiesArray = ['activitiesList', 'callList', 'chatList', 'check_listList', 'fieldList', 'fileList', 'meetingList', 'noteList', 'taskList', 'waitList', 'contactList', 'companyList'];
-                        activitiesArray.forEach(function(elt){
-                            host.database.cards.items[host.database.cards.items.length - 1][elt] = [];
-                        });
-                        data_module.cardList[content.data.id] = {
-                            heapIndex: data_module.pendingData.length
-                        };
-                        var onLoad = [
-                            function(host){
-                                return function(){
-                                    carddone.cards.redraw(host, parseInt(host.cards_container.userCombobox.value, 10));
-                                }
-                            }(host)
-                        ];
-                        if (mode == 0){
-                            onLoad.push(
-                                function(host, parentid, id){
+        else {
+            var index = host.database.cards.getIndex(id);
+            contact_to_del = host.database.cards.items[index].contactList.filter(function(elt){
+                return value.contact.indexOf(elt) == -1;
+            });
+            contactDelete = contact_to_del.map(function(elt){
+                for (var i = 0; i < host.database.contact.items.length; i++){
+                    if (host.database.contact_card.items[i].hostid == id && host.database.contact_card.items[i].contactid == elt) return host.database.contact_card.items[i].id;
+                }
+                return -1;
+            });
+            contactInsert = value.contact.filter(function(elt){
+                return host.database.cards.items[index].contactList.indexOf(elt) == -1;
+            });
+            company_to_del = host.database.cards.items[index].companyList.filter(function(elt){
+                return value.companies.indexOf(elt) == -1;
+            });
+            companiesDelete = company_to_del.map(function(elt){
+                for (var i = 0; i < host.database.companies.items.length; i++){
+                    if (host.database.companies_card.items[i].hostid == id && host.database.companies_card.items[i].companyid == elt) return host.database.companies_card.items[i].id;
+                }
+                return -1;
+            });
+            companiesInsert = value.companies.filter(function(elt){
+                return host.database.cards.items[index].companyList.indexOf(elt) == -1;
+            });
+            if (listid != value.stage){
+                oindex = host.database.cards.items[index].lindex;
+                lindex = host.database.lists.items[host.database.lists.getIndex(value.stage)].childrenIdList.length;
+                host.database.lists.items[host.database.lists.getIndex(listid)].childrenIdList.forEach(function(elt){
+                    var idx = host.database.cards.getIndex(elt);
+                    if (host.database.cards.items[idx].lindex > oindex) {
+                        cardToUpdateIndex.push(elt);
+                        host.database.cards.items[idx].lindex--;
+                    }
+                });
+                cardToUpdateIndex.sort(function(a, b){
+                    var aIndex, bIndex;
+                    aIndex = host.database.cards.getIndex(a);
+                    bIndex = host.database.cards.getIndex(b);
+                    if (host.database.cards.items[aIndex].lindex > host.database.cards.items[bIndex].lindex) return 1;
+                    if (host.database.cards.items[aIndex].lindex < host.database.cards.items[bIndex].lindex) return -1;
+                    return 0;
+                });
+            }
+            else lindex = host.database.cards.items[index].lindex;
+        }
+        var params = [
+            {name: "id", value: id},
+            {name: "name", value: value.name},
+            {name: "objectid", value: value.objectid},
+            {name: "lindex", value: lindex},
+            {name: "oindex", value: oindex},
+            {name: "stage", value: value.stage},
+            {name: "important", value: value.important},
+            {name: "knowledge", value: value.knowledge},
+            {name: "cardToUpdateIndex", value: EncodingClass.string.fromVariable(cardToUpdateIndex)},
+            {name: "contactInsert", value: EncodingClass.string.fromVariable(contactInsert)},
+            {name: "contactDelete", value: EncodingClass.string.fromVariable(contactDelete)},
+            {name: "companiesDelete", value: EncodingClass.string.fromVariable(companiesDelete)},
+            {name: "companiesInsert", value: EncodingClass.string.fromVariable(companiesInsert)},
+        ];
+        ModalElement.show_loading();
+        FormClass.api_call({
+            url: "card_edit_save.php",
+            params: params,
+            func: function(success, message){
+                ModalElement.close(-1);
+                if (success){
+                    if (message.substr(0, 2) == "ok"){
+                        var content = EncodingClass.string.toVariable(message.substr(2));
+                        if (id == 0) {
+                            content.data.boardid = host.boardContent.boardid;
+                            host.database.cards.items.push(content.data);
+                            host.database.lists.items[host.database.lists.getIndex(content.data.parentid)].childrenIdList.push(content.data.id);
+                            var activitiesArray = ['activitiesList', 'callList', 'chatList', 'check_listList', 'fieldList', 'fileList', 'meetingList', 'noteList', 'taskList', 'waitList', 'contactList', 'companyList'];
+                            activitiesArray.forEach(function(elt){
+                                host.database.cards.items[host.database.cards.items.length - 1][elt] = [];
+                            });
+                            data_module.cardList[content.data.id] = {
+                                heapIndex: data_module.pendingData.length
+                            };
+                            var onLoad = [
+                                function(host, rs){
                                     return function(){
-                                        carddone.cards.prevEditCard(host, parentid, id);
+                                        carddone.cards.redraw(host, parseInt(host.userCombobox.value, 10)).then(function(singlePage){
+                                            host.userCombobox = singlePage.userCombobox;
+                                            host.frameList.removeChild(host.frameList.getAllChild()[0]);
+                                            host.frameList.addChildBefore(singlePage, host.frameList.getAllChild()[0]);
+                                            rs({
+                                                cardid: content.data.id,
+                                                listid: content.data.parentid
+                                            });
+                                        });
                                     }
-                                }(host, content.data.parentid, content.data.id)
-                            );
+                                }(host, rs)
+                            ];
+                            data_module.pendingData.push({
+                                type: "card",
+                                archived: 0,
+                                id: content.data.id,
+                                boardid: host.boardContent.id,
+                                onLoad: onLoad,
+                                isLoaded: false
+                            });
+                            data_module.dataManager[-1000] = {
+                                startIndex: data_module.cardList[content.data.id].heapIndex,
+                                endIndex: data_module.cardList[content.data.id].heapIndex + 1
+                            };
+                            data_module.boardArray.push(-1000);
+                            data_module.boardActive = -1000;
                         }
                         else {
-                            onLoad.push(
-                                function(){
-                                    host.frameList.removeLast();
+                            var index = host.database.cards.getIndex(id);
+                            host.database.cards.items[index].name = content.data.name;
+                            host.database.cards.items[index].parentid = content.data.parentid;
+                            host.database.cards.items[index].important = content.data.important;
+                            if (listid != value.stage){
+                                var temp = host.database.lists.items[host.database.lists.getIndex(listid)].childrenIdList.filter(function(elt){
+                                    return elt != id;
+                                });
+                                host.database.lists.items[host.database.lists.getIndex(listid)].childrenIdList = temp;
+                                host.database.lists.items[host.database.lists.getIndex(value.stage)].childrenIdList.push(id);
+                            }
+                            host.database.cards.items[index].companyList = host.database.cards.items[index].companyList.filter(function(elt){
+                                return company_to_del.indexOf(elt) == -1;
+                            });
+                            host.database.cards.items[index].contactList = host.database.cards.items[index].contactList.filter(function(elt){
+                                return contact_to_del.indexOf(elt) == -1;
+                            });
+                            host.database.cards.items[index].contactList = host.database.cards.items[index].contactList.concat(content.contact.map(function(elt){
+                                return elt.contactid;
+                            }));
+                            host.database.cards.items[index].companyList = host.database.cards.items[index].companyList.concat(content.companies.map(function(elt){
+                                return elt.companyid;
+                            }));
+                            host.database.contact_card.items = host.database.contact_card.items.filter(function(elt){
+                                return contactDelete.indexOf(elt.id) == -1;
+                            });
+                            host.database.companies_card.items = host.database.companies_card.items.filter(function(elt){
+                                return companiesDelete.indexOf(elt.id) == -1;
+                            });
+                            host.database.contact_card.items = host.database.contact_card.items.concat(content.contact);
+                            host.database.companies_card.items = host.database.companies_card.items.concat(content.companies);
+                            data_module.cardList[id].generateData.contactList = host.database.cards.items[index].contactList;
+                            data_module.cardList[id].generateData.companyList = host.database.cards.items[index].companyList;
+                            data_module.cardList[id].content.contact_card = host.database.contact_card.items;
+                            data_module.cardList[id].content.companies_card = host.database.companies_card.items;
+                            for (var i = 0; i < host.database.knowledge.items.length; i++){
+                                if (host.database.knowledge.items[i].cardid == id){
+                                    host.database.knowledge.items[i].available = value.knowledge;
+                                    break;
                                 }
-                            );
+                            }
+                            carddone.cards.redraw(host, parseInt(host.userCombobox.value, 10)).then(function(singlePage){
+                                host.userCombobox = singlePage.userCombobox;
+                                host.frameList.removeChild(host.frameList.getAllChild()[0]);
+                                host.frameList.addChildBefore(singlePage, host.frameList.getAllChild()[0]);
+                                rs({
+                                    cardid: content.data.id,
+                                    listid: value.stage
+                                });
+                            });
                         }
-                        data_module.pendingData.push({
-                            type: "card",
-                            id: content.data.id,
-                            boardid: host.boardContent.id,
-                            onLoad: onLoad,
-                            isLoaded: false
-                        });
-                        data_module.dataManager[-1000] = {
-                            startIndex: data_module.cardList[content.data.id].heapIndex,
-                            endIndex: data_module.cardList[content.data.id].heapIndex + 1
-                        };
-                        data_module.boardArray.push(-1000);
-                        data_module.boardActive = -1000;
                     }
                     else {
-                        var index = host.database.cards.getIndex(id);
-                        host.database.cards.items[index].name = content.data.name;
-                        host.database.cards.items[index].parentid = content.data.parentid;
-                        host.database.cards.items[index].important = content.data.important;
-                        if (listid != value.stage){
-                            var temp = host.database.lists.items[host.database.lists.getIndex(listid)].childrenIdList.filter(function(elt){
-                                return elt != id;
-                            });
-                            host.database.lists.items[host.database.lists.getIndex(listid)].childrenIdList = temp;
-                            host.database.lists.items[host.database.lists.getIndex(value.stage)].childrenIdList.push(id);
-                        }
-                        host.database.cards.items[index].companyList = host.database.cards.items[index].companyList.filter(function(elt){
-                            return company_to_del.indexOf(elt) == -1;
-                        });
-                        host.database.cards.items[index].contactList = host.database.cards.items[index].contactList.filter(function(elt){
-                            return contact_to_del.indexOf(elt) == -1;
-                        });
-                        host.database.cards.items[index].contactList = host.database.cards.items[index].contactList.concat(content.contact.map(function(elt){
-                            return elt.contactid;
-                        }));
-                        host.database.cards.items[index].companyList = host.database.cards.items[index].companyList.concat(content.companies.map(function(elt){
-                            return elt.companyid;
-                        }));
-                        host.database.contact_card.items = host.database.contact_card.items.filter(function(elt){
-                            return contactDelete.indexOf(elt.id) == -1;
-                        });
-                        host.database.companies_card.items = host.database.companies_card.items.filter(function(elt){
-                            return companiesDelete.indexOf(elt.id) == -1;
-                        });
-                        host.database.contact_card.items = host.database.contact_card.items.concat(content.contact);
-                        host.database.companies_card.items = host.database.companies_card.items.concat(content.companies);
-                        data_module.cardList[id].generateData.contactList = host.database.cards.items[index].contactList;
-                        data_module.cardList[id].generateData.companyList = host.database.cards.items[index].companyList;
-                        data_module.cardList[id].content.contact_card = host.database.contact_card.items;
-                        data_module.cardList[id].content.companies_card = host.database.companies_card.items;
-                        for (var i = 0; i < host.database.knowledge.items.length; i++){
-                            if (host.database.knowledge.items[i].cardid == id){
-                                host.database.knowledge.items[i].available = value.knowledge;
-                                break;
-                            }
-                        }
-                        carddone.cards.redraw(host, parseInt(host.cards_container.userCombobox.value, 10));
-                        if (mode == 0){
-                            carddone.cards.prevEditCard(host, content.data.parentid, content.data.id);
-                        }
-                        else {
-                            host.frameList.removeLast();
-                        }
+                        ModalElement.alert({message: message});
                     }
                 }
                 else {
                     ModalElement.alert({message: message});
                 }
             }
-            else {
-                ModalElement.alert({message: message});
-            }
-        }
+        });
     });
 };
 
@@ -854,6 +1221,7 @@ carddone.cards.addCheckListForm = function(host, cardid, id){
                     return;
                 }
                 return carddone.cards.editActivitiesSave(host, cardid, id, -25, value, {name: 'checklist', list: 'check_listList'}, 0).then(function rs(value){
+                    id = value.id;
                     resolve(value);
                 }, function rj(message){
                     reject(message);
@@ -868,6 +1236,7 @@ carddone.cards.addCheckListForm = function(host, cardid, id){
                     return;
                 }
                 return carddone.cards.editActivitiesSave(host, cardid, id, -25, value, {name: 'checklist', list: 'check_listList'}, 1).then(function rs(value){
+                    host.frameList.removeLast();
                     resolve(value);
                 }, function rj(message){
                     reject(message);
@@ -882,9 +1251,6 @@ carddone.cards.addCheckListForm = function(host, cardid, id){
                     console.log(message);
                     reject(message);
                 });
-                // .then(function(value){
-                //     resolve(value);
-                // }); //thanhyen
             });
         }
     };
@@ -898,7 +1264,6 @@ carddone.cards.addCheckListForm = function(host, cardid, id){
         cmdButton: cmdButton,
         boardName: host.database.boards.items[host.database.boards.getIndex(host.boardId)].name,
         cardName: cardid > 0 ? host.database.cards.items[host.database.cards.getIndex(cardid)].name : "",
-        // userid: systemconfig.userid,
         frameList: host.frameList,
         getObjectbyType: function(host){
             return function(typeid, valueid){
@@ -941,6 +1306,7 @@ carddone.cards.addWaitForm = function(host, cardid, id){
                     return;
                 }
                 return carddone.cards.editActivitiesSave(host, cardid, id, -23, value, {name: 'wait', list: 'waitList'}, 0).then(function rs(value){
+                    id = value.id;
                     resolve(value);
                 }, function rj(message){
                     reject(message);
@@ -955,6 +1321,7 @@ carddone.cards.addWaitForm = function(host, cardid, id){
                     return;
                 }
                 return carddone.cards.editActivitiesSave(host, cardid, id, -23, value, {name: 'wait', list: 'waitList'}, 1).then(function rs(value){
+                    host.frameList.removeLast();
                     resolve(value);
                 }, function rj(message){
                     reject(message);
@@ -981,7 +1348,6 @@ carddone.cards.addWaitForm = function(host, cardid, id){
         cmdButton: cmdButton,
         boardName: host.database.boards.items[host.database.boards.getIndex(host.boardId)].name,
         cardName: cardid > 0 ? host.database.cards.items[host.database.cards.getIndex(cardid)].name : "",
-        // userid: systemconfig.userid,
         frameList: host.frameList,
         getObjectbyType: function(host){
             return function(typeid, valueid){
@@ -1024,6 +1390,7 @@ carddone.cards.addCallForm = function(host, cardid, id){
                     return;
                 }
                 return carddone.cards.editActivitiesSave(host, cardid, id, -22, value, {name: 'call', list: 'callList'}, 0).then(function rs(value){
+                    id = value.id;
                     resolve(value);
                 }, function rj(message){
                     reject(message);
@@ -1038,6 +1405,7 @@ carddone.cards.addCallForm = function(host, cardid, id){
                     return;
                 }
                 return carddone.cards.editActivitiesSave(host, cardid, id, -22, value, {name: 'call', list: 'callList'}, 1).then(function rs(value){
+                    host.frameList.removeLast();
                     resolve(value);
                 }, function rj(message){
                     reject(message);
@@ -1064,7 +1432,6 @@ carddone.cards.addCallForm = function(host, cardid, id){
         cmdButton: cmdButton,
         boardName: host.database.boards.items[host.database.boards.getIndex(host.boardId)].name,
         cardName: cardid > 0 ? host.database.cards.items[host.database.cards.getIndex(cardid)].name : "",
-        // userid: systemconfig.userid,
         frameList: host.frameList,
         getObjectbyType: function(host){
             return function(typeid, valueid){
@@ -1107,6 +1474,7 @@ carddone.cards.addTaskForm = function(host, cardid, id){
                     return;
                 }
                 return carddone.cards.editActivitiesSave(host, cardid, id, -18, value, {name: 'task', list: 'taskList'}, 0).then(function rs(value){
+                    id = value.id;
                     resolve(value);
                 }, function rj(message){
                     reject(message);
@@ -1121,6 +1489,7 @@ carddone.cards.addTaskForm = function(host, cardid, id){
                     return;
                 }
                 return carddone.cards.editActivitiesSave(host, cardid, id, -18, value, {name: 'task', list: 'taskList'}, 1).then(function rs(value){
+                    host.frameList.removeLast();
                     resolve(value);
                 }, function rj(message){
                     reject(message);
@@ -1147,7 +1516,6 @@ carddone.cards.addTaskForm = function(host, cardid, id){
         cmdButton: cmdButton,
         boardName: host.database.boards.items[host.database.boards.getIndex(host.boardId)].name,
         cardName: cardid > 0 ? host.database.cards.items[host.database.cards.getIndex(cardid)].name : "",
-        // userid: systemconfig.userid,
         frameList: host.frameList,
         getObjectbyType: function(host){
             return function(typeid, valueid){
@@ -1190,14 +1558,12 @@ carddone.cards.addMeetingForm = function(host, cardid, id){
                     return;
                 }
                 return carddone.cards.editActivitiesSave(host, cardid, id, -20, value, {name: 'meeting', list: 'meetingList'}, 0).then(function rs(value){
+                    id = value.id;
                     resolve(value);
                 }, function rj(message){
                     console.log(message);
                     reject(message);
                 });
-                // .then(function(value){
-                //     resolve(value);
-                // }); //thanhyen
             });
         },
         saveClose: function () {
@@ -1208,6 +1574,7 @@ carddone.cards.addMeetingForm = function(host, cardid, id){
                     return;
                 }
                 return carddone.cards.editActivitiesSave(host, cardid, id, -20, value, {name: 'meeting', list: 'meetingList'}, 1).then(function rs(value){
+                    host.frameList.removeLast();
                     resolve(value);
                 }, function rj(message){
                     reject(message);
@@ -1234,7 +1601,6 @@ carddone.cards.addMeetingForm = function(host, cardid, id){
         cmdButton: cmdButton,
         boardName: host.database.boards.items[host.database.boards.getIndex(host.boardId)].name,
         cardName: cardid > 0 ? host.database.cards.items[host.database.cards.getIndex(cardid)].name : "",
-        // userid: systemconfig.userid,
         frameList: host.frameList,
         getObjectbyType: function(host){
             return function(typeid, valueid){
@@ -1277,6 +1643,7 @@ carddone.cards.addNoteForm = function(host, cardid, id){
                     return;
                 }
                 return carddone.cards.editActivitiesSave(host, cardid, id, -21, value, {name: 'note', list: 'noteList'}, 0).then(function rs(value){
+                    id = value.id;
                     resolve(value);
                 }, function rj(message){
                     reject(message);
@@ -1291,6 +1658,7 @@ carddone.cards.addNoteForm = function(host, cardid, id){
                     return;
                 }
                 return carddone.cards.editActivitiesSave(host, cardid, id, -21, value, {name: 'note', list: 'noteList'}, 1).then(function rs(value){
+                    host.frameList.removeLast();
                     resolve(value);
                 }, function rj(message){
                     reject(message);
@@ -1317,7 +1685,6 @@ carddone.cards.addNoteForm = function(host, cardid, id){
         cmdButton: cmdButton,
         boardName: host.database.boards.items[host.database.boards.getIndex(host.boardId)].name,
         cardName: cardid > 0 ? host.database.cards.items[host.database.cards.getIndex(cardid)].name : "",
-        // userid: systemconfig.userid,
         frameList: host.frameList,
         getObjectbyType: function(host){
             return function(typeid, valueid){
@@ -1426,7 +1793,7 @@ carddone.cards.knowledgeEdit = function(host, cardid){
                 break;
             }
         }
-        var cmdbutton = {
+        var cmdButton = {
             close: function (event, me) {
                 while (host.frameList.getLength() > 2){
                     host.frameList.removeLast();
@@ -1490,7 +1857,7 @@ carddone.cards.knowledgeEdit = function(host, cardid){
             data.groupList.push(getGroupItem(host.database.knowledge_groups.items[i].id));
         }
         host.knowledgeEdit = host.funcs.formKnowledgeEdit({
-            cmdbutton: cmdbutton,
+            cmdButton: cmdButton,
             data: data,
             knowledge_groups: host.database.knowledge_groups
         });
@@ -1830,10 +2197,8 @@ carddone.cards.addFileNewSave = function(host, cardid, allFiles){
                             });
                             var cardIndex = host.database.cards.getIndex(cardid);
                             for (var j = 0; j < objects.length; j++){
-                                // host.database.cards.items[cardIndex].fileList.push(objects[j].id);
                                 data_module.cardList[cardid].generateData.fileList.push(objects[j].id);
                                 data_module.cardList[cardid].content.objects.push(objects[j]);
-                                // host.database.cards.items[cardIndex].activitiesList.push(objects[j].id);
                                 data_module.cardList[cardid].generateData.activitiesList.push(objects[j].id);
                             }
                             resolve(listFile);
@@ -1933,6 +2298,7 @@ carddone.cards.addFieldForm = function(host, cardid, id){
                     return;
                 }
                 return carddone.cards.editActivitiesSave(host, cardid, id, value.typeid, value, {name: 'field', list: 'fieldList'}, 0).then(function rs(value){
+                    id = value.id;
                     resolve(value);
                 }, function rj(message){
                     reject(message);
@@ -1947,6 +2313,7 @@ carddone.cards.addFieldForm = function(host, cardid, id){
                     return;
                 }
                 return carddone.cards.editActivitiesSave(host, cardid, id, value.typeid, value, {name: 'field', list: 'fieldList'}, 1).then(function rs(value){
+                    host.frameList.removeLast();
                     resolve(value);
                 }, function rj(message){
                     reject(message);
@@ -2068,14 +2435,25 @@ carddone.cards.editCard = function(host, listId, id){
             host.frameList.removeLast();
         },
         save: function () {
-            var value = singlePage.getValue();
-            if (!value) return;
-            carddone.boards.editCardSave(host, id, value, listId, 0);
+            return new Promise(function(rs){
+                var value = singlePage.getValue();
+                if (!value) {
+                    rs(false);
+                    return;
+                }
+                carddone.boards.editCardSave(host, id, value, listId, 0).then(function(value){
+                    id = value.cardid;
+                    listId = value.listid;
+                    rs(true);
+                });
+            });
         },
         saveClose: function () {
             var value = singlePage.getValue();
             if (!value) return;
-            carddone.boards.editCardSave(host, id, value, listId, 1);
+            carddone.boards.editCardSave(host, id, value, listId, 1).then(function(value){
+                host.frameList.removeLast();
+            });
         }
     };
     host.imagesList = [];
@@ -2094,13 +2472,13 @@ carddone.cards.editCard = function(host, listId, id){
     }
     else {
         cmdButton.move = function () {
-            alert("click move button");
+            return carddone.cards.moveCard(host, id);
         };
         cmdButton.archive = function () {
-            alert("click archive button");
+            return carddone.cards.archiveCard(host, id);
         };
-        cmdButton.remove = function () {
-            alert("click delete button");
+        cmdButton.delete = function () {
+            return carddone.cards.deleteCard(host, id);
         };
         index = host.database.cards.getIndex(id);
         name = host.database.cards.items[index].name;
@@ -2127,20 +2505,17 @@ carddone.cards.editCard = function(host, listId, id){
         contactList = host.database.cards.items[index].contactList;
         companyList = host.database.cards.items[index].companyList;
         activitiesList = host.database.cards.items[index].activitiesList;
-        if (host.database.boards.items[0].userid == systemconfig.userid) editMode = 'edit';
-        else {
-            for (var i = 0; i < host.database.list_member.items.length; i++){
-                if (host.database.list_member.items[i].userid == systemconfig.userid) {
-                    if (host.database.list_member.items[i].type == 1) editMode = 'edit';
-                    else {
-                        if (host.database.boards.items[0].permission == 1) {
-                            if (host.database.cards.items[index].userid == systemconfig.userid) editMode = 'edit';
-                            else editMode = "view";
-                        }
-                        else editMode = "edit";
+        for (var i = 0; i < host.database.list_member.items.length; i++){
+            if (host.database.list_member.items[i].userid == systemconfig.userid) {
+                if (host.database.list_member.items[i].type > 0) editMode = 'edit';
+                else {
+                    if (host.database.boards.items[0].permission == 1) {
+                        if (host.database.cards.items[index].userid == systemconfig.userid) editMode = 'edit';
+                        else editMode = "view";
                     }
-                    break;
+                    else editMode = "edit";
                 }
+                break;
             }
         }
         var chatIndex = host.database.cards.items[index].chatIndex;
@@ -2284,7 +2659,7 @@ carddone.cards.editCard = function(host, listId, id){
         },
         {
             src1: 'icons/check_list.png',
-            src2: 'icons/checklist_disabled.png',
+            src2: 'icons/check_list_disabled.png',
             text: LanguageModule.text("txt_check_list"),
             click: function(){
                 if (editMode == 'view') return;
@@ -2340,6 +2715,7 @@ carddone.cards.editCard = function(host, listId, id){
     ];
     params = {
         cardid: id,
+        frameList: host.frameList,
         editMode: editMode,
         activitiesOfCard: activitiesList,
         activities: activities,
@@ -2389,7 +2765,6 @@ carddone.cards.editCard = function(host, listId, id){
         cities: cities,
         nations: nations,
         users: users,
-        // userid: systemconfig.userid,
         getObjectbyType: function(host){
             return function(typeid, valueid){
                 return contentModule.getObjectbyTypeView(host, typeid, valueid);
@@ -2449,144 +2824,202 @@ carddone.cards.editCard = function(host, listId, id){
 };
 
 carddone.cards.redraw = function(host, userid){
-    var list = [], cardIdList, memberList;
-    memberList = host.database.list_member.items.map(function(elt){
-        return elt.userid;
-    });
-    memberList.push(host.boardContent.userid);
-    for (var i = 0; i < host.database.lists.items.length; i++){
-        if (host.database.lists.items[i].type2 == "group") continue;
-        var decoration = EncodingClass.string.toVariable(host.database.lists.items[i].decoration);
-        if ((host.database.boards.items[0].userid != systemconfig.userid) && (host.database.boards.items[0].permission == 0)){
-            var list_member_index;
-            for (var j = 0; j < host.database.list_member.items.length; j++){
-                if (host.database.list_member.items[j].userid == systemconfig.userid) list_member_index = j;
-            }
-            if (host.database.list_member.items[list_member_index].type == 0) {
-                cardIdList = host.database.lists.items[i].childrenIdList.filter(function(elt){
-                    var cIndex = host.database.cards.getIndex(elt);
-                    return host.database.cards.items[cIndex].userid == systemconfig.userid;
-                });
+    return new Promise(function(rs){
+        var list = [], cardIdList, memberList;
+        memberList = host.database.list_member.items.map(function(elt){
+            return elt.userid;
+        });
+        for (var i = 0; i < host.database.lists.items.length; i++){
+            if (host.database.lists.items[i].type2 == "group") continue;
+            var decoration = EncodingClass.string.toVariable(host.database.lists.items[i].decoration);
+            if ((host.database.boards.items[0].userid != systemconfig.userid) && (host.database.boards.items[0].permission == 0)){
+                var list_member_index;
+                for (var j = 0; j < host.database.list_member.items.length; j++){
+                    if (host.database.list_member.items[j].userid == systemconfig.userid) list_member_index = j;
+                }
+                if (host.database.list_member.items[list_member_index].type == 0) {
+                    cardIdList = host.database.lists.items[i].childrenIdList.filter(function(elt){
+                        var cIndex = host.database.cards.getIndex(elt);
+                        return host.database.cards.items[cIndex].userid == systemconfig.userid;
+                    });
+                }
+                else cardIdList = EncodingClass.string.duplicate(host.database.lists.items[i].childrenIdList);
             }
             else cardIdList = EncodingClass.string.duplicate(host.database.lists.items[i].childrenIdList);
-        }
-        else cardIdList = EncodingClass.string.duplicate(host.database.lists.items[i].childrenIdList);
-        var cards = cardIdList.map(function(elt){
-            var cIndex = host.database.cards.getIndex(elt);
-            if (memberList.indexOf(host.database.cards.items[cIndex].userid) == -1) memberList.push(host.database.cards.items[cIndex].userid);
-            return {
-                id: host.database.cards.items[cIndex].id,
-                name: host.database.cards.items[cIndex].name,
-                userid: host.database.cards.items[cIndex].userid,
-                lindex: host.database.cards.items[cIndex].lindex,
-                editFunc: function(parentid, id){
-                    return function(){
-                        if (data_module.cardList[id].content){
-                            carddone.cards.prevEditCard(host, parentid, id);
-                        }
+            var cards = [];
+            cardIdList.forEach(function(elt){
+                var editMode = 'view';
+                var cIndex = host.database.cards.getIndex(elt);
+                if (cIndex == -1) return;
+                if (memberList.indexOf(host.database.cards.items[cIndex].userid) == -1) memberList.push(host.database.cards.items[cIndex].userid);
+                for (var i = 0; i < host.database.list_member.items.length; i++){
+                    if (host.database.list_member.items[i].userid == systemconfig.userid) {
+                        if (host.database.list_member.items[i].type > 0) editMode = 'edit';
                         else {
-                            data_module.pendingData[data_module.cardList[id].heapIndex].onLoad.push(function(){
-                                carddone.cards.prevEditCard(host, parentid, id);
-                            });
-                            data_module.dataManager[-100] = {
-                                startIndex: data_module.cardList[id].heapIndex,
-                                endIndex: data_module.cardList[id].heapIndex + 1
-                            };
-                            data_module.boardArray.push(-100);
-                            data_module.boardActive = -100;
+                            if (host.database.boards.items[0].permission == 1) {
+                                if (host.database.cards.items[cIndex].userid == systemconfig.userid) editMode = 'edit';
+                                else editMode = "view";
+                            }
+                            else editMode = "edit";
                         }
+                        break;
                     }
-                }(host.database.cards.items[cIndex].parentid, host.database.cards.items[cIndex].id)
-            }
+                }
+                cards.push({
+                    id: host.database.cards.items[cIndex].id,
+                    name: host.database.cards.items[cIndex].name,
+                    userid: host.database.cards.items[cIndex].userid,
+                    parentid: host.database.cards.items[cIndex].parentid,
+                    lindex: host.database.cards.items[cIndex].lindex,
+                    editMode: editMode,
+                    editFunc: function(parentid, id){
+                        return function(){
+                            if (data_module.cardList[id].content){
+                                carddone.cards.prevEditCard(host, parentid, id);
+                            }
+                            else {
+                                data_module.pendingData[data_module.cardList[id].heapIndex].onLoad.push(function(){
+                                    carddone.cards.prevEditCard(host, parentid, id);
+                                });
+                                data_module.dataManager[-100] = {
+                                    startIndex: data_module.cardList[id].heapIndex,
+                                    endIndex: data_module.cardList[id].heapIndex + 1
+                                };
+                                data_module.boardArray.push(-100);
+                                data_module.boardActive = -100;
+                            }
+                        }
+                    }(host.database.cards.items[cIndex].parentid, host.database.cards.items[cIndex].id),
+                    deleteFunc: function(id){
+                        return function(){
+                            return carddone.cards.deleteCard(host, id);
+                        }
+                    }(host.database.cards.items[cIndex].id),
+                    moveFunc: function(id){
+                        return function(){
+                            return carddone.cards.moveCard(host, id);
+                        }
+                    }(host.database.cards.items[cIndex].id),
+                    archiveFunc: function(id){
+                        return function(){
+                            return carddone.cards.archiveCard(host, id);
+                        }
+                    }(host.database.cards.items[cIndex].id)
+                });
+            });
+            cards.sort(function(a, b){
+                if (a.lindex > b.lindex) return -1;
+                if (a.lindex < b.lindex) return 1;
+                return 0;
+            });
+            list.push({
+                id: host.database.lists.items[i].id,
+                name: host.database.lists.items[i].name,
+                lindex: host.database.lists.items[i].lindex,
+                description: "",
+                decoration: decoration,
+                cards: cards,
+                addNewCardFunc: function(id){
+                    return function(){
+                        carddone.cards.prevEditCard(host, id, 0);
+                    }
+                }(host.database.lists.items[i].id),
+                cardenter: function(host){
+                    return function(event){
+                        carddone.cards.moveCardToOtherListSave(host, event.item.ident, event.target, event.from, event.to, event.to.table);
+                    }
+                }(host),
+                orderchange: function(host){
+                    return function(event){
+                        carddone.cards.moveCardSave(host, event.boardElt, event.$body, event.target.ident, event.from, event.to);
+                    }
+                }(host),
+                archiveAllCardInListFunc: function(host, id){
+                    return function(){
+                        return carddone.cards.archiveAllCardInListFunc(host, id);
+                    }
+                }(host, host.database.lists.items[i].id)
+            });
+        }
+        var count = 0, index = 0;
+        while (list.some(function(elt){
+            return (elt.cards[index]);
+        })){
+            list.forEach(function(elt){
+                if (elt.cards[index]) {
+                    if (!data_module.cardList[elt.cards[index].id]){
+                        data_module.cardList[elt.cards[index].id] = {
+                            heapIndex: data_module.pendingData.length,
+                            archived: 0
+                        };
+                        data_module.pendingData.push({
+                            type: "card",
+                            archived: 0,
+                            id: elt.cards[index].id,
+                            boardid: host.boardContent.id,
+                            onLoad: [],
+                            isLoaded: false
+                        });
+                        count++;
+                    }
+                }
+            });
+            index++;
+        }
+        if (count > 0){
+            data_module.dataManager[host.boardContent.id] = {
+                startIndex: data_module.pendingData.length - count,
+                endIndex: data_module.pendingData.length
+            };
+            data_module.boardArray.push(host.boardContent.id);
+            data_module.boardActive = host.boardContent.id;
+        }
+        memberList = memberList.map(function(elt){
+            var index = data_module.users.getByhomeid(elt);
+            return {
+                value: elt,
+                text: data_module.users.items[index].username + " - " + data_module.users.items[index].fullname
+            };
         });
-        cards.sort(function(a, b){
-            if (a.lindex > b.lindex) return -1;
-            if (a.lindex < b.lindex) return 1;
+        memberList.sort(function(a, b){
+            if (absol.string.nonAccentVietnamese(a.text) > absol.string.nonAccentVietnamese(b.text)) return 1;
+            if (absol.string.nonAccentVietnamese(a.text) < absol.string.nonAccentVietnamese(b.text)) return 1;
             return 0;
         });
-        list.push({
-            id: host.database.lists.items[i].id,
-            name: host.database.lists.items[i].name,
-            lindex: host.database.lists.items[i].lindex,
-            description: "",
-            decoration: decoration,
-            cards: cards,
-            addNewCardFunc: function(id){
-                return function(){
-                    carddone.cards.prevEditCard(host, id, 0);
-                }
-            }(host.database.lists.items[i].id),
-            cardenter: function(host){
-                return function(event){
-                    carddone.cards.moveCardToOtherListSave(host, event.item.ident, event.target, event.from, event.to, event.to.table);
-                }
-            }(host),
-            orderchange: function(host){
-                return function(event){
-                    carddone.cards.moveCardSave(host, event.boardElt, event.$body, event.target.ident, event.from, event.to);
-                }
-            }(host)
-        });
-    }
-    var count = 0, index = 0;
-    while (list.some(function(elt){
-        return (elt.cards[index]);
-    })){
-        list.forEach(function(elt){
-            if (elt.cards[index]) {
-                if (!data_module.cardList[elt.cards[index].id]){
-                    data_module.cardList[elt.cards[index].id] = {
-                        heapIndex: data_module.pendingData.length
-                    };
-                    data_module.pendingData.push({
-                        type: "card",
-                        id: elt.cards[index].id,
-                        boardid: host.boardContent.id,
-                        onLoad: [],
-                        isLoaded: false
+        memberList.unshift({value: 0, text: LanguageModule.text("txt_all")});
+        var singlePage = host.funcs.cardInitForm({
+            cmdButton: {
+                close: function () {
+                    if (carddone.isMobile){
+                        host.holder.selfRemove();
+                        carddone.menu.loadPage(100);
+                    }
+                    else {
+                        carddone.menu.tabPanel.removeTab(host.holder.id);
+                    }
+                },
+                viewArchived: function(){
+                    return carddone.cards.loadArchivedCards(host);
+                },
+                viewCurrent: function(){
+                    host.database.cards.items = host.currentCardData;
+                    carddone.cards.redraw(host, 0).then(function(singlePage){
+                        host.userCombobox = singlePage.userCombobox;
+                        host.frameList.removeLast();
+                        host.frameList.addChild(singlePage);
+                        singlePage.requestActive();
                     });
-                    count++;
                 }
-            }
+            },
+            content: list,
+            memberList: memberList,
+            userid: userid,
+            boardName: host.boardContent.name,
+            frameList: host.frameList
+
         });
-        index++;
-    }
-    if (count > 0){
-        data_module.dataManager[host.boardContent.id] = {
-            startIndex: data_module.pendingData.length - count,
-            endIndex: data_module.pendingData.length
-        };
-        data_module.boardArray.push(host.boardContent.id);
-        data_module.boardActive = host.boardContent.id;
-    }
-    memberList = memberList.map(function(elt){
-        var index = data_module.users.getByhomeid(elt);
-        return {
-            value: elt,
-            text: data_module.users.items[index].username + " - " + data_module.users.items[index].fullname
-        };
+        rs(singlePage);
     });
-    memberList.sort(function(a, b){
-        if (absol.string.nonAccentVietnamese(a.text) > absol.string.nonAccentVietnamese(b.text)) return 1;
-        if (absol.string.nonAccentVietnamese(a.text) < absol.string.nonAccentVietnamese(b.text)) return 1;
-        return 0;
-    });
-    memberList.unshift({value: 0, text: LanguageModule.text("txt_all")});
-    var singlePage = host.funcs.cardInitForm({
-        buttonlist: [
-            host.funcs.closeButton({
-                onclick: function () {
-                    carddone.menu.tabPanel.removeTab(host.holder.id);
-                }
-            })
-        ],
-        content: list,
-        memberList: memberList,
-        userid: userid
-    });
-    host.cards_container.userCombobox = singlePage.userCombobox;
-    host.cards_container.clearChild();
-    host.cards_container.addChild(singlePage);
 };
 
 carddone.cards.init = function(host, boardId){
@@ -2607,6 +3040,10 @@ carddone.cards.init = function(host, boardId){
             }
             return;
         }
+        contentModule.makeCitiesIndex();
+        contentModule.makeDistrictsIndex();
+        contentModule.makeCompanyIndex();
+        contentModule.makeContactIndex(); //thanhyen
         host.boardId = boardId;
         host.database = {};
         host.holder.addChild(host.frameList);
@@ -2647,16 +3084,24 @@ carddone.cards.init = function(host, boardId){
                         contentModule.makeField_list(host);
                         contentModule.makeCitiesIndex(host);
                         contentModule.makeKnowledgeGroupIndex(host);
-                        host.cards_container = absol._({});
-                        var singlePage = absol.buildDom({
-                            tag: "singlepagenfooter",
-                            child: host.cards_container
-                        });
-                        host.frameList.addChild(singlePage);
-                        singlePage.requestActive();
                         host.holder.boardid = host.boardContent.id;
-                        carddone.cards.redraw(host, 0);
-                        rs();
+                        host.boardContent.decoration = EncodingClass.string.toVariable(host.boardContent.decoration);
+                        // if (host.boardContent.decoration.selection == "color"){
+                        //     host.holder.addStyle("backgroundColor", "#" + host.boardContent.decoration.color);
+                        // }
+                        // else {
+                        //     host.holder.addStyle("backgroundImage", "url('" + window.domain + host.boardContent.decoration.picture + "')");
+                        //     host.holder.addStyle("backgroundSize", "cover");
+                        //     host.holder.addStyle("backgroundRepeat", "no-repeat");
+                        //     host.holder.addStyle("backgroundPosition", "center");
+                        //     host.holder.addStyle("backgroundAttachment", "fixed");
+                        // }
+                        carddone.cards.redraw(host, 0).then(function(singlePage){
+                            host.userCombobox = singlePage.userCombobox;
+                            host.frameList.addChild(singlePage);
+                            singlePage.requestActive();
+                            rs();
+                        });
                     }
                     else {
                         console.log(message);

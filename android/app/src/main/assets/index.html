@@ -18,7 +18,6 @@
 		        var regContent = {}
 		        ModuleManagerClass.register = function (regContent) {
 		            return function (params) {
-						console.log(regContent, params);
 		                var name, prerequisites, trigger, mqueue, node, tnode;
 		                var isReady;
 		                var i, k, t;
@@ -125,6 +124,8 @@
 			};
             var carddone = {
 				isMobile: window.mobilecheck(),
+				sessionIdActive: 0,
+				listTabChat: [],
                 menu: {},
                 boards: {},
                 chats: {},
@@ -195,6 +196,24 @@
 			    });
 			};
             var initUI = function () {
+				window.addEventListener("message", function(message){
+					var data = message.data;
+					console.log(data);
+					if(data.name == "checkShowNotiChat"){
+						var moredata = JSON.parse(data.value.moredata);
+						if (moredata.sessionid != carddone.sessionIdActive){
+							window.ReactNativeWebView.postMessage(JSON.stringify({name: "pushNotification", value: data.value}));
+						}
+					}
+					else if (data.name == "openchatMobile"){
+						var moredata = JSON.parse(data.value);
+						console.log("moredata5: ", moredata);
+						carddone.menu.loadPage(7).then(function(value){
+							console.log("loadchatend");
+							carddone.menu.openChatMobile(moredata.sessionid);
+						});
+					}
+				});
 				loadMainternance().then(function(st){
 					if (st.is_maintenance){
 						DOMElement.removeAllChildren(window.holderMain);
@@ -261,7 +280,6 @@
 		                        if (message.content.type == "carddone_maintenance"){
 		                            window.ReactNativeWebView.postMessage(JSON.stringify({name: "reload"}));
 		                            function GetToken(message){
-		                                console.log("reload");
 		                                window.removeEventListener("message",GetToken);
 		                            };
 		                            window.addEventListener("message", GetToken);
@@ -320,7 +338,7 @@
                 ModalElement.question = function (params) {
                     var isdelete = false;
                     var priv = systemconfig.privSystem;
-                    var message = params.message,title = params.title, h, func = params.onclick, displaycheckbox = params.displaycheckbox;
+                    var message = params.message, title = params.title, h, func = params.onclick, displaycheckbox = params.displaycheckbox;
                     if (message === undefined) message = "";
                     if (title === undefined) title = "Question";
                     if (func === undefined) func = function(){};

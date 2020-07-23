@@ -85,10 +85,10 @@ theme.formContactEdit = function(params){
             enableSearch: true
         }
     });
-    
+
     if (!params.data.editCompany) company_select.disabled = true;
     var owner_select = absol.buildDom({
-             tag: "selectbox",
+             tag: "mselectbox",
              style: {
                  display: "block",
                  width: "100%"
@@ -282,193 +282,143 @@ theme.formContactEdit = function(params){
         firstname_inputtext.focus()
     },10);
     return singlePage;
-};
+ };
 
-     theme.formContactGetRow = function(content){
-         var editIcon = DOMElement.div({
-             attrs: {
-                 className: "card-icon-cover",
-                 style: {
-                     marginRight: "var(--control-horizontal-distance-1)"
-                 }
-             },
-             children: [DOMElement.i({
-                 attrs: {
-                     className: "material-icons bsc-icon-hover-black"
-                 },
-                 text: "create"
-             })]
-         });
-         var deleteIcon = DOMElement.div({
-             attrs: {
-                 className: "card-icon-remove-cover"
-             },
-             children: [DOMElement.i({
-                 attrs: {
-                     className: "material-icons card-icon-remove"
-                 },
-                 text: "remove_circle"
-             })]
-         });
-         var row = [
-             "",
-             {
-                 style: {whiteSpace: "nowrap"},
-                 value: content.firstname,
-                 element: DOMElement.div({
-                     attrs: {
-                         className: "sortTable-cell-view"
-                     },
-                     text: content.firstname
-                 })
-             },
-             {
-                 style: {whiteSpace: "nowrap"},
-                 value: content.lastname,
-                 element: DOMElement.div({
-                     attrs: {
-                         className: "sortTable-cell-view"
-                     },
-                     text: content.lastname
-                 })
-             },
-             {
-                 style: {whiteSpace: "nowrap"},
-                 value: content.phone,
-                 element: DOMElement.div({
-                     attrs: {
-                         className: "sortTable-cell-view"
-                     },
-                     text: content.phone
-                 })
-             },
-             {
-                 style: {whiteSpace: "nowrap"},
-                 value: content.email,
-                 element: DOMElement.div({
-                     attrs: {
-                         className: "sortTable-cell-view"
-                     },
-                     text: content.email
-                 })
-             }
-         ];
-         if (content.department !== undefined){
-             row.push({
-                 style: {whiteSpace: "nowrap"},
-                 value: content.department,
-                 element: DOMElement.div({
-                     attrs: {
-                         className: "sortTable-cell-view"
-                     },
-                     text: content.department
-                 })
-             });
-         }
-         if (content.position !== undefined){
-            row.push({
-                style: {whiteSpace: "nowrap"},
-                value: content.position,
-                element: DOMElement.div({
-                    attrs: {
-                        className: "sortTable-cell-view"
-                    },
-                    text: content.position
-                })
-            });
-         }
-         if (content.company !== undefined){
-             row.push({
-                 style: {whiteSpace: "nowrap"},
-                 value: (content.company != "")? content.company + "_" + content.companyid : "...",
-                 element: DOMElement.div({
-                     attrs: {
-                         className: "sortTable-cell-view"
-                     },
-                     text: content.company
-                 })
-             });
-         }
-         row.push({
-             value: content.available,
+ theme.formContactGetRow = function(content){
+     var row = [
+         {
+             value: content.firstname,
              element: DOMElement.div({
                  attrs: {
                      className: "sortTable-cell-view"
                  },
-                 text: content.available
+                 text: content.firstname
              })
-         });
-         row.push({
-             functionClick: function(event,me,index,parent,data,row){
-                 var me = event.target;
-                 while (me.parentNode.classList !== undefined && !me.parentNode.classList.contains("sortTable-cell-view-cmd")) {
-                     me = me.parentNode;
-                 }
-                 if (me === editIcon){
-                    content.func.edit().then(function(value){
-                        console.log(value);
-                        if (!value){
-                            parent.dropRow(index);
-                        }
-                        else {
-                            var c = theme.formContactGetRow(value);
-                            parent.updateRow(c, index);
-                        }
-                    });
-                 }
-                 if (me === deleteIcon){
-                    content.func.delete().then(function(value){
-                        parent.dropRow(index);
-                    });
-                 }
-             },
+         },
+         {
+             value: content.lastname,
              element: DOMElement.div({
                  attrs: {
-                     className: "sortTable-cell-view-cmd"
+                     className: "sortTable-cell-view"
                  },
-                 children: [
-                     editIcon,
-                     deleteIcon
-                 ]
+                 text: content.lastname
+             })
+         },
+         {
+             value: content.phone,
+             element: DOMElement.div({
+                 attrs: {
+                     className: "sortTable-cell-view"
+                 },
+                 text: content.phone
+             })
+         },
+         {
+             value: content.email,
+             element: DOMElement.div({
+                 attrs: {
+                     className: "sortTable-cell-view"
+                 },
+                 text: content.email
+             })
+         }
+     ];
+     if (content.department !== undefined){
+         row.push({
+             value: content.department,
+             element: DOMElement.div({
+                 attrs: {
+                     className: "sortTable-cell-view"
+                 },
+                 text: content.department
              })
          });
-         return row;
-     };
+     }
+     if (content.position !== undefined){
+        row.push({
+            value: content.position,
+            element: DOMElement.div({
+                attrs: {
+                    className: "sortTable-cell-view"
+                },
+                text: content.position
+            })
+        });
+     }
+     if (content.company !== undefined){
+         row.push({
+             value: (content.company != "")? content.company + "_" + content.companyid : "...",
+             element: DOMElement.div({
+                 attrs: {
+                     className: "sortTable-cell-view"
+                 },
+                 text: content.company
+             })
+         });
+     }
+     row.push({
+         value: content.available,
+         element: DOMElement.div({
+             attrs: {
+                 className: "sortTable-cell-view"
+             },
+             text: content.available
+         })
+     });
+     row.func = content.func;
+     return row;
+ };
 
-     theme.formContactContentData = function(params){
-         var data = [];
-         for (var i = 0; i < params.data.length; i++){
-             data.push(theme.formContactGetRow(params.data[i]));
-         }
-         var header = [
-             {type: "dragzone", style: {paddingLeft: "var(--control-verticle-distance-1)", paddingRight: "var(--control-verticle-distance-1)", width: "40px"}},
-             {value: LanguageModule.text("txt_firstname"), sort: true},
-             {value: LanguageModule.text("txt_lastname"), sort: true},
-             {value: LanguageModule.text("txt_phone_number1"), sort: true},
-             {value: LanguageModule.text("txt_email1"), sort: true}
-         ];
-         if (params.fromCompany === undefined){
-             header.push(
-                 {value: LanguageModule.text("txt_department"), sort: true},
-                 {value: LanguageModule.text("txt_position"), sort: true},
-                 {value: LanguageModule.text("txt_company"), sort: true}
-             );
-         }
-         header.push({value: LanguageModule.text("txt_active"), sort: true});
-         header.push({value: ""});
-         var x = pizo.tableView(
-             header,
-             data,
-             false,
-             true,
-             1
+ theme.formContactContentData = function(params){
+     var data = [];
+     for (var i = 0; i < params.data.length; i++){
+         data.push(theme.formContactGetRow(params.data[i]));
+     }
+     var header = [
+         {value: LanguageModule.text("txt_firstname"), sort: true},
+         {value: LanguageModule.text("txt_lastname"), sort: true},
+         {value: LanguageModule.text("txt_phone_number1"), sort: true},
+         {value: LanguageModule.text("txt_email1"), sort: false, hidden: true}
+     ];
+     if (params.fromCompany === undefined){
+         header.push(
+             {value: LanguageModule.text("txt_department"), sort: false, hidden: true},
+             {value: LanguageModule.text("txt_position"), sort: false, hidden: true},
+             {value: LanguageModule.text("txt_company"), sort: false, hidden: true}
          );
-         if (params.inputsearchbox !== undefined){
-             x.addInputSearch(params.inputsearchbox);
-             x.addFilter(params.company_select, 7);
-         }
-         return x;
+     }
+     header.push({value: LanguageModule.text("txt_active"), sort: false, hidden: true});
+     var x = pizo.tableView(
+         header,
+         data,
+         false,
+         true,
+         1
+     );
+     x.addClass('am-gray-table');
+     if (params.inputsearchbox !== undefined){
+         x.addInputSearch(params.inputsearchbox);
+         x.addFilter(params.company_select, 6);
+     }
+     x.setUpSwipe(true, true);
+     x.swipeCompleteRight = function(event, me, index, data, row, parent){
+         data.func.edit().then(function(value){
+             if (!value){
+                 parent.exactlyDeleteRow(index);
+             }
+             else {
+                 var c = theme.formContactGetRow(value);
+                 parent.updateRow(c, index);
+             }
+         });
      };
+     x.swipeCompleteLeft = function(event, me, index, data, row, parent){
+         data.func.delete().then(function(value){
+             parent.exactlyDeleteRow(index);
+         });
+     };
+     return x;
+ };
 
 theme.formContactInit = function(params){
     var filterFunc = function(){
@@ -572,7 +522,7 @@ theme.formContactInit = function(params){
             }),
             DOMElement.div({
                 attrs: {
-                    className: "card-mobile-content-has-search"
+                    className: "card-mobile-content-has-search absol-single-page-scroller"
                 },
                 children: [params.data_container]
             })
