@@ -54,31 +54,31 @@ theme.MesssageItem = function MesssageItem(){
 };
 
 theme.MesssageItem.render = function(){
- return absol._({
-     extendEvent: ['pressopen'],
-     class: 'chat-message-item',
-     child:[
-         {
-             class: 'chat-message-item-avatar'
-         },
-         {
-             class:'chat-message-item-content-ctn',
-             child:[
-                 {
-                     class:'chat-message-item-title',
-                     child:[
-                         {
-                             class:'chat-message-item-name'
-                         },
-                         {
-                             class:'chat-message-item-time'
-                         }
-                     ]
-                 },
-                 {
-                     class:'chat-message-item-company-contact'
-                 },
-                 {
+return absol._({
+    extendEvent: ['pressopen'],
+    class: 'chat-message-item',
+    child:[
+        {
+            class: 'chat-message-item-avatar'
+        },
+        {
+            class:'chat-message-item-content-ctn',
+            child:[
+                {
+                    class:'chat-message-item-title',
+                    child:[
+                        {
+                            class:'chat-message-item-name'
+                        },
+                        {
+                            class:'chat-message-item-time'
+                        }
+                    ]
+                },
+                {
+                    class:'chat-message-item-company-contact'
+                },
+                {
                     class:'chat-message-item-message',
                     child:[
                         {
@@ -293,6 +293,7 @@ theme.ChatBox.prototype.nameChat = function () {
         on: {
             action: function () {
                 self.frameList.getAllChild()[0].requestActive();
+                carddone.sessionIdActive = 0;
                 carddone.menu.showMobileTabbar(true);
             }
         }
@@ -337,6 +338,19 @@ theme.ChatBox.prototype.createMessage = function (data) {
                     className: "card-chatbox-message-line"
                 }
             });
+            if (data.loading !== undefined){
+                res.appendChild(DOMElement.div({
+                    attrs: {
+                        className: "card-icon-edit-message-cover"
+                    },
+                    children: [DOMElement.img({
+                        attrs: {
+                            className: "material-icons card-icon-loading-message",
+                            src: "./loading.gif"
+                        }
+                    })]
+                }));
+            }
             if (data.type == "me" && data.isEdit !== undefined) {
                 res.appendChild(DOMElement.div({
                     attrs: {
@@ -372,6 +386,10 @@ theme.ChatBox.prototype.createMessage = function (data) {
             }
             break;
         case "img":
+            var srcimg = window.domain + "uploads/images/" + data.localid + "_" + data.content + ".upload";
+            if (data.loading !== undefined){
+                srcimg = URL.createObjectURL(data.object)
+            }
             messelt = DOMElement.div({
                 attrs: {
                     className: classNameImg
@@ -382,12 +400,12 @@ theme.ChatBox.prototype.createMessage = function (data) {
                             maxHeight: "100%",
                             maxWidth: "100%"
                         },
-                        src: window.domain + "uploads/images/" + data.localid + "_" + data.content + ".upload",
+                        src: srcimg,
                         download: data.content,
                         onclick: function (id) {
                             return function (event, me) {
                                 document.body.appendChild(descViewImagePreview(self.dataImageList, id));
-                                console.log(self.dataImageList, id);
+                                // console.log(self.dataImageList, id);
                             }
                         }(data.localid)
                     }
@@ -396,14 +414,27 @@ theme.ChatBox.prototype.createMessage = function (data) {
             res = DOMElement.div({
                 attrs: {
                     className: "card-chatbox-message-line"
-                },
-                children: [messelt]
+                }
             });
+            if (data.loading !== undefined){
+                res.appendChild(DOMElement.div({
+                    attrs: {
+                        className: "card-icon-edit-message-cover"
+                    },
+                    children: [DOMElement.img({
+                        attrs: {
+                            className: "material-icons card-icon-loading-message",
+                            src: "./loading.gif"
+                        }
+                    })]
+                }));
+            }
+            res.appendChild(messelt);
             self.dataImageList.unshift({
                 id: data.localid,
                 avatar: data.avatarSrc,
                 userName: data.fullname,
-                src: window.domain + "uploads/images/" + data.localid + "_" + data.content + ".upload",
+                src: srcimg,
                 date: data.m_time,
                 note: ""
             });
@@ -430,9 +461,22 @@ theme.ChatBox.prototype.createMessage = function (data) {
             res = DOMElement.div({
                 attrs: {
                     className: "card-chatbox-message-line"
-                },
-                children: [messelt]
+                }
             });
+            if (data.loading !== undefined){
+                res.appendChild(DOMElement.div({
+                    attrs: {
+                        className: "card-icon-edit-message-cover"
+                    },
+                    children: [DOMElement.img({
+                        attrs: {
+                            className: "material-icons card-icon-loading-message",
+                            src: "./loading.gif"
+                        }
+                    })]
+                }));
+            }
+            res.appendChild(messelt);
             break;
         case "add_member":
             var listMemberText = "";
@@ -656,7 +700,28 @@ theme.ChatBox.prototype.deleteMessage = function (localid) {
         for (var i = 0; i < self.chatBar.listChatView.length; i++) {
             if (self.chatBar.listChatView[i].name == self.id) {
                 if (self.chatBar.listChatView[i].lastLocalid == localid) {
-                    self.chatBar.listChatView[i].elt.messagetext = ""; //thanhyen
+                    if (values == "")  self.chatBar.listChatView[i].elt.messagetext = "";
+                    else {
+                        switch (values.content_type) {
+                            case "file":
+                            case "text":
+                                self.chatBar.listChatView[i].elt.messagetext = values.content;
+                                break;
+                            case "img":
+                                self.chatBar.listChatView[i].elt.messagetext = "[photo]";
+                                break;
+                            case "join":
+                                self.chatBar.listChatView[i].elt.messagetext = values.fullname + " đã tham gia nhóm."
+                                break;
+                            case "create":
+                                self.chatBar.listChatView[i].elt.messagetext = values.fullname + " đã tạo nhóm."
+                                break;
+                            case "add_member":
+                                self.chatBar.listChatView[i].elt.messagetext = values.fullname + " đã thêm ..."
+                                break;
+                        }
+                        self.chatBar.listChatView[i].lastLocalid = values.localid;
+                    }
                 }
                 break;
             }
@@ -679,58 +744,119 @@ theme.ChatBox.prototype.deleteMessageConfirm = function (localid) {
     });
 };
 
+theme.ChatBox.prototype.updateMessage = function(content){
+    var self = this;
+    var messEltCmd;
+    for (var i = self.listMessLocalid.length -1; i >= 0; i--){
+        if (self.listMessLocalid[i].localid == content.localid){
+            messEltCmd = absol.$('.card-icon-loading-message', self.listMessLocalid[i].elt).parentNode;
+            DOMElement.removeAllChildren(messEltCmd);
+            if (content.failed){
+                messEltCmd.appendChild(DOMElement.i({
+                    attrs: {
+                        className: "material-icons card-icon-failed-message"
+                    },
+                    text: "error_outline"
+                }));
+            }
+            else if (content.content_type == "img"){
+                messEltCmd = absol.$('.card-chatbox-message-me-img', self.listMessLocalid[i].elt).firstChild;
+                messEltCmd.src = "./uploads/images/" + content.localid + "_" + content.content + ".upload";
+            }
+            break;
+        }
+    }
+};
+
 theme.ChatBox.prototype.sendAddMessage = function (text, files, images) {
     var self = this;
     switch (self.vMediaInput.mode) {
         case "new":
-            self.sendFunc(text, files, images).then(function (values) {
-                for (var i = 0; i < values.length; i++) {
-                    self.addMessage(values[i]);
-                }
+            var messList = [];
+            for (var i = 0; i < files.length; i++){
+                messList.push({
+                    content_type: "file",
+                    content: files[i].name,
+                    m_time: new Date(),
+                    userid: systemconfig.userid,
+                    loading: true
+                });
+            }
+            for (var i = 0; i < images.length; i++){
+                messList.push({
+                    content_type: "img",
+                    content: images[i].name,
+                    m_time: new Date(),
+                    userid: systemconfig.userid,
+                    object: images[i],
+                    loading: true
+                });
+            }
+            if (text != ""){
+                messList.push({
+                    content_type: "text",
+                    content: text,
+                    m_time: new Date(),
+                    userid: systemconfig.userid,
+                    loading: true
+                });
+            }
+            var listIdLocal = [], localid;
+            for (var i = 0; i < messList.length; i++){
+                localid = (new Date()).getTime() + i;
+                listIdLocal.push(localid);
+                messList[i].localid = localid;
+                messList[i].type = "me";
+                self.addMessage(messList[i]);
                 self.vMessContainer.scrollTop = self.vMessContainer.scrollHeight;
-                if (self.messageitem === undefined) {
-                    for (var i = 0; i < self.chatBar.listChatView.length; i++) {
-                        if (self.chatBar.listChatView[i].name == values.sessionid) {
-                            self.messageitem = self.chatBar.listChatView[i].elt;
-                            break;
-                        }
+            }
+            setTimeout(function () {
+                self.vMessContainer.scrollTop = self.vMessContainer.scrollHeight;
+                self.vMediaInput.focus();
+            }, 1000);
+            if (self.messageitem === undefined) {
+                for (var i = 0; i < self.chatBar.listChatView.length; i++) {
+                    if (self.chatBar.listChatView[i].name == this.id) {
+                        self.messageitem = self.chatBar.listChatView[i].elt;
+                        break;
                     }
-                    if (self.messageitem === undefined) {
-                        self.messageitem = self._messageitemhidden;
-                        self.chatBar.listChatView.push({
-                            name: values.sessionid,
-                            elt: self.messageitem,
-                            lastLocalid: values[values.length - 1].localid
-                        });
-                    }
-                    self.chatBar.listChatContent.insertBefore(self.messageitem, self.chatBar.listChatContent.firstChild);
                 }
-                var lastMess = values[values.length - 1];
-                 switch (lastMess.content_type) {
-                     case "file":
-                     case "text":
-                         self.messageitem.messagetext = lastMess.content;
-                         break;
-                     case "img":
-                         self.messageitem.messagetext = "[photo]";
-                         break;
-                     case "join":
-                         self.messageitem.messagetext = lastMess.fullname + " đã tham gia nhóm."
-                         break;
-                     case "create":
-                         self.messageitem.messagetext = lastMess.fullname + " đã tạo nhóm."
-                         break;
-                     case "add_member":
-                         self.messageitem.messagetext = lastMess.fullname + " đã thêm ..."
-                         break;
+                if (self.messageitem === undefined) {
+                    self.messageitem = self._messageitemhidden;
+                    self.chatBar.listChatView.push({
+                        name: this.id,
+                        elt: self.messageitem,
+                        lastLocalid: messList[messList.length - 1].localid
+                    });
+                }
+                self.chatBar.listChatContent.insertBefore(self.messageitem, self.chatBar.listChatContent.firstChild);
+            }
+            var lastMess = messList[messList.length - 1];
+            switch (lastMess.content_type) {
+                case "file":
+                case "text":
+                    self.messageitem.messagetext = lastMess.content;
+                    break;
+                case "img":
+                    self.messageitem.messagetext = "[photo]";
+                    break;
+                case "join":
+                    self.messageitem.messagetext = lastMess.fullname + " đã tham gia nhóm."
+                    break;
+                case "create":
+                    self.messageitem.messagetext = lastMess.fullname + " đã tạo nhóm."
+                    break;
+                case "add_member":
+                    self.messageitem.messagetext = lastMess.fullname + " đã thêm ..."
+                    break;
 
-                 }
-                self.messageitem.time = contentModule.getTimeMessageList(new Date());
-                self.messageitem.parentNode.insertBefore(self.messageitem, self.messageitem.parentNode.firstChild);
-                setTimeout(function () {
-                    self.vMessContainer.scrollTop = self.vMessContainer.scrollHeight;
-                    self.vMediaInput.focus();
-                }, 500);
+            }
+            self.messageitem.time = contentModule.getTimeMessageList(new Date());
+            self.messageitem.parentNode.insertBefore(self.messageitem, self.messageitem.parentNode.firstChild);
+            self.sendFunc(text, files, images, listIdLocal).then(function(values){
+                for (var i = 0; i < values.length; i++) {
+                    self.updateMessage(values[i]);
+                }
             });
             break;
         case "edit":
@@ -788,325 +914,325 @@ theme.ChatBox.prototype.updateContentSize = function () {
 };
 
 theme.ChatBox.prototype.addMessage = function(content){
- var self = this;
- if (this.lastMessTime != 0){
-     var oldTime, oldMonth, oldDate, oldYear;
-     oldTime = this.lastMessTime.getTime()/86400000;
-     oldDate = this.lastMessTime.getDate();
-     oldMonth = this.lastMessTime.getMonth() + 1;
-     oldYear = this.lastMessTime.getFullYear();
-     var newTime = content.m_time.getTime()/86400000;
-     var newDate = content.m_time.getDate()
-     var newMonth = content.m_time.getMonth() + 1;
-     var newYear = content.m_time.getFullYear();
-     if (oldYear != newYear || oldMonth != newMonth || oldDate != newDate){
-         var now = new Date();
-         var nowTime = now.getTime()/86400000;
-         var nowDate = now.getDate()
-         var nowMonth = now.getMonth() + 1;
-         var nowYear = now.getFullYear();
-         var res;
-         if (nowYear == newYear){
-             if (nowMonth == newMonth && nowDate == newDate){
-                 res = "Today";
-             }
-             else if (nowTime - newTime < 7){
-                 var weekday = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-                 res = weekday[content.m_time.getDay()];
-             }
-             else {
-                 res = contentModule.formatTimeDisplay(content.m_time);
-             }
-         }
-         else {
-             res = contentModule.formatTimeDisplay(content.m_time);
-         }
-         var singleMessage = absol.buildDom({
-             class: "card-chatbox-line-seen",
-             child: [absol.buildDom({
-                 tag: "unreadmessageline",
-                 props: {
-                     text: res
-                 }
-             })]
-         });
-         this.vBoxMessage.appendChild(singleMessage);
-     }
- }
- if (content.content_type != "file" && content.content_type != "img" && content.content_type != "text"){
-     var singleMessage = this.createMessage(content);
-     self.listMessLocalid.push({
-         localid: content.localid,
-         userid: content.userid,
-         m_time: content.m_time,
-         elt: singleMessage,
-         type: content.type
-     });
-     this.vBoxMessage.appendChild(singleMessage);
-     this.lastUserid = 0;
- }
- else {
-     if (this.lastUserid !== content.userid || parseInt(this.lastMessTime.getTime()/60000, 10) != parseInt(content.m_time.getTime()/60000, 10)){
-         var className;
-         if (content.type == "me"){
-             className = "card-chatbox-groupmess-me";
-             this._lastVMessageGroup = DOMElement.div({
-                 attrs: {
-                     className: className
-                 },
-                 children: [
-                     DOMElement.div({
-                         attrs: {
-                             className: "card-chatbox-groupmess-me-note"
-                         },
-                         text: contentModule.getTimeMessage(content.m_time)
-                     })
-                 ]
-             });
-             this.vBoxMessage.appendChild(this._lastVMessageGroup);
-         }
-         else {
-             className = "card-chatbox-groupmess-other";
-             var srcImgAvatar = content.avatarSrc;
-             this._lastVMessageGroup = DOMElement.div({
-                 attrs: {
-                     className: className
-                 },
-                 children: [
-                     DOMElement.div({
-                         attrs: {
-                             className: "card-chatbox-groupmess-other-note"
-                         },
-                         text: content.fullname + ", " + contentModule.getTimeMessage(content.m_time)
-                     })
-                 ]
-             });
-             this.vBoxMessage.appendChild(DOMElement.div({
-                 attrs: {
-                     className: "card-chatbox-message-cover"
-                 },
-                 children: [
-                     DOMElement.div({
-                         attrs: {
-                             style: {
-                                 marginLeft: "10px",
-                                 display: "inline-block",
-                                 verticalAlign: "top"
-                             }
-                         },
-                         children: [
-                             DOMElement.div({
-                                 attrs: {
-                                     className: "message-avatar-user",
-                                     style: {
-                                         backgroundImage: "url("+srcImgAvatar+")"
-                                     }
-                                 }
-                             })
-                         ]
-                     }),
-                     DOMElement.div({
-                         attrs: {
-                             style: {
-                                 display: "inline-block"
-                             }
-                         },
-                         children: [this._lastVMessageGroup]
-                     })
-                     ]
-                 }));
-             }
-             this.lastUserid = content.userid;
-             this.lastMessTime = content.m_time;
-         }
-         for (var i = 0; i < self.chatBar.listChatView.length; i++){
-             if (self.chatBar.listChatView[i].name == self.id){
-                 self.chatBar.listChatView[i].lastLocalid = content.localid;
-                 break;
-             }
-         }
-         var singleMessage = this.createMessage(content);
-         self.listMessLocalid.push({
-             localid: content.localid,
-             userid: content.userid,
-             m_time: content.m_time,
-             elt: singleMessage,
-             type: content.type
-         });
-         this._lastVMessageGroup.appendChild(singleMessage);
- }
- var self = this;
- if (content.localid <= this.mess_seen_id){
-     absol._('attachhook').addTo(singleMessage).on('error', function(){
-         this.remove();
-         setTimeout(function(){
-             singleMessage.scrollIntoView({behavior: "smooth", block: "end", inline: "nearest"});
-         }, 500);
-     });
- }
+    var self = this;
+    if (this.lastMessTime != 0){
+        var oldTime, oldMonth, oldDate, oldYear;
+        oldTime = this.lastMessTime.getTime()/86400000;
+        oldDate = this.lastMessTime.getDate();
+        oldMonth = this.lastMessTime.getMonth() + 1;
+        oldYear = this.lastMessTime.getFullYear();
+        var newTime = content.m_time.getTime()/86400000;
+        var newDate = content.m_time.getDate()
+        var newMonth = content.m_time.getMonth() + 1;
+        var newYear = content.m_time.getFullYear();
+        if (oldYear != newYear || oldMonth != newMonth || oldDate != newDate){
+            var now = new Date();
+            var nowTime = now.getTime()/86400000;
+            var nowDate = now.getDate()
+            var nowMonth = now.getMonth() + 1;
+            var nowYear = now.getFullYear();
+            var res;
+            if (nowYear == newYear){
+                if (nowMonth == newMonth && nowDate == newDate){
+                    res = "Today";
+                }
+                else if (nowTime - newTime < 7){
+                    var weekday = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+                    res = weekday[content.m_time.getDay()];
+                }
+                else {
+                    res = contentModule.formatTimeDisplay(content.m_time);
+                }
+            }
+            else {
+                res = contentModule.formatTimeDisplay(content.m_time);
+            }
+            var singleMessage = absol.buildDom({
+                class: "card-chatbox-line-seen",
+                child: [absol.buildDom({
+                    tag: "unreadmessageline",
+                    props: {
+                        text: res
+                    }
+                })]
+            });
+            this.vBoxMessage.appendChild(singleMessage);
+        }
+    }
+    if (content.content_type != "file" && content.content_type != "img" && content.content_type != "text"){
+        var singleMessage = this.createMessage(content);
+        self.listMessLocalid.push({
+            localid: content.localid,
+            userid: content.userid,
+            m_time: content.m_time,
+            elt: singleMessage,
+            type: content.type
+        });
+        this.vBoxMessage.appendChild(singleMessage);
+        this.lastUserid = 0;
+    }
+    else {
+        if (this.lastUserid !== content.userid || this.lastMessTime.getTime() + 60000 < content.m_time.getTime()){
+            var className;
+            if (content.type == "me"){
+                className = "card-chatbox-groupmess-me";
+                this._lastVMessageGroup = DOMElement.div({
+                    attrs: {
+                        className: className
+                    },
+                    children: [
+                        DOMElement.div({
+                            attrs: {
+                                className: "card-chatbox-groupmess-me-note"
+                            },
+                            text: contentModule.getTimeMessage(content.m_time)
+                        })
+                    ]
+                });
+                this.vBoxMessage.appendChild(this._lastVMessageGroup);
+            }
+            else {
+                className = "card-chatbox-groupmess-other";
+                var srcImgAvatar = content.avatarSrc;
+                this._lastVMessageGroup = DOMElement.div({
+                    attrs: {
+                        className: className
+                    },
+                    children: [
+                        DOMElement.div({
+                            attrs: {
+                                className: "card-chatbox-groupmess-other-note"
+                            },
+                            text: content.fullname + ", " + contentModule.getTimeMessage(content.m_time)
+                        })
+                    ]
+                });
+                this.vBoxMessage.appendChild(DOMElement.div({
+                    attrs: {
+                        className: "card-chatbox-message-cover"
+                    },
+                    children: [
+                        DOMElement.div({
+                            attrs: {
+                                style: {
+                                    marginLeft: "10px",
+                                    display: "inline-block",
+                                    verticalAlign: "top"
+                                }
+                            },
+                            children: [
+                                DOMElement.div({
+                                    attrs: {
+                                        className: "message-avatar-user",
+                                        style: {
+                                            backgroundImage: "url("+srcImgAvatar+")"
+                                        }
+                                    }
+                                })
+                            ]
+                        }),
+                        DOMElement.div({
+                            attrs: {
+                                style: {
+                                    display: "inline-block"
+                                }
+                            },
+                            children: [this._lastVMessageGroup]
+                        })
+                        ]
+                    }));
+                }
+                this.lastUserid = content.userid;
+                this.lastMessTime = content.m_time;
+            }
+            for (var i = 0; i < self.chatBar.listChatView.length; i++){
+                if (self.chatBar.listChatView[i].name == self.id){
+                    self.chatBar.listChatView[i].lastLocalid = content.localid;
+                    break;
+                }
+            }
+            var singleMessage = this.createMessage(content);
+            self.listMessLocalid.push({
+                localid: content.localid,
+                userid: content.userid,
+                m_time: content.m_time,
+                elt: singleMessage,
+                type: content.type
+            });
+            this._lastVMessageGroup.appendChild(singleMessage);
+    }
+    var self = this;
+    if (content.localid <= this.mess_seen_id){
+        absol._('attachhook').addTo(singleMessage).on('error', function(){
+            this.remove();
+            setTimeout(function(){
+                singleMessage.scrollIntoView({behavior: "smooth", block: "end", inline: "nearest"});
+            }, 500);
+        });
+    }
 };
 
 theme.ChatBox.prototype.addOldMessage = function(content){
-     var oldTime, oldMonth, oldDate, oldYear;
-     if (this.firstMessTime != 0){
-         oldTime = this.firstMessTime.getTime()/86400000;
-         oldDate = this.firstMessTime.getDate();
-         oldMonth = this.firstMessTime.getMonth() + 1;
-         oldYear = this.firstMessTime.getFullYear();
-     }
-     var newTime = content.m_time.getTime()/86400000;
-     var newDate = content.m_time.getDate()
-     var newMonth = content.m_time.getMonth() + 1;
-     var newYear = content.m_time.getFullYear();
-     if (oldYear != newYear || oldMonth != newMonth || oldDate != newDate){
-         var now = new Date();
-         var nowTime = now.getTime()/86400000;
-         var nowDate = now.getDate()
-         var nowMonth = now.getMonth() + 1;
-         var nowYear = now.getFullYear();
-         var res;
-         if (nowYear == newYear){
-             if (nowMonth == newMonth && nowDate == newDate){
-                 res = "Today";
-             }
-             else if (nowTime - oldTime < 7){
-                 var weekday = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-                 res = weekday[this.firstMessTime.getDay()];
-             }
-             else {
-                 res = contentModule.formatTimeDisplay(this.firstMessTime);
-             }
-         }
-         else {
-             res = contentModule.formatTimeDisplay(this.firstMessTime);
-         }
-         var singleMessage = absol.buildDom({
-             class: "card-chatbox-line-seen",
-             child: [absol.buildDom({
-                 tag: "unreadmessageline",
-                 props: {
-                     text: res
-                 }
-             })]
-         });
-         this.vBoxMessage.insertBefore(singleMessage, this.vBoxMessage.firstChild);
-         this.firstUserid = 0;
-         this.firstMessTime = 0;
-     }
-     if (content.content_type == "file" || content.content_type == "img" || content.content_type == "text"){
-         if (this.firstUserid !== content.userid || parseInt(this.firstMessTime.getTime()/60000, 10) !== parseInt(content.m_time.getTime()/60000, 10)){
-             var className;
-             if (content.type == "me"){
-                 className = "card-chatbox-groupmess-me";
-                 this._firstVMessageGroup = DOMElement.div({
-                     attrs: {
-                         className: className
-                     },
-                     children: [
-                         DOMElement.div({
-                             attrs: {
-                                 className: "card-chatbox-groupmess-me-note"
-                             },
-                             text: contentModule.getTimeMessage(content.m_time)
-                         })
-                     ]
-                 });
-                 this.vBoxMessage.insertBefore(this._firstVMessageGroup, this.vBoxMessage.firstChild);
-             }
-             else {
-                 className = "card-chatbox-groupmess-other";
-                 var srcImgAvatar = content.avatarSrc;
-                 this._firstVMessageGroup = DOMElement.div({
-                     attrs: {
-                         className: className
-                     },
-                     children: [
-                         DOMElement.div({
-                             attrs: {
-                                 className: "card-chatbox-groupmess-other-note"
-                             },
-                             text: content.fullname + ", " + contentModule.getTimeMessage(content.m_time)
-                         })
-                     ]
-                 });
-                 var groupCoverElt = DOMElement.div({
-                     attrs: {
-                         className: "card-chatbox-message-cover"
-                     },
-                     children: [
-                         DOMElement.div({
-                             attrs: {
-                                 style: {
-                                     marginLeft: "10px",
-                                     display: "inline-block",
-                                     verticalAlign: "top"
-                                 }
-                             },
-                             children: [
-                                 DOMElement.div({
-                                     attrs: {
-                                         className: "message-avatar-user",
-                                         style: {
-                                             backgroundImage: "url("+srcImgAvatar+")"
-                                         }
-                                     }
-                                 })
-                             ]
-                         }),
-                         DOMElement.div({
-                             attrs: {
-                                 style: {
-                                     display: "inline-block"
-                                 }
-                             },
-                             children: [this._firstVMessageGroup]
-                         })
-                     ]
-                 });
-                 this.vBoxMessage.insertBefore(groupCoverElt, this.vBoxMessage.firstChild);
-             }
-             this.firstUserid = content.userid;
-             this.firstMessTime = content.m_time;
-         }
-     }
-     else {
-         this._firstVMessageGroup = DOMElement.div({});
-         this.vBoxMessage.insertBefore(this._firstVMessageGroup, this.vBoxMessage.firstChild);
-         this.firstUserid = 0;
-     }
-     var singleMessage = this.createMessage(content);
-     self.listMessLocalid.push({
-         localid: content.localid,
-         userid: content.userid,
-         m_time: content.m_time,
-         elt: singleMessage,
-         type: content.type
-     });
-     this._firstVMessageGroup.insertBefore(singleMessage, this._firstVMessageGroup.childNodes[1]);
+    var oldTime, oldMonth, oldDate, oldYear;
+    if (this.firstMessTime != 0){
+        oldTime = this.firstMessTime.getTime()/86400000;
+        oldDate = this.firstMessTime.getDate();
+        oldMonth = this.firstMessTime.getMonth() + 1;
+        oldYear = this.firstMessTime.getFullYear();
+    }
+    var newTime = content.m_time.getTime()/86400000;
+    var newDate = content.m_time.getDate()
+    var newMonth = content.m_time.getMonth() + 1;
+    var newYear = content.m_time.getFullYear();
+    if (oldYear != newYear || oldMonth != newMonth || oldDate != newDate){
+        var now = new Date();
+        var nowTime = now.getTime()/86400000;
+        var nowDate = now.getDate()
+        var nowMonth = now.getMonth() + 1;
+        var nowYear = now.getFullYear();
+        var res;
+        if (nowYear == newYear){
+            if (nowMonth == newMonth && nowDate == newDate){
+                res = "Today";
+            }
+            else if (nowTime - oldTime < 7){
+                var weekday = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+                res = weekday[this.firstMessTime.getDay()];
+            }
+            else {
+                res = contentModule.formatTimeDisplay(this.firstMessTime);
+            }
+        }
+        else {
+            res = contentModule.formatTimeDisplay(this.firstMessTime);
+        }
+        var singleMessage = absol.buildDom({
+            class: "card-chatbox-line-seen",
+            child: [absol.buildDom({
+                tag: "unreadmessageline",
+                props: {
+                    text: res
+                }
+            })]
+        });
+        this.vBoxMessage.insertBefore(singleMessage, this.vBoxMessage.firstChild);
+        this.firstUserid = 0;
+        this.firstMessTime = 0;
+    }
+    if (content.content_type == "file" || content.content_type == "img" || content.content_type == "text"){
+        if (this.firstUserid !== content.userid || this.firstMessTime.getTime() + 60000 < content.m_time.getTime()){
+            var className;
+            if (content.type == "me"){
+                className = "card-chatbox-groupmess-me";
+                this._firstVMessageGroup = DOMElement.div({
+                    attrs: {
+                        className: className
+                    },
+                    children: [
+                        DOMElement.div({
+                            attrs: {
+                                className: "card-chatbox-groupmess-me-note"
+                            },
+                            text: contentModule.getTimeMessage(content.m_time)
+                        })
+                    ]
+                });
+                this.vBoxMessage.insertBefore(this._firstVMessageGroup, this.vBoxMessage.firstChild);
+            }
+            else {
+                className = "card-chatbox-groupmess-other";
+                var srcImgAvatar = content.avatarSrc;
+                this._firstVMessageGroup = DOMElement.div({
+                    attrs: {
+                        className: className
+                    },
+                    children: [
+                        DOMElement.div({
+                            attrs: {
+                                className: "card-chatbox-groupmess-other-note"
+                            },
+                            text: content.fullname + ", " + contentModule.getTimeMessage(content.m_time)
+                        })
+                    ]
+                });
+                var groupCoverElt = DOMElement.div({
+                    attrs: {
+                        className: "card-chatbox-message-cover"
+                    },
+                    children: [
+                        DOMElement.div({
+                            attrs: {
+                                style: {
+                                    marginLeft: "10px",
+                                    display: "inline-block",
+                                    verticalAlign: "top"
+                                }
+                            },
+                            children: [
+                                DOMElement.div({
+                                    attrs: {
+                                        className: "message-avatar-user",
+                                        style: {
+                                            backgroundImage: "url("+srcImgAvatar+")"
+                                        }
+                                    }
+                                })
+                            ]
+                        }),
+                        DOMElement.div({
+                            attrs: {
+                                style: {
+                                    display: "inline-block"
+                                }
+                            },
+                            children: [this._firstVMessageGroup]
+                        })
+                    ]
+                });
+                this.vBoxMessage.insertBefore(groupCoverElt, this.vBoxMessage.firstChild);
+            }
+            this.firstUserid = content.userid;
+            this.firstMessTime = content.m_time;
+        }
+    }
+    else {
+        this._firstVMessageGroup = DOMElement.div({});
+        this.vBoxMessage.insertBefore(this._firstVMessageGroup, this.vBoxMessage.firstChild);
+        this.firstUserid = 0;
+    }
+    var singleMessage = this.createMessage(content);
+    self.listMessLocalid.push({
+        localid: content.localid,
+        userid: content.userid,
+        m_time: content.m_time,
+        elt: singleMessage,
+        type: content.type
+    });
+    this._firstVMessageGroup.insertBefore(singleMessage, this._firstVMessageGroup.childNodes[1]);
 };
 
 theme.ChatBox.prototype.loadOldMess = function(){
- var self = this;
- console.log(this.data);
- self.vMessContainer.addEventListener("scroll", function(){
-     if (self.vMessContainer.scrollTop == 0){
-         var x = self.vBoxMessage.firstChild;
-         self.loadOldMessFunc().then(function(values){
-             if (self.data.content.length > 0){
-                 self.firstUserid = 0;
-                 self.firstMessTime = self.data.content[0].m_time;
-             }
-             else {
-                 self.firstUserid = 0;
-                 self.firstMessTime = 0;
-             }
-             for (var i = values.length -1; i >= 0; i--){
-                 self.addOldMessage(values[i]);
-             }
-             x.scrollIntoView();
-         });
-     }
- });
+    var self = this;
+    // console.log(this.data);
+    self.vMessContainer.addEventListener("scroll", function(){
+        if (self.vMessContainer.scrollTop == 0){
+            var x = self.vBoxMessage.firstChild;
+            self.loadOldMessFunc().then(function(values){
+                if (self.data.content.length > 0){
+                    self.firstUserid = 0;
+                    self.firstMessTime = self.data.content[0].m_time;
+                }
+                else {
+                    self.firstUserid = 0;
+                    self.firstMessTime = 0;
+                }
+                for (var i = values.length -1; i >= 0; i--){
+                    self.addOldMessage(values[i]);
+                }
+                x.scrollIntoView();
+            });
+        }
+    });
 };
 
 theme.ChatBox.prototype.getView = function () {
@@ -1278,8 +1404,13 @@ theme.ChatBar.prototype.drawListMessage = function (data, openChat, sessionActiv
                         for (var j = 0; j < self.listChatBoxOpen.length; j++) {
                             if (self.listChatBoxOpen[j].name == item.id) {
                                 self.listChatBoxOpen[j].elt.requestActive();
+                                carddone.sessionIdActive = item.id;
                                 carddone.menu.showMobileTabbar(false);
-                                self.listChatBoxOpen[j].chatBox.vMediaInput.focus();
+                                if (self.listChatBoxOpen[j].chatBox.messageitem.new_noseen > 0){
+                                    setTimeout(function(){
+                                        self.listChatBoxOpen[j].chatBox.seenMessage();
+                                    }, 500);
+                                }
                                 return;
                             }
                         }
@@ -1299,9 +1430,15 @@ theme.ChatBar.prototype.drawListMessage = function (data, openChat, sessionActiv
                                 chatBox.getView()
                             ]
                         });
-                        console.log(self.frameList);
+                        // console.log(self.frameList);
                         self.frameList.addChild(newChat);
                         newChat.requestActive();
+                        carddone.sessionIdActive = item.id;
+                        if (chatBox.messageitem.new_noseen > 0){
+                            setTimeout(function(){
+                                chatBox.seenMessage();
+                            }, 500);
+                        }
                         carddone.menu.showMobileTabbar(false);
                         self.listChatBoxOpen.push({
                             name: item.id,
@@ -1354,13 +1491,18 @@ theme.ChatBar.prototype.drawListMessage = function (data, openChat, sessionActiv
                 for (var j = 0; j < self.listChatBoxOpen.length; j++) {
                     if (self.listChatBoxOpen[j].name == data[i].id) {
                         self.listChatBoxOpen[j].elt.requestActive();
+                        carddone.sessionIdActive = data[i].id;
                         carddone.menu.showMobileTabbar(false);
-                        self.listChatBoxOpen[j].chatBox.vMediaInput.focus();
+                        if (self.listChatBoxOpen[j].chatBox.messageitem.new_noseen > 0){
+                            setTimeout(function(){
+                                self.listChatBoxOpen[j].chatBox.seenMessage();
+                            }, 500);
+                        }
                         return;
                     }
                 }
                 var chatBox = new theme.ChatBox({
-                    messageitem: this,
+                    messageitem: mItemsNew,
                     chatBar: self,
                     data: data[i],
                     frameList: self.frameList
@@ -1377,12 +1519,19 @@ theme.ChatBar.prototype.drawListMessage = function (data, openChat, sessionActiv
                 });
                 self.frameList.addChild(newChat);
                 newChat.requestActive();
+                carddone.sessionIdActive = data[i].id;
+                if (chatBox.messageitem.new_noseen > 0){
+                    setTimeout(function(){
+                        chatBox.seenMessage();
+                    }, 500);
+                }
                 carddone.menu.showMobileTabbar(false);
                 self.listChatBoxOpen.push({
                     name: data[i].id,
                     elt: newChat,
                     chatBox: chatBox
                 });
+                chatBox.seenMessage();
                 exOpenChat = true;
                 //console.log(data[i]);
             }
@@ -1407,7 +1556,7 @@ theme.ChatBar.prototype.drawListMessage = function (data, openChat, sessionActiv
                     avatarSrc: sessionActive.avatarSrc,
                     name: sessionActive.name,
                     quickMenuItems: quickMenuItems,
-                    company_contactName: data[i].company_contactName,
+                    company_contactName: sessionActive.company_contactName,
                     time: contentModule.getTimeMessageList(sessionActive.lasttime),
                     new_noseen: 0
                 },
@@ -1416,6 +1565,12 @@ theme.ChatBar.prototype.drawListMessage = function (data, openChat, sessionActiv
                         for (var j = 0; j < self.listChatBoxOpen.length; j++) {
                             if (self.listChatBoxOpen[j].name == sessionActive.id) {
                                 self.listChatBoxOpen[j].elt.requestActive();
+                                carddone.sessionIdActive = sessionActive.id;
+                                if (self.listChatBoxOpen[j].chatBox.messageitem.new_noseen > 0){
+                                    setTimeout(function(){
+                                        self.listChatBoxOpen[j].chatBox.seenMessage();
+                                    }, 500);
+                                }
                                 carddone.menu.showMobileTabbar(false);
                                 return;
                             }
@@ -1438,6 +1593,12 @@ theme.ChatBar.prototype.drawListMessage = function (data, openChat, sessionActiv
                         });
                         self.frameList.addChild(newChat);
                         newChat.requestActive();
+                        carddone.sessionIdActive = sessionActive.id;
+                        if (chatBox.messageitem.new_noseen > 0){
+                            setTimeout(function(){
+                                chatBox.seenMessage();
+                            }, 500);
+                        }
                         carddone.menu.showMobileTabbar(false);
                         self.listChatBoxOpen.push({
                             name: sessionActive.id,
@@ -1467,6 +1628,12 @@ theme.ChatBar.prototype.drawListMessage = function (data, openChat, sessionActiv
             });
             self.frameList.addChild(newChat);
             newChat.requestActive();
+            carddone.sessionIdActive = sessionActive.id;
+            if (chatBox.messageitem.new_noseen > 0){
+                setTimeout(function(){
+                    chatBox.seenMessage();
+                }, 500);
+            }
             carddone.menu.showMobileTabbar(false);
             self.listChatBoxOpen.push({
                 name: sessionActive.id,
@@ -1476,6 +1643,21 @@ theme.ChatBar.prototype.drawListMessage = function (data, openChat, sessionActiv
             //console.log(self);
         }
     }
+};
+
+theme.ChatBar.prototype.getMessOpenChat = function(){
+    var self = this;
+    return new Promise(function(resolve, reject){
+        self.data.functionOpenChat().then(function(values){
+            for (var i = 0; i < self.listChatView.length; i++){
+                if (self.listChatView[i].name == values){
+                    self.listChatView[i].elt.emit("click");
+                    break;
+                }
+            }
+            resolve(self.getMessOpenChat());
+        });
+    });
 };
 
 theme.ChatBar.prototype.getMessView = function () {
@@ -1497,7 +1679,12 @@ theme.ChatBar.prototype.getMessView = function () {
                         if (self.listChatView[i].name == values.content.sessionid) {
                             var new_noseen = self.listChatView[i].elt.new_noseen;
                             if (new_noseen === undefined) new_noseen = 0;
-                            self.listChatView[i].elt.new_noseen = values.content.dataDraw.length + new_noseen;
+                            if (values.content.dataDraw[0].type == "other"){
+                                self.listChatView[i].elt.new_noseen = values.content.dataDraw.length + new_noseen;
+                            }
+                            else {
+                                self.listChatView[i].elt.new_noseen = 0;
+                            }
                             //console.log(values.content.dataDraw);
                            lastMess = values.content.dataDraw[values.content.dataDraw.length - 1];
                          switch (lastMess.content_type) {
@@ -1532,6 +1719,7 @@ theme.ChatBar.prototype.getMessView = function () {
                                 isS = 1;
                             }
                             for (var j = 0; j < values.content.dataDraw.length; j++) {
+                                if (values.content.dataDraw[j].type == "me") isS = true;
                                 self.listChatBoxOpen[i].chatBox.addMessage(values.content.dataDraw[j]);
                             }
                             if (isS) self.listChatBoxOpen[i].chatBox.vLastBoxmess.scrollIntoView();
@@ -1566,6 +1754,12 @@ theme.ChatBar.prototype.getMessView = function () {
                                 for (var j = 0; j < self.listChatBoxOpen.length; j++) {
                                     if (self.listChatBoxOpen[j].name == values.item.id) {
                                         self.listChatBoxOpen[j].elt.requestActive();
+                                        carddone.sessionIdActive = values.item.id;
+                                        if (self.listChatBoxOpen[j].chatBox.messageitem.new_noseen > 0){
+                                            setTimeout(function(){
+                                                self.listChatBoxOpen[j].chatBox.seenMessage();
+                                            }, 500);
+                                        }
                                         carddone.menu.showMobileTabbar(false);
                                         return;
                                     }
@@ -1588,6 +1782,12 @@ theme.ChatBar.prototype.getMessView = function () {
                                 });
                                 self.frameList.addChild(newChat);
                                 newChat.requestActive();
+                                carddone.sessionIdActive = values.item.id;
+                                if (chatBox.messageitem.new_noseen > 0){
+                                    setTimeout(function(){
+                                        chatBox.seenMessage();
+                                    }, 500);
+                                }
                                 carddone.menu.showMobileTabbar(false);
                                 self.listChatBoxOpen.push({
                                     name: values.item.id,
@@ -1635,7 +1835,7 @@ theme.ChatBar.prototype.getMessView = function () {
                     });
                     break;
                 case "editmessage":
-                    console.log(values);
+                    // console.log(values);
                     for (var i = 0; i < self.data.length; i++) {
                         if (self.data[i].id == values.content.sessionid) {
                             for (var j = 0; j < self.data[i].content.length; j++) {
@@ -1699,36 +1899,59 @@ theme.ChatBar.prototype.getMessView = function () {
                     for (var i = 0; i < self.listChatView.length; i++) {
                         if (self.listChatView[i].name == values.content.sessionid) {
                             if (self.listChatView[i].lastLocalid == values.content.localid) {
-                                self.listChatView[i].elt.messagetext = ""; //thanhyen
+                                if (values.content.lastMess == ""){
+                                    self.listChatView[i].elt.messagetext = "";
+                                }
+                                else {
+                                    switch (values.content.lastMess.content_type) {
+                                        case "file":
+                                        case "text":
+                                            self.listChatView[i].elt.messagetext = values.content.lastMess.content;
+                                            break;
+                                        case "img":
+                                            self.listChatView[i].elt.messagetext = "[photo]";
+                                            break;
+                                        case "join":
+                                            self.listChatView[i].elt.messagetext = values.content.lastMess.fullname + " đã tham gia nhóm."
+                                            break;
+                                        case "create":
+                                            self.listChatView[i].elt.messagetext = values.content.lastMess.fullname + " đã tạo nhóm."
+                                            break;
+                                        case "add_member":
+                                            self.listChatView[i].elt.messagetext = values.content.lastMess.fullname + " đã thêm ..."
+                                            break;
+                                    }
+                                    self.listChatView[i].lastLocalid = values.content.lastMess.localid;
+                                }
                             }
                             break;
                         }
                     }
                     break;
-          case "change_group_name":
-              console.log(values);
-              for (var i = 0; i < self.listChatBoxOpen.length; i++){
-                   if (self.listChatBoxOpen[i].name == values.sessionid){
-                       self.listChatBoxOpen[i].chatBox.titleChat.textContent = values.name;
-                       break;
-                   }
-              }
-              for (var i = 0; i < self.listChatView.length; i++){
-                  if (self.listChatView[i].name == values.sessionid){
-                      self.listChatView[i].elt.name = values.name;
-                      break;
-                  }
-              }
-              break;
-         case "change_group_avatar":
-             console.log(values);
-             for (var i = 0; i < self.listChatView.length; i++){
-                 if (self.listChatView[i].name == values.sessionid){
-                     self.listChatView[i].elt.avatarSrc = values.avatarSrc;
-                     break;
-                 }
-             }
-             break;
+                case "change_group_name":
+                    // console.log(values);
+                    for (var i = 0; i < self.listChatBoxOpen.length; i++){
+                        if (self.listChatBoxOpen[i].name == values.sessionid){
+                            self.listChatBoxOpen[i].chatBox.titleChat.textContent = values.name;
+                            break;
+                        }
+                    }
+                    for (var i = 0; i < self.listChatView.length; i++){
+                        if (self.listChatView[i].name == values.sessionid){
+                            self.listChatView[i].elt.name = values.name;
+                            break;
+                        }
+                    }
+                    break;
+                case "change_group_avatar":
+                    // console.log(values);
+                    for (var i = 0; i < self.listChatView.length; i++){
+                        if (self.listChatView[i].name == values.sessionid){
+                            self.listChatView[i].elt.avatarSrc = values.avatarSrc;
+                            break;
+                        }
+                    }
+                    break;
 
             }
             resolve(self.getMessView());
@@ -1752,7 +1975,7 @@ theme.ChatBar.prototype.addgroupFuncSubmit = function () {
     };
     self.data.addgroupFunc(data).then(function (values) {
         //console.log(values);
-        ModalElement.close(1);
+        self.frameList.removeLast();
         var quickMenuItems = [];
         if (values.item.memberList.length > 2 || values.item.cardid > 0){
             quickMenuItems.push({
@@ -1774,10 +1997,16 @@ theme.ChatBar.prototype.addgroupFuncSubmit = function () {
             },
             on: {
                 pressopen: function (event) {
-                    console.log(values.item.id, self.listChatBoxOpen);
+                    // console.log(values.item.id, self.listChatBoxOpen);
                     for (var j = 0; j < self.listChatBoxOpen.length; j++) {
                         if (self.listChatBoxOpen[j].name == values.item.id) {
                             self.listChatBoxOpen[j].elt.requestActive();
+                            carddone.sessionIdActive = values.item.id;
+                            if (self.listChatBoxOpen[j].chatBox.messageitem.new_noseen > 0){
+                                setTimeout(function(){
+                                    self.listChatBoxOpen[j].chatBox.seenMessage();
+                                }, 500);
+                            }
                             carddone.menu.showMobileTabbar(false);
                             return;
                         }
@@ -1800,6 +2029,12 @@ theme.ChatBar.prototype.addgroupFuncSubmit = function () {
                     });
                     self.frameList.addChild(newChat);
                     newChat.requestActive();
+                    carddone.sessionIdActive = values.item.id;
+                    if (chatBox.messageitem.new_noseen > 0){
+                        setTimeout(function(){
+                            chatBox.seenMessage();
+                        }, 500);
+                    }
                     carddone.menu.showMobileTabbar(false);
                     self.listChatBoxOpen.push({
                         name: values.item.id,
@@ -1846,6 +2081,12 @@ theme.ChatBar.prototype.addgroupFuncSubmit = function () {
         for (var j = 0; j < self.listChatBoxOpen.length; j++) {
             if (self.listChatBoxOpen[j].name == values.item.id) {
                 self.listChatBoxOpen[j].elt.requestActive();
+                carddone.sessionIdActive = values.item.id;
+                if (self.listChatBoxOpen[j].chatBox.messageitem.new_noseen > 0){
+                    setTimeout(function(){
+                        self.listChatBoxOpen[j].chatBox.seenMessage();
+                    }, 500);
+                }
                 carddone.menu.showMobileTabbar(false);
                 return;
             }
@@ -1879,6 +2120,12 @@ theme.ChatBar.prototype.addgroupFuncSubmit = function () {
         });
         self.frameList.addChild(newChat);
         newChat.requestActive();
+        carddone.sessionIdActive = values.item.id;
+        if (chatBox.messageitem.new_noseen > 0){
+            setTimeout(function(){
+                chatBox.seenMessage();
+            }, 500);
+        }
         carddone.menu.showMobileTabbar(false);
         self.listChatBoxOpen.push({
             name: values.item.id,
@@ -1892,19 +2139,18 @@ theme.ChatBar.prototype.addgroupFunc = function () {
     var self = this;
     self._name_group_inputtext = theme.input({
         style: {
-            width: "300px",
+            width: "100%",
             marginTop: "var(--control-horizontal-distance-1)",
             marginBottom: "var(--control-horizontal-distance-2)"
         }
     });
 
     self._members_group_select = absol.buildDom({
-        tag: 'selectbox',
+        tag: 'mselectbox',
         style: {
             textAlign: "left",
             display: "block",
             width: "100%",
-            maxWidth: "300px",
             marginTop: "var(--control-horizontal-distance-1)",
             marginBottom: "var(--control-horizontal-distance-2)"
         },
@@ -1913,47 +2159,60 @@ theme.ChatBar.prototype.addgroupFunc = function () {
             enableSearch: true
         }
     });
-    ModalElement.showWindow({
-        index: 1,
-        title: LanguageModule.text("txt_add_group"),
-        bodycontent: DOMElement.div({
-            children: [
-                DOMElement.div({ text: LanguageModule.text("txt_group_name") }),
-                self._name_group_inputtext,
-                DOMElement.div({ text: LanguageModule.text("txt_add_members_into_group") }),
-                self._members_group_select,
-                DOMElement.div({
+    var header = absol.buildDom({
+        tag: 'mheaderbar',
+        props: {
+            actionIcon: DOMElement.i({
+                attrs: {
+                    className: "material-icons"
+                },
+                text: "arrow_back_ios"
+            }),
+            title: LanguageModule.text("txt_add_group"),
+            commands: [{
+                icon: DOMElement.i({
                     attrs: {
-                        align: "center"
+                        className: "material-icons"
                     },
-                    children: [DOMElement.table({
-                        data: [[
-                            {
-                                children: [theme.noneIconButton({
-                                    onclick: function () {
-                                        self.addgroupFuncSubmit();
-                                    },
-                                    text: LanguageModule.text("txt_save")
-                                })]
-                            },
-                            {
-                                attrs: { style: { width: carddone.menu.distanceButtonForm } }
-                            },
-                            {
-                                children: [theme.noneIconButton({
-                                    onclick: function (event, me) {
-                                        ModalElement.close();
-                                    },
-                                    text: LanguageModule.text("txt_cancel")
-                                })]
-                            }
-                        ]]
-                    })]
+                    text: "save"
                 })
-            ]
-        })
+            }]
+        },
+        on: {
+            action: function(){
+                self.frameList.removeLast();
+            },
+            command: function(){
+                self.addgroupFuncSubmit();
+            }
+        }
     });
-    self._name_group_inputtext.focus();
+    var manageGroupDiv = absol.buildDom({
+         tag: "tabframe",
+         class: "card-manage-group",
+         child: [
+             header,
+             DOMElement.div({
+                 attrs: {
+                     className: "card-mobile-content"
+                 },
+                 children: [
+                     DOMElement.div({ text: LanguageModule.text("txt_group_name") }),
+                     self._name_group_inputtext,
+                     DOMElement.div({ text: LanguageModule.text("txt_add_members_into_group") }),
+                     self._members_group_select
+                 ]
+             })
+         ]
+   });
+   self.manageModal = absol.buildDom({
+       tag: 'tabframe',
+       child: [manageGroupDiv]
+   });
+   self.frameList.addChild(self.manageModal);
+   self.manageModal.requestActive();
+   carddone.sessionIdActive = 0;
+   self._name_group_inputtext.focus();
 };
 
 theme.ChatBar.prototype.loadOldChat_session = function () {
@@ -2029,7 +2288,7 @@ theme.ChatBar.prototype.editNameGroup = function(item){
 };
 
 theme.ChatBar.prototype.manageGroup = function(item){
-    console.log(item);
+    // console.log(item);
     var self = this;
     item.memberList.getIndex = function(id){
        for (var i = 0; i < item.memberList.length; i++){
@@ -2077,7 +2336,7 @@ theme.ChatBar.prototype.manageGroup = function(item){
             items.push(self.data.listUserAdd[i]);
         }
         var members_group_select = absol.buildDom({
-            tag: 'selectbox',
+            tag: 'mselectbox',
             class: "card-chat-members-group-select",
             props: {
                 items: items,
@@ -2126,6 +2385,7 @@ theme.ChatBar.prototype.manageGroup = function(item){
         });
         self.frameList.addChild(addMemberElt);
         addMemberElt.requestActive();
+        carddone.sessionIdActive = 0;
     };
     var listMemberElt = DOMElement.div({
         attrs: {
@@ -2280,6 +2540,7 @@ theme.ChatBar.prototype.manageGroup = function(item){
    });
    self.frameList.addChild(self.manageModal);
    self.manageModal.requestActive();
+   carddone.sessionIdActive = 0;
     var editNameBtn = absol.$('.card-manage-group-edit-btn', self.manageModal);
     editNameBtn.on('click', function(){
         self.editNameGroup(item);
@@ -2317,6 +2578,7 @@ theme.ChatBar.prototype.getView = function () {
         return -1;
     };
     this.getMessView();
+    this.getMessOpenChat();
     var header = absol.buildDom({
         tag: 'mheaderbar',
         class: "am-small-title",
@@ -2383,6 +2645,7 @@ theme.ChatBar.prototype.getView = function () {
     })
     this.drawListMessage(this.data, this.openChat, this.sessionActive);
     this.loadOldChat_session();
+    carddone.listTabChat.status = 1;
     return this.view;
 };
 
@@ -2405,6 +2668,7 @@ theme.formChatsInit = function (params) {
     });
     params.frameList.addChild(x);
     x.requestActive();
+    carddone.sessionIdActive = 0;
 };
 ModuleManagerClass.register({
     name: "Chats_view",

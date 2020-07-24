@@ -1,5 +1,5 @@
 'use strict';
-var DOMElement = {
+window.DOMElement = {
 
     idcount : 0,
     hiddendiv: null,

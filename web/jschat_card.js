@@ -1,4 +1,4 @@
-var ChatClass = {
+window.ChatClass = {
     n: 0
 };
 ChatClass.ps = function () {

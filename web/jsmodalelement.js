@@ -1,4 +1,4 @@
-var ModalElement = {
+window.ModalElement = {
     alert_func : null,
     question_callback_func : null,
     singleInput_callback_func : null,

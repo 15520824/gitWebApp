@@ -1,5 +1,5 @@
 
-    var button071218 = {};
+    window.button071218 = {};
     button071218.showButton = function(params){
         var sym, con, tcolor, bcolor, xheight, xwidth, xborder, xradius,icolor,hcolor;
         sym = DOMElement.div({});

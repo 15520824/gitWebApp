@@ -1,7 +1,7 @@
-import React, {Component,  useRef, useState, useEffect } from 'react';
-import {Platform, StyleSheet, Alert, View, AppState, Text} from 'react-native';
+import React, {Component} from 'react';
+import {Platform, StyleSheet, Alert, View, AppState} from 'react-native';
 import {WebView} from 'react-native-webview';
-import firebase, { RNFirebase } from 'react-native-firebase';
+import firebase from 'react-native-firebase';
 import AsyncStorage from '@react-native-community/async-storage';
 
 const isAndroid = Platform.OS === 'android';
@@ -28,11 +28,11 @@ const channel = new firebase.notifications.Android.Channel(
   ).setDescription("Used for getting reminder notification");
 firebase.notifications().android.createChannel(channel);
 
-function displayNotification(notification: { notificationId: string; title: string; subtitle: string; body: string; moredata: any; })
+function displayNotification(notification: { notificationId: string; title: string; subtitle: string; body: string; moredata: any; data: any; })
 {
   return new Promise(function(resolve,reject){
     if (Platform.OS === 'android') {
-      const localNotification = new firebase.notifications.Notification({sound: 'default', show_in_foreground: true})
+      const localNotification = new firebase.notifications.Notification()
           .setNotificationId(notification.notificationId)
           .setTitle(notification.title)
           .setSubtitle(notification.subtitle)
@@ -109,7 +109,7 @@ class App extends Component {
     this.notificationListener = firebase
       .notifications().onNotificationOpened(notificationOpen => {
         const notification = notificationOpen.notification;
-        // console.log(notification);
+        console.log(notification);
         const clientResponseCode = `
         window.postMessage(${JSON.stringify({name: "openchatMobile", value: notification.data.moredata})}, "*");
         true;
@@ -145,7 +145,7 @@ class App extends Component {
     });
   }
 
-  clickNotiChatFuncClose(moredata, count = 0) {
+  clickNotiChatFuncClose(moredata: string, count = 0) {
     var self = this;
     if (self.webView) {
       const clientResponseCode = `
@@ -189,14 +189,14 @@ class App extends Component {
             self.getToken().then(function(value){
               resolve(value);
             }).catch(function(err){
-              console.log('permission rejected');
+              console.log('permission rejected',err);
               reject();
             })
           } else {
             self.requestPermission().then(function(value){
               resolve(value);
             }).catch(function(err){
-              console.log('permission rejected');
+              console.log('permission rejected',err);
               reject();
             })
           }
@@ -221,7 +221,7 @@ class App extends Component {
               }
             })
             .catch(function(err){
-              console.log('permission rejected');
+              console.log('permission rejected',err);
               reject();
             })
           }
@@ -246,7 +246,7 @@ class App extends Component {
         // User has authorised
       } catch (error) {
         // User has rejected permissions
-        console.log('permission rejected');
+        console.log('permission rejected',error);
         reject();
       }
     })
@@ -274,7 +274,7 @@ class App extends Component {
     return (
       <View style={styles.container}>
         <WebView
-          source={{uri: indexfile}}
+          source={indexfile}
           ref={(webView) => this.webView = webView}
           keyboardDisplayRequiresUserAction={false} //ios
           automaticallyAdjustContentInsets={false}
@@ -324,6 +324,7 @@ class App extends Component {
                     self.webView.injectJavaScript(clientResponseCode);
                   }
                 }).catch(function(err){
+                  console.log(err);
                   const clientResponseCode = `
                     window.postMessage(${JSON.stringify({name: "saveDomain", value: false})}, "*");
                     true;

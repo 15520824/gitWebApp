@@ -1,6 +1,6 @@
 'use strict'
-
-var EncodingClass = {
+console.log(1);
+window.EncodingClass = {
     func: {
         tempFunc : null,
         exec : function (st) {

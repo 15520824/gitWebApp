@@ -1,4 +1,4 @@
-var StorageClass = {
+window.StorageClass = {
     tempvars: [],
 
     isSupported: function () {

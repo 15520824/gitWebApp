@@ -209,11 +209,15 @@ body {
     padding-right: var(--tab-padding-right)
 }
 
+/* .bsc-white .absol-single-page-scroller {
+    height: unset;
+} */
+
 .button-panel-header {
     background-color: white;
     padding-top: var(--control-verticle-distance-1);
     padding-bottom: var(--control-verticle-distance-1);
-    z-index: 88;
+    /* z-index: 88; */
 }
 
 .single-button-header {
@@ -360,6 +364,9 @@ td {
 .sortTableClone {
     margin-left: 0 !important;
 }
+.cardtablehover {
+    position: relative;
+}
 
 .bsc-white .sortTable thead th,
 .bsc-white .sortTableClone thead th {
@@ -406,9 +413,22 @@ td {
     border-left: 1px solid #ddd !important;
 }
 
+.bsc-white table.sortTable,
+.bsc-white table.sortTableClone {
+    margin: unset;
+}
+
+.container-header > span {
+    justify-content: center;
+    align-items: center;
+}
+.bsc-white table.sortTable {
+    max-width: calc(100% - 20px);
+}
+
 .sortTable-cell-view {
     min-height: 30px;
-    background-color: #ebebeb;
+    /* background-color: #ebebeb; */
     padding-left: 5px;
     padding-right: 5px;
     padding-top: 7px;
@@ -436,6 +456,82 @@ td {
     background-color: white;
 }
 
+/* thiên */
+.sortTable.am-gray-table>tbody>tr.parent>td.card-table-drag-cell::before{
+    background-color: unset;
+}
+
+.sortTable.am-gray-table{
+
+}
+
+.sortTable.am-gray-table>tbody>tr>td.parent{
+    position: relative;
+    background-color: #d6d6d6;
+    border: none !important;
+}
+
+.sortTable.am-gray-table>tbody>tr.parent>td::before{
+    content: "";
+    position: absolute;
+    z-index: 0;
+    left: 5px;
+    right: 2.5px;
+    top: 5px;
+    bottom: 5px;
+    background-color: #ebebeb;
+}
+
+.sortTable.am-gray-table>tbody>tr.parent>td:first-child::before{
+    left: 10px;
+}
+
+.sortTable.am-gray-table>tbody>tr.parent>td:last-child::before{
+    right: 10px;
+}
+
+
+.sortTable.am-gray-table>tbody>tr.parent>td>.container-view{
+    position: relative;
+    z-index: 3;
+}
+
+.sortTable.am-white-table{
+
+}
+
+.sortTable.am-white-table>tbody>tr>td.parent{
+    position: relative;
+    background-color: #d6d6d6;
+    border: none !important;
+}
+
+.sortTable.am-white-table>tbody>tr.parent>td::before{
+    content: "";
+    position: absolute;
+    z-index: 0;
+    left: 5px;
+    right: 2.5px;
+    top: 5px;
+    bottom: 5px;
+    background-color: #ffffff;
+}
+
+.sortTable.am-white-table>tbody>tr.parent>td:first-child::before{
+    left: 10px;
+}
+
+.sortTable.am-white-table>tbody>tr.parent>td:last-child::before{
+    right: 10px;
+}
+
+
+.sortTable.am-white-table>tbody>tr.parent>td>.container-view{
+    position: relative;
+    z-index: 3;
+}
+
+/* thiên */
 .as-message-input-body .as-message-input-text-input {
     padding-left: var(--control-horizontal-distance-2);
     padding-top: var(--control-verticle-distance-1);
@@ -475,6 +571,13 @@ td {
     text-align: left;
     width: 100%;
 }
+/* .chats-theme-desktop-list-message-content>div:nth-child(odd){
+    background-color: #efefef;
+}
+
+.chats-theme-desktop-list-message-content>div:nth-child(even){
+    background-color: #ffffff;
+} */
 
 .chats-theme-desktop-message-details {
     height: 100%;
@@ -673,6 +776,7 @@ td {
     border-bottom-left-radius: 12px;
     display: inline-block;
     background-color: #DBF4FD;
+    vertical-align: middle;
 }
 
 .card-chatbox-message-line:nth-child(2) .card-chatbox-message-me,
@@ -728,6 +832,7 @@ td {
     border-bottom-right-radius: 12px;
     display: inline-block;
     background-color: rgb(241, 240, 240);
+    vertical-align: middle;
 }
 
 .card-chatbox-groupmess-me {
@@ -771,7 +876,11 @@ td {
     display: block;
 }
 
-.table-of-list-board .cd-list-board:not(:last-child) {
+/* .table-of-list-board .cd-list-board:not(:last-child) {
+    margin-right: 20px;
+} */
+
+.table-of-list-board .cd-list-board {
     margin-right: 20px;
 }
 
@@ -962,6 +1071,7 @@ td {
     vertical-align: middle;
     width: 52px;
     height: 52px;
+    border: 1px solid #efefef;
 }
 
 .message-avatar-user {
@@ -985,7 +1095,7 @@ td {
 
 .chat-message-item-name {
     font-size: 16px;
-    padding-bottom: 10px;
+    padding-bottom: 5px;
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 70%;
@@ -1028,7 +1138,7 @@ td {
 .chat-message-item-cmd {
     position: absolute;
     right: 5px;
-    top: 0;
+    top: -10px;
 }
 
 .chats-theme-desktop-message-frameview {
@@ -1214,6 +1324,11 @@ td {
 
 .card-icon-edit-message {
     color: #929292;
+    font-size: var(--icon-fontsize);
+}
+
+.card-icon-failed-message {
+    color: red;
     font-size: var(--icon-fontsize);
 }
 
@@ -1587,7 +1702,11 @@ td {
 }
 
 .table-of-list-board .cd-list-board-body {
-    max-height: calc(100vh - 245px);
+    max-height: calc(100vh - 260px);
+}
+
+.card-mobile-content .table-of-list-board .cd-list-board-body {
+    max-height: calc(100vh - 165px);
 }
 
 .card-report-filter-icon{
@@ -1641,12 +1760,20 @@ td {
     max-width: 70vw;
 }
 
+.am-application .card-chatbox-message-me-img {
+    max-width: 50vw;
+}
+
 .am-application .card-chatbox-message-cover {
     max-width: 100%;
 }
 
 .am-application .card-chatbox-message-other {
     max-width: 60vw;
+}
+
+.am-application .card-chatbox-message-other-img {
+    max-width: 50vw;
 }
 
 .am-application .card-manage-group {
@@ -1656,3 +1783,118 @@ td {
 .am-application .card-chat-member {
     min-width: 100%;
 }
+
+.card-edit-company-ctn {
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    width: 100%;
+    height: 100%;
+    align-items: stretch;
+}
+
+.card-edit-company-block-first {
+    display: inline-block;
+    vertical-align: top;
+    padding-right: 20px;
+    padding-bottom: 20px;
+    display: flex;
+    flex-shrink: 0;
+}
+
+.card-edit-company-block-maps {
+    flex-grow: 2;
+    display: flex;
+}
+
+.card-edit-company-block-maps-child {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+}
+
+.card-edit-company-block-maps-child-ctn{
+    flex-grow: 2;
+    display: flex;
+    position: relative;
+}
+
+.card-edit-company-block-contact{
+    vertical-align: top;
+    display: flex;
+    flex-shrink: 0;
+    justify-content: left;
+    padding-bottom: 20px;
+}
+.card-edit-company-block-maps-contact-ctn{
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    width: 100%;
+    height: 100%;
+    align-items: stretch;
+    flex-direction: column;
+}
+
+.bsc-white .cd-work-calendar-date .cd-today{
+    color: black;
+}
+
+.bsc-white .cd-work-calendar-date {
+    margin-left: 0;
+}
+
+.card-icon-loading-message {
+    display: inline-block;
+    vertical-align: middle;
+    height: 20px;
+    width: 20px;
+}
+
+.progress {
+    height: 20px;
+    margin-bottom: 20px;
+    overflow: hidden;
+    background-color: #f5f5f5;
+    border-radius: 4px;
+    -webkit-box-shadow: inset 0 1px 2px rgba(0,0,0,.1);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,.1);
+}
+
+.progress-bar {
+    float: left;
+    width: 0;
+    height: 100%;
+    font-size: 12px;
+    line-height: 20px;
+    color: #fff;
+    text-align: center;
+    background-color: #337ab7;
+    -webkit-box-shadow: inset 0 -1px 0 rgba(0,0,0,.15);
+    box-shadow: inset 0 -1px 0 rgba(0,0,0,.15);
+    -webkit-transition: width .6s ease;
+    -o-transition: width .6s ease;
+    transition: width .6s ease;
+}
+
+.progress-bar-striped, .progress-striped .progress-bar {
+    background-image: -webkit-linear-gradient(45deg,rgba(255,255,255,.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,.15) 50%,rgba(255,255,255,.15) 75%,transparent 75%,transparent);
+    background-image: -o-linear-gradient(45deg,rgba(255,255,255,.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,.15) 50%,rgba(255,255,255,.15) 75%,transparent 75%,transparent);
+    background-image: linear-gradient(45deg,rgba(255,255,255,.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,.15) 50%,rgba(255,255,255,.15) 75%,transparent 75%,transparent);
+    -webkit-background-size: 40px 40px;
+    background-size: 40px 40px;
+}
+
+.progress-bar.active, .progress.active .progress-bar {
+    -webkit-animation: progress-bar-stripes 2s linear infinite;
+    -o-animation: progress-bar-stripes 2s linear infinite;
+    animation: progress-bar-stripes 2s linear infinite;
+}
+
+.bsc-white .absol-single-page-header {
+    z-index: 88;
+}
+
+/* .header-of-board {
+    background-color: unset;
+} */

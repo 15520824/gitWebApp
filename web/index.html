@@ -7,129 +7,37 @@
         <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
         <link rel="stylesheet" href="https://cdn.materialdesignicons.com/4.5.95/css/materialdesignicons.min.css">
         <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css" integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">
-        <link rel="stylesheet" href="style_card.css">
-		<link rel="stylesheet" href="jsdomelement.css">
-		<link rel="stylesheet" href="theme/mobile/config_format.css">
-		<link rel="stylesheet" href="theme/mobile/absol_module_view.css">
-		<script type="text/javascript">
-		    var ModuleManagerClass = {};
-		    if (function () {
-		        var regContent = {}
-		        ModuleManagerClass.register = function (regContent) {
-		            return function (params) {
-		                var name, prerequisites, trigger, mqueue, node, tnode;
-		                var isReady;
-		                var i, k, t;
-		                if ((typeof params === "string") || (params instanceof String)) params = {
-		                    name: params
-		                }
-		                name = params.name;
-		                prerequisites = params.prerequisites;
-		                trigger = params.trigger;
-		                if (name === undefined) return;
-		                if ((prerequisites === undefined) || (prerequisites === null)) prerequisites = [];
-		                if ((trigger === undefined) || (trigger === null)) trigger = function () {};
-		                isReady = true;
-		                for (i = 0; i < prerequisites.length; i++) {
-		                    if (regContent[prerequisites[i]] === undefined) {
-		                        regContent[prerequisites[i]] = {
-		                            name: prerequisites[i],
-		                            loaded: false,
-		                            prerequisites: [],
-		                            queue: [name]
-		                        }
-		                        isReady = false;
-		                    }
-		                    else if (!regContent[prerequisites[i]].loaded) {
-		                        regContent[prerequisites[i]].queue.push(name);
-		                        isReady = false;
-		                    }
-		                }
-		                if (regContent[name] === undefined) {
-		                    regContent[name] = {
-		                        name: name,
-		                        loaded: false,
-		                        queue: [],
-		                        prerequisites: prerequisites,
-		                        trigger: trigger
-		                    }
-		                }
-		                else {
-		                    regContent[name].trigger = trigger;
-		                    regContent[name].prerequisites = prerequisites;
-		                }
-		                if (!isReady) return;
-		                mqueue = [name];
-		                while (mqueue.length > 0) {
-		                    node = regContent[mqueue.shift()];
-		                    if (node.loaded) continue;
-		                    node.trigger();
-		                    node.loaded = true;
-		                    delete node.prerequisites;
-		                    for (i = 0; i < node.queue.length; i++) {
-		                        tnode = regContent[node.queue[i]];
-		                        isReady = true;
-		                        for (k = 0; k < tnode.prerequisites.length; k++) {
-		                            if (!regContent[tnode.prerequisites[k]].loaded) {
-		                                isReady = false;
-		                                break;
-		                            }
-		                        }
-		                        if (isReady) mqueue.push(tnode.name);
-		                    }
-		                    delete node.queue;
-		                }
-		            }
-		        } (regContent);
-		        ModuleManagerClass.isReady = function (regContent) {
-		            return function (modulename) {
-		                var i;
-		                if (modulename === undefined) return ModuleManagerClass.isReady(Object.keys(regContent));
-		                if ((typeof modulename === "string") || (modulename instanceof String)) modulename = [modulename];
-		                for (i = 0; i < modulename.length; i++) {
-		                    if (regContent[modulename[i]] === undefined) return false;
-		                    if (!regContent[modulename[i]].loaded) return false;
-		                }
-		                return true;
-		            }
-		        } (regContent);
-		        return false;
-		    } ()) ModuleManagerClass = null;
-		</script>
-		<script src="task.js"></script>
-        <script src="exceljs.js?time=<?php echo time(); ?>"></script>
-        <script src="polyfill.js?time=<?php echo time(); ?>"></script>
-        <script src="md5.min.js"></script>
-        <script src="languagemodule.js"></script>
-        <script src="jsbutton_071218.js"></script>
-		<script src="jsdomelement.js"></script>
-		<script src="jsform.js"></script>
-		<script src="jsmodalelement.js"></script>
-		<script src="jsencoding.js"></script>
-		<script src="jsstorage.js"></script>
-		<script src="jschat_card.js"></script>
-		<script src="absol/absol_full.js"></script>
-		<link rel="stylesheet" href="style_card_app.css">
         <title>Carddone</title>
         <script type="text/javascript">
         "use strict";
 			window.imageServiceInit = "logo-card-15-11.png";
 			window.imageCompanyInit = "SoftA.png";
-			window.isApp = true;
-			var isMobile = window.mobilecheck = function() {
+			window.domain = "https://lab.daithangminh.vn/home_co/carddone/";
+			window.domainHome = "https://lab.daithangminh.vn/home_co/";
+            window.domainUser_avatars = "../user_avatars/";
+            window.domainGoup_avatars = "group_avatars/";
+            window.domainCompany_logo = "../company_logo/";
+            window.imageServiceInit = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAccAAABRCAYAAACntG1YAAAACXBIWXMAABcRAAAXEQHKJvM/AAAVrklEQVR4nO2dXW4aTRaGm9Hc880CkM0KTFZgsoKQFYRcIHExUjorMF5BOndIXBhLcx97BYEVfLACjFjAZ1bAqNBbSZl00/Vzqqu6OY+ExjMTt6nu6nrr/NQ5rcPhkDAMwzAM85t/8b1gGIZhmLewODIMwzDMCf+O9YZMO93rJEmu8/6/8W6zqP4bMZfCtNPtaw71dbzbrGxuS2uU/pUkSS/gLX09zDKr784wl0BwcYQI9rFQyE+75Hfkj+skSV6SJBEv+YJFkyHip+Zllpi7NvQM/o4XWqNUXnaPd+gV/3n8HGbZC08o5lIJkpAz7XTFwjDEwnJDfPnnJEmexGe827wSX5u5AKadru5LsRzvNlbi2Bql/dDiqIEQzQU+TyyWzCVRmThOO92/IIhiu3pV0T1+TJJkzhYlYwKLYyHCUzNnoWQuAe8JOUIUp53uBO7PbxUKo+CTWICmne7CII7EMEw+N3iHN61R+gSBZ5hG4lUcFVG8K4sjeuaWRZJhSPkg3qnWKF2wSDJNxIs4CgGadroxiOIpUiQzuHkZhiF4pyCSudnlDFNHyMVRCA9iKVW6T035IrLx2IpkGDJu4W6d8C1lmgCZOIojGdNOdwXhqQNXsCL5ZWYYOu5gRbJnhqk1JOKIoxkrD8cyquBu2unO2c3KMGQIK3LVGqUhixwwjBPO4jjtdAc4BxVTbNEUkdW6YIFkGDKEZ2bBAsnUFSdxnHa64tzij5oLo+SGBZJhSGmzQDJ1xVocYTE+NOzJs0AyDC0skEwtsRJHxBjnDX3kNw0eG8OEQAokH/VgaoNx4XFYVb5ijEulluPLeLfJLVGFIxiyYHnfw7GRD+JIyni3STX+LcMw5Yj14lhV5zDLuOYxEz02XTmeiIVR1GvMTAqFK7VSjxYeLFkhZAPC7/YFAsk1JBmGBuGVmeBdZZioMXKr4kzgLdGAhJX4frzb9Ma7zdylg4boqTfebYawJu/RTcCFbZIk71gYGYacL1xujqkD2uII6+yOYExCuD6LbgbU3TKEwI53mwlE8tnyMuL3erZNbBmGKWXORQKY2DFxq2YEYxHW4sB3n0Vcf4CM2rmBq/Ue4koOYrWymbNcGOTPstFsgp9fWJzPo8SdZZKH/PkFn0T+zC3LouMKrlWuTsVEi1Y/R5xndD228T1EgouSWXuues8eok26iBI0dV4qjZtr4eLFmNVPgp/bcKNb3WNRnhAx5YGla3+NRK952caD+zlWgnjnrn0n5+AISQ8bJ3Vjeg2RXir/fIUN1eowy6LcUMHi7mFNOd1oJxiDZIHxLGLtv4kMZjXBMlGejWSvjKuyMemK44tjRqhwowY7HqFk2OYJFKk1i0V8iA9lFu0xcSnkfSwCFvpAIyHKWByxMUuJSxNusWHK8p67gTg+ItZtDIvjkfvDLCO3HlujVM5F10z2ZzR2Dv7OtUbpEGP6YHmJNTba89BCiQ2LHI/L89kqYyL3tJWKI4HVGFQYJQUCSeZGxfUzlKLziZgQk9D3FONNDTcB2uKI5K/Uc/WlPZ7ZG5E0EEfr+eNRHJca/yYhTKxzYX+YZSSxR1hUpvNRl1/zpOpjKBDFCfGYHsU1qxZJjIV6oytZYkxkFr+OOLpYjdY7ax9gQZcTYjjebZ4o/sy005XxkyrL6ImdYFp1PE0RRRvhKhVHxBLnFbc82+NeyqNBtRXHwyxrWXwPn2eGy/jsapmhTZbvjVQiRdKHtXsKnovv9+C+CsGvaCwSMpE8K45wl/2wvPZaHNOw/maeQEzslSKGBxfqU+BuJJXFcgmEq1AcIbqTwC3PlnD1/KP572svjqfgew0r8IBIng+zbGDzixUvuipiYzr04cpLfos9xckAHbyNBdb83MEV7ML3wyxzWhfLjnLYWn17LDLRgTORFMI4iKRNlyhWsPJdD9ZnE2tsWBYR9AK9VTwLF4nYcR9mmXjv3xm4aF34YHOsAwISqqm6eOf/hpuQDHEfWqP0qUJhlGNZUJ89RVxxFUgYE5ynXbmULCwURyy2tgNrdGWZCLuRiAn+ApEhRcwDn02sFWGMpRdoEzrMOCMsicMsEwvm9wr+nPbCHEhAinhojVKS2D82CItAYiLm/E8qscd1/g60cVG5cekres5ytLX8tr7OCsYA0bEWH7TRUYRMIH03sVaEkQUpUuCa+ur522mtNYEFpIhPRAIZwwYxc+2eAmGMaX207grjQxxZGMNBJpCKcHnZ/bEw1ofDLMscKk7pUDpfFWGMxcOg4iSQ+N0YxuXUPSVCYZRYCeQ5cbTxQe9jPIdHQY36Vx67H7jEIPG71AXm1etfszDWjiFBzeIidIQhVmGUWAlka5SmFSY/6dDGu29ExMIoMRb+XHHErt5m4WqqMF4TjW2NGM5nkbmJ4uYt/Pwe7qtHgkXoymaCK1BbjHskd8iUcQrh3eJefZX3D/fyHf77Z9zrLcH3v3iQ7k9RQjKXcwkhEVlWZXwyidvBkvkW7NsWc4OEJy0wDm9zgxDZNk3LcCiqrWrrlmtqk2CXxXyvVGPJTVJSjjf8OuYASzV1OKx9K85fjncbo0mLrFTXhWiNMa9Oj24QXP8RJeByj4TklIZLlZZmMe3Q60jmMREmd8GC2NTpuYkknZXm0YiYBSVtjdLSM5AQGm9eJg9ot00rcqva+Jz3TSyWjUottou5sFyuxTlE0+xdUaAAdTvfQ2xsmMDq1QKC7JKVKoSrizZkWY4w9hyuv4SlPTQtfKC0NOt6jp01GiyUvo53/LEhhwusDhbJKaVGAkQ/hipFRbQ1+25SV++pAq22aUXiaBNvbFznA6UajCl7uPlS15qtQghQTOHe4tfbuta8Uv7OhiVEcViyCbC9/le0OHPafInvNt5txAbgo8f4WdOp8j036agTEzpuyTokLp5d+yAwoc8m21K6Fhk1Oy6hiS2WMouXcw1rkbpX5cRyUb9FZZsyUssd4D2E66xljExf053yHtYiqfWAsoF9B4v8kvEljm8sRyy8MVtWZaRFsS2MrQ7WVrskhlrnkwk3ZfHhInG0mZSNEke4I01jHWKx7fvqV6ks6qYCeXYSO1jInw3OtJq+SHvcSy/zCtdlgYyHUyGp+5Gw9pkxVN66z4HcI30VbV62nqs0nZ1jlJZjpdXqK8C0WsTepzBKsKibvly3JWcfbYo2a3dbgeVqulMe+I5h41n5PKLQRLxvghtgNUqGBdZjTEUMyij6rr42L1tkmv/nMMtEv88+6gW/85AvcHUu9kgpjk3DVBzJekKWAVEyLet1bjymYntveJ7V9F7eV9VtBAIcTeeY2KmoZVNTnkf7dCzoNVkrTgUEiVI+Ni8ioa8nurSczjOUMxxAOCkpnGtk4lh16ySfIGvTxNL5HmD8E8MzfLmTAGM1sRqXJuUB4bI1cU+vqy4/CHc1Z7Fq4FLIWfP6pvMldk7fu+g6FWlwal35EHjRnWVYtvlCezPKd7VwLGTiqJn0URdMxrIPER+BlWryd9sFrlXTiW66qzedF6HiMXWKA4XEqzhaZsrHzM3JhqKO4zt95tSW/d7wmpTvarvItcpu1XxMBGNelTv1FLg2TazHvHGZjPXRotuKyWKwDuWBwLgeQ/xt5oh8h3yKx1qJZ7UQy+rif/NZSUkdE7XlKMb0XhmPy7noIn6JIyx76mpFqYm7/jDLXojHmDvniirkXCxwA5q4VEMfUp4bVC15MwksygTaWMgmi13oe5lxFZ1SfImXTPTxdf37vA7+WGjnaIPl6/n3lfPG1Oc2BxjDEdGPE3HNDeHf6BX8TMFeLXUJK65q69pIHJcWAdd+QwoBmDz8dQR9K03E8XRsJpNwaTlWk12mSz1YZ0RyzrTT3daw4keV+I6Z+aih+hWdRQqB5SKySxMPAnm0vGyaOpfwrAqjRPxvrVH6TJgVqwo6tXA9nViNaYBs3txQAaVbtY6B5jxMxhF8MwDB0nUJne5aTcZqLFyGrbPWodzTJzSu0hMVWNx9LVzWTWlLWJYJ4wmpBxerNDSox3fuWI2vIzfUMefT7xnimEvuZrhIHG0WiKaIo8nuLpaFVPtFOEmcMpnoNmNt9L28QHweQ3g1nC+6GIUCYMU0tietLUpSkTdx9LQ50iLPqi8SRxv32RVlF/qAmLygsRQ+sF3QtcdaQVH5ut/LS8CbaIhYmYfLbi2vS+7e1yl0HTm+spRVrfGxOdLlD+0qEkfbBaIJh3dNBL7uC6lufMfWzWSyIISO3TJnQFNeX7FYOb+qdDsWAuuRywrmQyqSeTHTWMgVR1gJNiW1alf9wYVIYmRVUMUEZnGMFLi7fLoapXVHbTm4bF4v5d025WKS1c4l5Ni4I67QfeEiMOmVeKGYLDBNiVk3CgjjwnPrKF/x5pBuOkYD3xWXXDgnjrZ+97oHs01e1FgebKyLgMnOnReyyMB5Od/CmCjvHHWYwmXDxZu1fLwVGPAUd9blD8+VD3EU1uOllOKKRRyb8CLHMgaTOGkjXW9iN98apeL87I8KhHGtxJ2o7+etzdlCWMvU425K2ID6GZ2uoUFivXmxz8IKOSKeNu10bQ+STqadbrCyao6YTOK+bqd9z8Qqjib3MpYxXFJC1htgKQ4qrhLk+/1JLbxZ5N4vHMznMMyfvFlDD7MsmrWsrHzc3FIc27A8o0tfFnHCkkovpuIYFJxb9L27t0Lc52mnq/urVxrPpgoan2ELa6oHV3YPn1Dz6JeHCqXPqK8vOvKLKixaGxlsEKgPovus21o1C+J2VdEmcZ6tkINWPrYPVjTYjSr+iLqpi2mnuypKpjEsfH0VQTeS2BOgTDp5Bx0Lksl0BWIfgZCfpTVKhdgcTj9JkvyTJMlPuE3vIAYhhDGv/Bm1kIhxLXQOmOPf+LBkm+RhoPYGiq4YUa5hOuXjXIpB38WSvSqFEanI4nzf6sx3q8WCjjHFfnzGZLMROlZt8iy5zJw7eWuLj/sqBTL3+QpLujVKxUb+b0+bhCaJo4/nE2USp444mrZFOuUhtEAqwqgeem/juz3h/1cxmQCfAlYGSmN1qSqYJHa1QyVzwQNg4i4KWiS9ASwLshN9bTqO73trlIrYn+jCMcFnDve4bvF+GxozV+CetjkDf46r1ijVNsKwkfFOqThaNNXN4yHgopcnjCrCpfRy4h41ncyVt1qCW9jnC00CCkqYbK4mOZuVKjB9hmw5ulG0pvi+r1dIOLrD55PnDeZeN95ZI3w8oy9l7lVY+OJe3mFT4xWtrhxoquuaYvtNZLBWufBB8F40yqSJl+PntNPNxPfDgm4y3tsA4l+n3aiR9Vh1BjBi4yatkp5jjzdGznPRmTbEIE3CGrHTRA+DrzEJy/4pL6sXwqmu5Z98xypNWlZRfJFPiPV5TWIRAieEDkkHJrvCL0jY6VlYEt+qSs4RmwxPfe98YXovP1SVzAWXv6kFHsPxnbqy14gtN+n+hm7g7YMnD65VifDkbeD+XuAjvJcPOWv5g89OHtriCGvqnuBvXsFKW/gov4bFbgWhs+EGgflriwnw5Dv+CGGsVbd6WFnPhr/mPZkLm5kHw1/bIoubsWNSVmz6MMtc8xxiYdlAl6oszO57A3OFHIDbEgNn4ev8qFGz4/FuMyGsYCAGvYFIOmVcCpEVlsa0033BYkdRHFdYE/8z/J02LE8vGaR1FEYFG0vwwZcFCeH9afGr3OvPnmeDxsNNuM9NniuxWMTHM/U2lZDKMBJHMCA2qYVI/ph2uq/IHE3L3JNwm/YhiGJntoGYUVaMfxzvNv+12MG2MR6yFwPiv6qxMErPw6PFr95hA0Uy+RWXu6nFKFgi/s6YszYJzTTAeizKxm0EsP6/RzKWGx9iXVYh5w9Q9aQP1yMlbfibj9UplMoqanD+r4pibevxbiNfZFsLQ7oFJ7YLKgQhrcmRDR1SbK5Mx3KLjGLxAmS2ZQnl83DYRF1KzWBqxGZ6CHecCbbvXhTjjeB7+GaCccawNokEnZWBZ6IUG8tRWgGfqb5ECbfKpxJhVEuIoWKO7Q7pCq7BF1jEWr5xEbeEC1Wev2qCMMpjQbaLRhv34gVZxVqxXUKX+z3mPWOGEIq+TewNllcs1okJpXHVJoDNTkybgG8o/0eCseUoEdYQrDsb91SsHIUxxzKZQDBtxVksyN+Q0bpFwlDeYtFHnctGiGEeIpll2uk+OriI20i2+jLtdPe4j3nuK1kzlMLVvkS8nTHDWhgVXN+9qjGJq9aewywT8T6X95kaUeDBdc4dsRbHpHkCWSSMskPJAAuxq3Bd4UNd3FiX4J0BhMsalp/rgtdWvAq+2NagRF+MUAjj0TqBNUDx7vnGKK7aIFJsRGPYwLQVgXSqA2vlVlVBPO2jx3MvVbAsEkYJjiP0az7OJKIelP1QvdsMEM96UNPWayFZUwijBC7K2N+941xxXZDrCMYc0/t8Q1GowFkck9/dO+qw2OXxfbzbnBVGCWJOTRDI4OB+xzxn9tgwcZzRjGdKYZTgerG+e9JKvtiqSUr8MZbnc2tSrzUPEnFM3gqHTbp+CMRD/DjebYwyEFkg6YhYINcsjMaI9+HrYZZ5s54iFUhSK7nO4B70InqfS+u1noNMHBMsdjgC8THyM0pid3ttW+kEi+Z1RJOgtrUoMWd6EWUlLlkYjRHvU6+KRJTIFuAlC+NbFBd4DGvS3qX/JKk4SiA6PaJyc5QIwX4/3m2c40jKoh5yjMfxNKESByz4kLHro+Wj62JnjogF8D2sxcpcisoCHHJDdX+YZc5JH01E3BNxbwKvjUts2Kxjj17EMfktHmLR7kbgahUi8nm821wbdvovBWN8F2CnJCZej3o8IcGm6jrAfFniXl5MCr4jzxDFfqgqMFiAU2wOq/RSrTF2PtpTAu5R1Wuj2OR+xtx02rA5HeXQAVmeQ5RTG+JDWebtHOKhzH2X/JJxSFQOmng+WvCIqjuNDP7LQgGYLxPP56eWuJfcm7GcNYpNP8WUeAJxvkYDXJ+VpLY43M/lAw2QcWLE/lyqU5WxRwm5jMqa9y6OEizmEzSzHeDsmE0psTJ+vcRVCwgW2T7O8NmWSstjiwc/vxSXn8dN1R7zY85xxbNsUVzh+Ik9ExNWygSL8JBwg/qMDQGLogO4f3OcWR0SnvNeY218onZxVyaOKnCfHX3BEJK+UtHE5CDpXqk2c3yJYxAPLLrHLClYk/Kj+8JuT8ZUtoi/GrguamVxnmyqesq97GtuPPYn9zIWK3EFl6BP5kr1oKJi/i/KnBDf6bXOBbOVRfj6ZK7obqzWynyhXnCpn/m5d3lO3LGf6szqk9JFo6+s/TZro1cvRutwOPi6tjWoQXr2sHpdXWEoJl5YF7TKcRk0Z36N1coqGcOKk2sYCRrjFnV3eeWs07BgQ1O47le9aYtSHBmGYRgmJN6yVRmGYRimrrA4MgzDMIxKkiT/B3hiRmZYkP98AAAAAElFTkSuQmCC";
+            window.imageCompanyInit = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAOcAAAA3CAYAAAD3yl0PAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAADHVJREFUeNrsXd1x4zgS5rj8frq6AEzXvu2L5QhMR2A5AkkR2IrAUgSSIpAcgekIpInA9Mu+bZkTwNXyIphDaxu7EIxuNPgjW2t0FWs8EgSCQH/o7g8NMEmiRIkSJUqUKFGiRIkSJUqUKFGiRIkSJUqUKFGiEPItdsHnl//++mtP/ZOpq6+uK/w4M4qUeFXq+q6u7X9++62IPRfBGaU7QI7UNURQhgqANVfXUgG1jD0awRmlHVDeq+tOXb2Wql2raxZBGsF5NPLLWZpxluf3H2V5YGACKB9aBKUtANBpVPt/GDiVIvcxzukZcQ/ENf/Df7dKmasjAGSKABh4QHCrnic/oLVcYZu6FhirawXSytE3A7TYLnlU/bFu2PdTQ3dc/V1FSAaAU3XoCJU5FdQHyvzcdBA7BOYAQeC1TOoZvh0QmJuacWVdqRCghdU/0JY/KFCrPrls0Ped1f3lwImWctWAjJgcyvIEWP4XYXHwAq4PBMy3ADd2m/zJxhYIMFPAq7kIsL4UQJ+YOi5VvxQ1+x9c9jnx9dg1oWPYoWNv0Kll3fsfo5wy1nLeIPYBK/uk6smx4z+Du/IUUPb5gBazJwDRUl0LlytqAVfXOxB4O7v7q/LnVr2PDDgBKOOaj3zHPF9O6ODK+nikPr9W+rT9kpYTLcwmaY+U2M3QHznjoTsbAk6nhVD1bNqKxRQoNsn+WqWTwBGAkruHhGAqVP2X1nO+EcCu1LP+u2WvZa3qHDt+8wfRbiDqzr8COE8cn62SdtnCXiAwupArZuIAxbg2L2YiyRxXWhM0mcDlnNYFJoj67QKfiZsY+6o9Uwd34BxLtGhtWU1tqV3ubI/xyr6eW4sWxhdjFkbM08fLB+bZBz8n9Uy3h3aR0O188PTvmMrwUb/XitvHOKxUZbcMQAv1m2sP6XSnyqyNdVBwo++JspAUIfYUkAii3OSS6P/I2jpizhuP0ty61v4MCt5lDWaflb39oNjlnpnMKhcwFXDShFn+Ud9ra/foUOzKAOgLYXn0hDHGfinVmG6J8cxgOSpgDZhbsloS41Koe5REW/OvAs4ToYUp0N0ric7Mkd28tZQDPp/GOXDPanIu3q0DmNB/EAOOPB6Kjqs31jVHC1rh+FAywvaR7qZZNuCxh8x3HNBuHRNN0YCQ+seCcylhXHHp5NJwfccRku+UmgLYwnZPFVhWHhc4NAYtPCHGyBjLNeNeDoUubcrE1jlnfTHuP0cdgjYD63/5lRIVToTlxEE4drgmVmLsIFPqygaNAuY80EJJZREAOsqypRjKtEoEOXQJ2GFgc6efNTQ6ZMxJxRl3sGYpXQ5pC5Q48+qJoTrmBWiMGynPZG2yskj63HfRDrgPkD9E/cDc9oy2LJkJ4kYQ/1EArnwJKtbY2yRSGaBDmuQ0GftdIockSYbIv25FF5Es61PPeOrw6TOCMHhRla2TjrM0sDOHroFV3+nZ3JsiiJR/yll+zPV0TS5To8zGZw1VGddSDQz+xCRSAqyIxJXdJjKmnLofBf5Mgw6JmYJQIEgImFATMY4j5XFJrOCI6AfwMKZCPZoTbciwzM5jUc+wYKqaO56/RJe7qeicAlvAlV/b4Hz2zNgjHJQqMVLJ2mA9A9IFodMHqjwM3C0zUQwT/yI/BYKpEFQa+BK3nypTmiQQWljunnuJCar8KAnM5kL2tiJ+07cs4iMzJiN0k0Pj0mWHk3vIJgIoO1e/GTJhmGtyAre+14KHSI1z8S7mRJDlwofSM9NGNfSnusCy3qM7EtqhMMgvSVgeb4rWfJQch1xxAyFwBUEmdmKC+nuNMX6oSL2fdWgM7VnbLLraiof33SThu3v6qMeuyeqV+U1TuWDIMCchNA4YOLuxANY3cAXREkqBuWrwgKsjAmgiGPweY2EXlCVMAhIDDBLKqzBoHai6+8Q4jz7CahIuaIj+PgVMYlkL7U25+50QZM5tTYCaDX+hYjqHK9t4UOpY7CMTn7X5wXg5kkmBAy23EeBO+Jmuu5MkAiRuRkzfTdDDGGNI5tRbx0RP4eCMaAd4j1PrygKs71/3OyXMKmSIXGNM1oQ1fFD1nLkSm42ZjlPGpdHYPg56SijgynLvJoZiUjOqxB00y2wIt+8xwDLVFV9MeRbofl1IQQ6sJpOxM0iM9WxURGqizDtcXqP4A1di/RoNxwNRz9o0VsSz9wkv0KXTQBrurdEygH1lwWlY0ImqZIYDcJPU26kPBNKzTVsbJytIOxRmu4X63YqYIWHW62t/3SSKkMByPaOXyDLLIFv8TpkbEmL/EoIaljkyVx4tkkihYxPqaTwSyrxLhjfY86Gnji6sJkWi5ZRhAEYeDIdDl1JTjwxrxoIT49UHpq/ByE0Fk2bhBacj5lgbiM+Q4JBS+RAX2seYDJnZdcy0Z8wQDsOG7niXUgktGwf0JwVEyL3NDWDq0EDM1nrWXLcMMUQp3w1aozpJ7m0INclXntCKGpOBpUeviXtpLzOe6d4z4UGuwNogwy4ag5OwJFvLAuq1yZRxyQYWsUB16ETQjDGhBP3k88or0ebMJncUeKi1xR4CVO8K6tV8Zi7OL5hQJyeeYWBYr6Ak95aE0rtRzfquhHFnaljuO0FY8mCEACkxgVUkIVQDrAWmV50nPGN4JQDSVkKz4wNsO2LQupKCsWS2wvu22OmQQARMtK767xXTT7ln/yhHDI08CtrlbpKrDxq7CyNOlXguIyPWzHz3OSF8+F5NoHJMmCTG+R5wu+/JcQnn0t1Y1jNPwpdGOIHjSFbqeksaLHMIkuH7TKhSJkcq2HbXc/c9LLGTuGKWGfcY9FMHMPWCLBv7eUBT14JdBJQ9O6YBxpxWyi2E7Vr2oc+T5O/N7E2lJ1CgLbdp24o97wMn38eOu7ckPntssT5Xaiun5wsc69Txm7nEQp86LOaTHkz8f+gBXVLQuNLHQhQxE3bqZ5JnhjDZWwpCMF/jQI46blcljPU10EKW16oDnML4g7B405Zd2yxAD2doCVcB4ZfbrTVSn0ykgyK9STNw0OqOGAXwuXmp5F5MUvWn3rWCqXbURJfh2UJ71lZd+owjn1XbItlQZx1xIn3xES4xhPTz+gBdW1uXAuQ1oOxMb3cTjJs5iZVUzEklne8W+OFENip3FoCNlPUmIEakyIU5l/rnySp6/gDMDQPLc2TPHBPZbVCDywkANTcf6wv+D8dbXht5tlLw7LLB8HchsuyobN2YcEtMSj5dmkvTTAP6tLB2TM3q1v8NGzlKwtLoKqMyCZ0P5c+tDAnuQOWdm2VvC/Ocp/vuHsbvnMdQhp7qzhzXmDuUkNx3iMQMF6ONawDGvod+GVLKWLRaLzfynN5uK2qtk9yZDJ6Zy11lyu8mICuZRMd9ffx+LNzb+VPQ9Hfn6noO6v4rRrW2GP4ZcwIIsMPnAQRDCOnz7pgTTIuaEffU1nqe7Kfv9XyuRMeTdE647QNH528TOj1w7PEygFm9QPDUeiZMkl/gMkrfACm0q2hy5CaO3VoQC3duNS0CxvVmtl24hvtSq+T9Fr8dz6K+HwtOWyg8hignEi0mAnC+c5tPjA7XZ5y2reAFFZjjPbeCSSDzAHPr2TDbloQc8ZkxwNkK6gLL9+JycwVWE1L9NniqAQBxjVvNpugitzHGPia0syR3asJI+APM9Now5UlIdjf5XNsJ0bZSMN4FCU7Dd/clE4QG6r7k8qY7YArPoLSpAGUIQLlzdvBVfL5+TtGKvsGZQnh8CQXIFICsLnChXlARNx32BYxt6bEiBz1DCts0bqBHvsnk1eO5lR7LXnmINhqcegbC9U0JQ+hjrLyHfOH31zVn2Tw58EFi6AVIrfSVx/UcCyfCFC0pWMOfCNaNcf3E+N0+AaCPGUFdyWMDy9rV+EB/XiZhy2oz4cl+BeMlLAR6PgmpV/IKwBR9+UHiz/LRrsysTkaI59yXPbIlCXiLWVuEkFVnZvQL2U7Jez3wpL37DnV2jRNBq4K64QI/TPC3DesGF9PFhIvfTYN13BFxYom6upTqqpEH0KRNT44Q7bsr9AtlK3uG726Dsmhr14GRTH9hPEiFbkUeesAY1tcj3KCmbWXZauk9ML+27ffU7JFQTRngYxXHGBXHcGzrl37t/GcTPHG9i4yg3WsE4yvnj0siOD8nSMFdfGgBpCXGfouWGNooEZxRDEuqT6HIEtmLdsHlh2ysXJqSFyWCM0o7YNWxk477dUxb1sn2iRIlSpQoUaJEiRIlSpQoUaJEiRIlSpQoUaJw8n8BBgBoQeUw/RSIYwAAAABJRU5ErkJggg==";
+            window.isApp = true;
+			window.mobilecheck = function() {
 					var check = false;
 					(function(a){if(/(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|mobile.+firefox|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows ce|xda|xiino/i.test(a)||/1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r |s )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(\-|_)|g1 u|g560|gene|gf\-5|g\-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp( i|ip)|hs\-c|ht(c(\-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ma)|i230|iac( |\-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja(t|v)a|jbro|jemu|jigs|kddi|keji|kgt( |\/)|klon|kpt |kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|u)|50|54|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m\-cr|me(rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(\-| |o|v)|zz)|mt(50|p1|v )|mwbp|mywa|n10[0-2]|n20[2-3]|n30(0|2)|n50(0|2|5)|n7(0(0|1)|10)|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h\-|oo|p\-)|sdk\/|se(c(\-|0|1)|47|mc|nd|ri)|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl\-|tdg\-|tel(i|m)|tim\-|t\-mo|to(pl|sh)|ts(70|m\-|m3|m5)|tx\-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|\-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(\-| )|webc|whit|wi(g |nc|nw)|wmlb|wonu|x700|yas\-|your|zeto|zte\-/i.test(a.substr(0,4))) check = true;})(navigator.userAgent||navigator.vendor||window.opera);
 					return check;
 			};
             var carddone = {
-				isMobile: isMobile,
+				isMobile: window.mobilecheck(),
+				sessionIdActive: 0,
+				listTabChat: [],
                 menu: {},
                 boards: {},
                 chats: {},
                 cards: {},
                 company: {},
                 contact: {},
-				reminder: {}
+				reminder: {},
+                activities: {},
+                my_calendar: {}
             };
             var data_module = {};
             var theme = {};
@@ -142,46 +50,123 @@
             var LanguageModule_v_languageCode;
             var LanguageModule_v_defaultcode;
         </script>
-
-        <script src="content_module.js"></script>
-		<script src="data_module.js"></script>
-		<script src="menu.js"></script>
-		<script src="boards.js"></script>
-		<script src="chats.js"></script>
-		<script src="cards.js"></script>
-		<script src="company.js"></script>
-		<script src="contact.js"></script>
-
-		<script src="theme/mobile/absol_module_view.js"></script>
-		<script src="theme/mobile/button.js"></script>
-		<script src="theme/mobile/common_view.js"></script>
-		<script src="theme/mobile/objects_view.js"></script>
-		<script src="theme/mobile/boards_view.js"></script>
-		<script src="theme/mobile/chats_view.js"></script>
-		<script src="theme/mobile/cards_view.js"></script>
-		<script src="theme/mobile/company_view.js"></script>
-		<script src="theme/mobile/contact_view.js"></script>
 		<script type="text/javascript">
+			var loadMainternance = function(){
+			    return new Promise(function(resolve, reject){
+			        FormClass.api_call({
+			            url: "api_maintenance.php",
+			            params: [],
+			            func: function(success, message){
+			                if (success){
+			                    if (message.substr(0,2) == "ok"){
+			                        var st = EncodingClass.string.toVariable(message.substr(2));
+									console.log(st);
+			                        resolve(st);
+			                    }
+			                    else {
+			                        ModalElement.alert({message: message});
+			                    }
+			                }
+			                else {
+			                    ModalElement.alert({message: message});
+			                }
+			            }
+			        });
+			    });
+			};
             var initUI = function () {
-                carddone.menu.init(window.holderMain);
-                var host = window.domain;
-                var x = host.indexOf("://");
-                if (x >= 0) host = host.substr(x + 3);
-                x = host.indexOf("/");
-                host = host.substr(0, x);
-                var x = window.domain.indexOf(host);
-                var y = window.domain.indexOf("/carddone");
-                var channel = window.domain.substr(x + host.length + 1, y - (x + host.length + 1));
-                console.log(host, channel);
-                var connector = ChatClass.connect({
-                    host: host,
-                    channel: channel,
-                    onMessage: function (message) {
-                        if (message.content.type == "carddone_maintenance"){
-                            window.location.reload();
-                        }
-                    }
-                });
+				window.addEventListener("message", function(message){
+					var data = message.data;
+					console.log(data);
+					if(data.name == "checkShowNotiChat"){
+						var moredata = JSON.parse(data.value.moredata);
+						if (moredata.sessionid != carddone.sessionIdActive){
+							window.ReactNativeWebView.postMessage(JSON.stringify({name: "pushNotification", value: data.value}));
+						}
+					}
+					else if (data.name == "openchatMobile"){
+						var moredata = JSON.parse(data.value);
+						console.log("moredata5: ", moredata);
+						carddone.menu.loadPage(7).then(function(value){
+							console.log("loadchatend");
+							carddone.menu.openChatMobile(moredata.sessionid);
+						});
+					}
+				});
+				loadMainternance().then(function(st){
+					if (st.is_maintenance){
+						DOMElement.removeAllChildren(window.holderMain);
+						var contentDiv = DOMElement.div({
+							children: [
+								DOMElement.img({
+									attrs: {
+										style: {
+											margin: "auto",
+											display: "block",
+											paddingTop: "20%",
+											maxWidth: "calc(100vw - 20px)"
+										},
+										src: window.domainHome + "/maintenance.jpg"
+									}
+								})
+							]
+						});
+						if (st.maintenance_time_defined !== undefined){
+							if (st.maintenance_day !== undefined && st.maintenance_time !== undefined){
+								var now = new Date();
+								var hour = st.maintenance_time.substr(0, 2);
+								var minus = st.maintenance_time.substr(3, 2);
+								var exp = new Date(st.maintenance_day*1000);
+								exp = exp.setHours(hour, minus, 0, 0);
+								if (now.getTime() < exp){
+									contentDiv.appendChild(DOMElement.div({
+										attrs: {
+											style: {
+												textAlign: "center",
+												paddingTop: "10px"
+											}
+										},
+										children: [DOMElement.span({
+											attrs: {
+												style: {
+													fontSize: "24px",
+													fontWeight: "bold"
+												}
+											},
+											text: "Hệ thống sẽ tiếp tục hoạt động sau " + contentModule.getTimeSend(new Date(exp))
+										})]
+									}));
+								}
+							}
+						}
+						window.holderMain.appendChild(contentDiv);
+					}
+					else {
+						carddone.menu.init(window.holderMain);
+						var host = window.domain;
+		                var x = host.indexOf("://");
+		                if (x >= 0) host = host.substr(x + 3);
+		                x = host.indexOf("/");
+		                host = host.substr(0, x);
+		                var x = window.domain.indexOf(host);
+		                var y = window.domain.indexOf("/carddone");
+		                var channel = window.domain.substr(x + host.length + 1, y - (x + host.length + 1));
+						console.log(host, channel);
+		                var connector = ChatClass.connect({
+		                    host: host,
+		                    channel: channel,
+		                    onMessage: function (message) {
+		                        if (message.content.type == "carddone_maintenance"){
+		                            window.ReactNativeWebView.postMessage(JSON.stringify({name: "reload"}));
+		                            function GetToken(message){
+		                                window.removeEventListener("message",GetToken);
+		                            };
+		                            window.addEventListener("message", GetToken);
+		                        }
+		                    }
+		                });
+					}
+				});
             };
 
             var newUIInit = function () {
@@ -232,7 +217,7 @@
                 ModalElement.question = function (params) {
                     var isdelete = false;
                     var priv = systemconfig.privSystem;
-                    var message = params.message,title = params.title, h, func = params.onclick, displaycheckbox = params.displaycheckbox;
+                    var message = params.message, title = params.title, h, func = params.onclick, displaycheckbox = params.displaycheckbox;
                     if (message === undefined) message = "";
                     if (title === undefined) title = "Question";
                     if (func === undefined) func = function(){};

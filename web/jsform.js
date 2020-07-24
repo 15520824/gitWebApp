@@ -1,6 +1,6 @@
 'use strict'
 
-var FormClass = {
+window.FormClass = {
     openUrlInNewTab: function (url) {     // must exec in "onclick" event
         window.open(url, "_blank");
     },

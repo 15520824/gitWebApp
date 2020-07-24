@@ -1,8 +1,33 @@
 "use strict";
-var task = {};
-var database = {};
-var language = "VN";
-var prefixhome;
+window.task = {};
+window.database = {};
+window.language = "VN";
+window.prefixhome;
+
+function setCookie(cname, cvalue, exdays) {
+    var d = new Date();
+    d.setTime(d.getTime() + (exdays*24*60*60*1000));
+    var expires = "expires=" + d.toGMTString();
+    document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
+    console.log(cname + "=" + cvalue + ";" + expires + ";path=/");
+    console.log(document);
+};
+
+function getCookie(cname) {
+    var name = cname + "=";
+    var decodedCookie = decodeURIComponent(document.cookie);
+    var ca = decodedCookie.split(';');
+    for(var i = 0; i < ca.length; i++) {
+        var c = ca[i];
+        while (c.charAt(0) == ' ') {
+            c = c.substring(1);
+        }
+        if (c.indexOf(name) == 0) {
+            return c.substring(name.length, c.length);
+        }
+    }
+    return "";
+};
 
 task.submitLogin = function() {
     var domain = document.getElementById("domain_input").value;
@@ -32,27 +57,45 @@ task.submitLogin = function() {
                 if (message.substr(0, 2) == "ok"){
                     window.session = message.substr(2);
                     if (rememberme) {
-                        var localString = EncodingClass.md5.encode("NaOH + HCl = NaCL + H2O" + (new Date()).getTime().toString());
-                        StorageClass.setLocal(prefixhome + "jughgfhjh",localString );
-                        FormClass.api_call({
-                            url: "card_newlogin_save.php",
-                            params: [
-                                {name: "localString", value: localString}
-                            ],
-                            func: function(success, message){
-                                if (success){
-                                    if (message.substr(0,2) == "ok"){
-                                        task.loadDatabase();
-                                    }
-                                    else {
-                                        ModalElement.alert({message: message});
-                                    }
-                                }
-                                else {
-                                    ModalElement.alert({message: message});
-                                }
+                        window.ReactNativeWebView.postMessage(JSON.stringify({name: "saveDomain", value: {
+                            domain: {
+                                name: "carddone_domain",
+                                value: domain
+                            },
+                            token: {
+                                name: "carddone_token",
+                                value: window.userToken
                             }
-                        });
+                        }}));
+                        function GetToken(message){
+                            var data = message.data;
+                            if (data.name === "saveDomain"){
+                                var cookvalueString = md5("KOH + HCl = KCL + H2O" + (new Date()).getTime());
+                                setCookie("carddone_user", cookvalueString, 3000);
+                                FormClass.api_call({
+                                    url: "card_newlogin_save.php",
+                                    params: [
+                                        {name: "localString", value: "carddone_" + window.userToken},
+                                        {name: "cookvalueString", value: cookvalueString}
+                                    ],
+                                    func: function(success, message){
+                                        if (success){
+                                            if (message.substr(0,2) == "ok"){
+                                                task.loadDatabase();
+                                            }
+                                            else {
+                                                ModalElement.alert({message: message});
+                                            }
+                                        }
+                                        else {
+                                            ModalElement.alert({message: message});
+                                        }
+                                    }
+                                });
+                                window.removeEventListener("message",this);
+                            }
+                        }
+                        window.addEventListener("message", GetToken);
                     }
                     else {
                         task.loadDatabase();
@@ -61,45 +104,45 @@ task.submitLogin = function() {
                 else {
                     switch (message) {
                         case "password_incorrect":
-                        document.getElementById("password_input").value = "";
-                        ModalElement.alert({
-                            message: task.getLanguage("password_incorrect"),
-                            func: function(){
-                                document.getElementById("password_input").focus();
-                            }
-                        });
-                        break;
+                            document.getElementById("password_input").value = "";
+                            ModalElement.alert({
+                                message: task.getLanguage("password_incorrect"),
+                                func: function(){
+                                    document.getElementById("password_input").focus();
+                                }
+                            });
+                            break;
                         case "logged":
-                        ModalElement.alert({
-                            message: task.getLanguage("logged"),
-                            func: function(){
-                                task.loadDatabase();
-                            }
-                        });
-                        break;
+                            ModalElement.alert({
+                                message: task.getLanguage("logged"),
+                                func: function(){
+                                    task.loadDatabase();
+                                }
+                            });
+                            break;
                         case "user_not_available":
-                        ModalElement.alert({
-                            message: task.getLanguage("user_not_available")
-                        });
-                        break;
+                            ModalElement.alert({
+                                message: task.getLanguage("user_not_available")
+                            });
+                            break;
                         case "username_incorrect":
-                        ModalElement.alert({
-                            message: task.getLanguage("username_incorrect"),
-                            func: function(){
-                                document.getElementById("username_input").focus();
-                            }
-                        });
-                        break;
+                            ModalElement.alert({
+                                message: task.getLanguage("username_incorrect"),
+                                func: function(){
+                                    document.getElementById("username_input").focus();
+                                }
+                            });
+                            break;
                         case "failed_service":
-                        ModalElement.alert({
-                            message: task.getLanguage("failed_service")
-                        });
-                        break;
+                            ModalElement.alert({
+                                message: task.getLanguage("failed_service")
+                            });
+                            break;
                         default:
-                        ModalElement.alert({
-                            message: message
-                        });
-                        break;
+                            ModalElement.alert({
+                                message: message
+                            });
+                            break;
                     }
                 }
             }
@@ -376,7 +419,7 @@ task.showLoginBox = function(){
                         width: "100%",
                         height: "40px"
                     },
-                    value: "https://lab.daithangminh.vn/home_co"
+                    value: window.domainHome
                 }
             }),
             DOMElement.div({
@@ -466,7 +509,7 @@ task.showLoginBox = function(){
             })
         ]
     }));
-    document.getElementById("username_input").focus();
+    // document.getElementById("username_input").focus();
 };
 
 task.loadDatabase = function () {
@@ -567,6 +610,7 @@ task.loadDatabase = function () {
                     }
 
                     //systemconfig
+                    systemconfig.userHasApp = st.dataUser.hasApp;
                     systemconfig.userid = st.dataUser.homeid;
                     systemconfig.username = st.dataUser.username;
                     systemconfig.fullname = st.dataUser.fullname;
@@ -579,28 +623,22 @@ task.loadDatabase = function () {
                     systemconfig.language = st.dataUser.language;
                     init();
                 }
-                else if (message.startsWith("not_logged_in_no_cookies")){
-                    prefixhome = message.substr("not_logged_in_no_cookies".length);
-                    task.showLoginBox();
-                }
-                else if (message.startsWith("not_logged_in_cookies")){
-                    prefixhome = message.substr("not_logged_in_cookies".length);
-                    var t = StorageClass.getLocal(prefixhome + "jughgfhjh");
-                    if (t == null) t = "";
+                else if (message.startsWith("not_logged_in")){
                     ModalElement.show_loading();
                     FormClass.api_call({
                         url: "card_login_quick.php",
                         params: [
                             {
                                 name: "jughgfhjh",
-                                value: t
+                                value: "carddone_" + window.userToken
                             }
                         ],
                         func: function(success, message) {
                             ModalElement.close(-1);
-                            // console.log(message);
+                            console.log(message);
                             if (success){
-                                if (message == "ok"){
+                                if (message.substr(0, 2) == "ok"){
+                                    window.session = message.substr(2);
                                     task.loadDatabase();
                                 }
                                 else {
@@ -634,9 +672,10 @@ task.loadDatabase = function () {
         }
     });
 }
+
 ModuleManagerClass.register({
     name: "main",
-    prerequisites: ["FormClass", "ModalElement", "Absol", "StorageClass"],
+    prerequisites: ["FormClass", "ModalElement", "Absol", "StorageClass", "Common_view"],
     trigger: function () {
         window.session = EncodingClass.string.fromVariable({});
         window.holderMain = DOMElement.div({
@@ -683,7 +722,54 @@ ModuleManagerClass.register({
             children: [window.holderMain]
         }));
         if (window.isApp){
-            task.showLoginBox();
+            console.log(window.ReactNativeWebView);
+            if (window.ReactNativeWebView !== undefined && window.ReactNativeWebView.postMessage !== undefined){
+                exe();
+            }
+            else {
+                var myVar = setInterval(function(){
+                    console.log(window.ReactNativeWebView);
+                    if(window.ReactNativeWebView !== undefined && window.ReactNativeWebView.postMessage !== undefined){
+                        exe();
+                        clearInterval(myVar);
+                    };
+                }, 100);
+                setTimeout(function(){
+                    clearInterval(myVar);
+                },10000);
+            }
+            function exe(){
+                window.ReactNativeWebView.postMessage(JSON.stringify({name: "getUserToken"}));
+                function GetToken(message){
+                    var data = message.data;
+                    if (data.name == "getUserToken"){
+                        window.userToken = data.value;
+                        window.removeEventListener("message",this);
+                        window.ReactNativeWebView.postMessage(JSON.stringify({name: "getDomain", value: "carddone_domain"}));
+                        function GetTokenA(message){
+                            var data = message.data;
+                            console.log(data);
+                            if (data.name === "getDomain"){
+                                if (!data.value){
+                                    window.domainHome = "";
+                                    task.showLoginBox();
+                                }
+                                else {
+                                    window.domainHome = data.value;
+                                    window.domain = data.value + "/carddone/";
+                                    window.domainUser_avatars = data.value + "/user_avatars/";
+                                    window.domainGoup_avatars = data.value + "/carddone/" + "/group_avatars/";
+                                    window.domainCompany_logo = data.value + "/company_logo/";
+                                    task.loadDatabase();
+                                }
+                                window.removeEventListener("message",this);
+                            }
+                        }
+                        window.addEventListener("message", GetTokenA);
+                    }
+                }
+                window.addEventListener("message", GetToken);
+            }
         }
         else {
             task.loadDatabase();

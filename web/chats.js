@@ -1,3 +1,4 @@
+
 'use strict';
 
 carddone.chats.generateDataChatContent = function(host, content){
@@ -34,7 +35,7 @@ carddone.chats.seenMess = function(host, sessionid, mess_seen_id){
                     }
                 }
                 else {
-                    ModalElement.alert({message: message});
+                    console.log(message);
                 }
             }
         });
@@ -53,13 +54,18 @@ carddone.chats.deleteMessage = function(host, sessionid, localid){
             func: function(success, message){
                 if (success){
                     if (message.substr(0, 2) == "ok"){
-                        resolve();
+                        var lastMess = "";
                         var sIndex = host.database.chat_sessions.getIndex(sessionid);
                         for (var j = 0; j < host.database.chat_sessions.items[sIndex].content.length; j++){
                             if (host.database.chat_sessions.items[sIndex].content[j].localid == localid){
+                                if (j > 0 && j == host.database.chat_sessions.items[sIndex].content.length - 1){
+                                    lastMess = host.database.chat_sessions.items[sIndex].content[j-1];
+                                }
                                 host.database.chat_sessions.items[sIndex].content.splice(j, 1);
+                                break;
                             }
                         }
+                        resolve(lastMess);
                         var receiverids = [];
                         var userIndex;
                         for (var i = 0; i < host.database.chat_sessions.items[sIndex].membersIdList.length; i++){
@@ -69,17 +75,14 @@ carddone.chats.deleteMessage = function(host, sessionid, localid){
                         }
                         var randomId = contentModule.generateRandom();
                         host.listMessRandomAccept.push(randomId);
-                        host.connector.send({
-                            content: {
-                                type: "deletemessage",
-                                localid: localid,
-                                sessionid: sessionid,
-                                listMember: host.database.chat_sessions.items[sIndex].membersIdList,
-                                randomId: randomId
-                            },
-                            receivertype: "all", onsent: function () {
-                                // console.log("send delete mess");
-                            }
+                        host.funcs.sendMessage({
+                            tabid: host.holder.id,
+                            type: "deletemessage",
+                            localid: localid,
+                            sessionid: sessionid,
+                            listMember: host.database.chat_sessions.items[sIndex].membersIdList,
+                            randomId: randomId,
+                            lastMess: lastMess
                         });
                     }
                     else {
@@ -107,7 +110,6 @@ carddone.chats.editMessage = function(host, sessionid, localid, content){
             func: function(success, message){
                 if (success){
                     if (message.substr(0, 2) == "ok"){
-                        // resolve();
                         var sIndex = host.database.chat_sessions.getIndex(sessionid);
                         var receiverids = [];
                         var userIndex;
@@ -117,7 +119,6 @@ carddone.chats.editMessage = function(host, sessionid, localid, content){
                                 host.database.chat_sessions.items[sIndex].content[j].isEdit = 1;
                             }
                         }
-                        // console.log(host.database.chat_sessions.items[sIndex].membersIdList);
                         for (var i = 0; i < host.database.chat_sessions.items[sIndex].membersIdList.length; i++){
                             if (host.database.chat_sessions.items[sIndex].membersIdList[i] == systemconfig.userid) continue;
                             userIndex = data_module.users.getByhomeid(host.database.chat_sessions.items[sIndex].membersIdList[i]);
@@ -126,6 +127,7 @@ carddone.chats.editMessage = function(host, sessionid, localid, content){
                         var randomId = contentModule.generateRandom();
                         host.listMessRandomAccept.push(randomId);
                         var dataDraw = {
+                            tabid: host.holder.id,
                             type: "editmessage",
                             localid: localid,
                             content: content,
@@ -134,12 +136,7 @@ carddone.chats.editMessage = function(host, sessionid, localid, content){
                             randomId: randomId
                         };
                         resolve(dataDraw);
-                        host.connector.send({
-                            content: dataDraw,
-                            receivertype: "all", onsent: function () {
-                                console.log("send edit mess");
-                            }
-                        });
+                        host.funcs.sendMessage(dataDraw);
                     }
                     else {
                         ModalElement.alert({message: message});
@@ -153,7 +150,7 @@ carddone.chats.editMessage = function(host, sessionid, localid, content){
     });
 };
 
-carddone.chats.sendMess = function (host, sessionid, text, files, images) {
+carddone.chats.sendMess = function (host, sessionid, text, files, images, listIdLocal) {
     return new Promise(function (resolveMessage, rejectMessage) {
         var sIndex = host.database.chat_sessions.getIndex(sessionid);
         var allFilesReadAsync = files.concat(images).map(function (file) {
@@ -176,17 +173,20 @@ carddone.chats.sendMess = function (host, sessionid, text, files, images) {
                 return res;
             });
         }).then(function (filesToUpload) {
-            var listIdLocal = [];
-            for (var i = 0; i < filesToUpload.length; i++){
-                listIdLocal.push((new Date()).getTime() + i);
-            }
-            listIdLocal.push((new Date()).getTime() + filesToUpload.length);
             FormClass.api_call({
                 url: "chats_save_message.php",
                 params: [
                     {
                         name: "sessionid",
                         value: sessionid
+                    },
+                    {
+                        name: "membersIdList",
+                        value: EncodingClass.string.fromVariable(host.database.chat_sessions.items[sIndex].membersIdList)
+                    },
+                    {
+                        name: "fullname",
+                        value: systemconfig.fullname
                     },
                     {
                         name: "text",
@@ -196,79 +196,82 @@ carddone.chats.sendMess = function (host, sessionid, text, files, images) {
                         name: "n",
                         value: filesToUpload.length
                     },
+                    {
+                        name: "domain",
+                        value: window.domain
+                    },
                     {name: "listIdLocal", value: EncodingClass.string.fromVariable(listIdLocal)}
                 ],
                 fileuploads: filesToUpload,
                 func: function (success, message) {
-                    if (success) {
-                        if (message.substr(0, 2) == "ok") {
-                            var st = EncodingClass.string.toVariable(message.substr(2));
-                            var dataDraw = [];
-                            dataDraw.sessionid = sessionid;
-                            var userIndex = data_module.users.getByhomeid(systemconfig.userid);
-                            for (var i = 0; i < filesToUpload.length; i++) {
-                                if (filesToUpload[i].type == "img") {
-                                    dataDraw.push({
-                                        localid: listIdLocal[i],
-                                        content: filesToUpload[i].filename,
-                                        userid: systemconfig.userid,
-                                        fullname: data_module.users.items[userIndex].fullname,
-                                        type: "me",
-                                        content_type: "img",
-                                        m_time: new Date()
-                                    });
-                                }
-                                else {
-                                    dataDraw.push({
-                                        localid: listIdLocal[i],
-                                        content: filesToUpload[i].filename,
-                                        userid: systemconfig.userid,
-                                        fullname: data_module.users.items[userIndex].fullname,
-                                        type: "me",
-                                        content_type: "file",
-                                        m_time: new Date()
-                                    });
-                                }
-                            }
-                            if (text != "") {
+                    console.log(message);
+                    var drawMessage = function(failed){
+                        var dataDraw = [];
+                        dataDraw.sessionid = sessionid;
+                        var userIndex = data_module.users.getByhomeid(systemconfig.userid);
+                        for (var i = 0; i < filesToUpload.length; i++) {
+                            if (filesToUpload[i].type == "img") {
                                 dataDraw.push({
-                                    localid: listIdLocal[listIdLocal.length - 1],
-                                    content: text,
+                                    localid: listIdLocal[i],
+                                    content: filesToUpload[i].filename,
                                     userid: systemconfig.userid,
                                     fullname: data_module.users.items[userIndex].fullname,
                                     type: "me",
-                                    content_type: "text",
-                                    m_time: new Date()
+                                    content_type: "img",
+                                    m_time: new Date(),
+                                    failed: failed
                                 });
                             }
-                            var dataSend = EncodingClass.string.duplicate(dataDraw);
-                            for (var i = 0; i < dataSend.length; i++){
-                                dataSend[i].type = "other";
-                                dataSend[i].avatarSrc = data_module.users.items[userIndex].avatarSrc;
+                            else {
+                                dataDraw.push({
+                                    localid: listIdLocal[i],
+                                    content: filesToUpload[i].filename,
+                                    userid: systemconfig.userid,
+                                    fullname: data_module.users.items[userIndex].fullname,
+                                    type: "me",
+                                    content_type: "file",
+                                    m_time: new Date(),
+                                    failed: failed
+                                });
                             }
-                            var receiverids = [];
-                            var userIndex;
-                            // console.log(host.database.chat_sessions.items[sIndex].membersIdList);
-                            for (var i = 0; i < host.database.chat_sessions.items[sIndex].membersIdList.length; i++){
-                                if (host.database.chat_sessions.items[sIndex].membersIdList[i] == systemconfig.userid) continue;
-                                userIndex = data_module.users.getByhomeid(host.database.chat_sessions.items[sIndex].membersIdList[i]);
-                                if (data_module.users.items[userIndex].clientid !== undefined) receiverids.push(data_module.users.items[userIndex].clientid);
-                            }
-                            resolveMessage(dataDraw);
+                        }
+                        if (text != "") {
+                            dataDraw.push({
+                                localid: listIdLocal[listIdLocal.length - 1],
+                                content: text,
+                                userid: systemconfig.userid,
+                                fullname: data_module.users.items[userIndex].fullname,
+                                type: "me",
+                                content_type: "text",
+                                m_time: new Date(),
+                                failed: failed
+                            });
+                        }
+                        var receiverids = [];
+                        var userIndex;
+                        // console.log(host.database.chat_sessions.items[sIndex].membersIdList);
+                        for (var i = 0; i < host.database.chat_sessions.items[sIndex].membersIdList.length; i++){
+                            if (host.database.chat_sessions.items[sIndex].membersIdList[i] == systemconfig.userid) continue;
+                            userIndex = data_module.users.getByhomeid(host.database.chat_sessions.items[sIndex].membersIdList[i]);
+                            if (data_module.users.items[userIndex].clientid !== undefined) receiverids.push(data_module.users.items[userIndex].clientid);
+                        }
+                        resolveMessage(dataDraw);
+                        if (!failed){
                             var randomId = contentModule.generateRandom();
                             host.listMessRandomAccept.push(randomId);
-                            host.connector.send({
-                                content: {
-                                    type: "addmessage",
-                                    dataDraw: dataSend,
-                                    sessionid: sessionid,
-                                    listMember: host.database.chat_sessions.items[sIndex].membersIdList,
-                                    randomId: randomId
-                                },
-                                receivertype: "all", onsent: function () {
-                                    console.log("send add mess");
-                                }
+                            host.funcs.sendMessage({
+                                tabid: host.holder.id,
+                                type: "addmessage",
+                                dataDraw: dataDraw,
+                                sessionid: sessionid,
+                                listMember: host.database.chat_sessions.items[sIndex].membersIdList,
+                                randomId: randomId
                             });
+                        }
+                    };
+                    if (success) {
+                        if (message.substr(0, 2) == "ok") {
+                            drawMessage(false);
                         }
                         else {
                             ModalElement.alert({message: message});
@@ -276,8 +279,7 @@ carddone.chats.sendMess = function (host, sessionid, text, files, images) {
                         }
                     }
                     else {
-                        ModalElement.alert({message: message});
-                        // rejectMessage(message)
+                        drawMessage(true);
                     }
                 }.bind(this)
             });
@@ -397,23 +399,19 @@ carddone.chats.addSession = function(host, data){
                             }
                             var randomId = contentModule.generateRandom();
                             host.listMessRandomAccept.push(randomId);
-                            host.connector.send({
-                                content: {
-                                    type: "add_session",
-                                    dataSession: {
-                                        id: host.database.chat_sessions.items[sessionIndex].id,
-                                        name: host.database.chat_sessions.items[sessionIndex].name,
-                                        cardid: 0,
-                                        lasttime: new Date(),
-                                        content: [],
-                                        archivedIdList: []
-                                    },
-                                    listMember: data.listMember,
-                                    randomId: randomId
+                            host.funcs.sendMessage({
+                                tabid: host.holder.id,
+                                type: "add_session",
+                                dataSession: {
+                                    id: host.database.chat_sessions.items[sessionIndex].id,
+                                    name: host.database.chat_sessions.items[sessionIndex].name,
+                                    cardid: 0,
+                                    lasttime: new Date(),
+                                    content: [],
+                                    archivedIdList: []
                                 },
-                                receivertype: "all", onsent: function () {
-                                    console.log("send add session");
-                                }
+                                listMember: data.listMember,
+                                randomId: randomId
                             });
                         }
                     }
@@ -449,17 +447,13 @@ carddone.chats.changeAvatarGroup = function(host, sessionid, src){
                         // console.log(window.domain + window.domainGoup_avatars + avatar);
                         var randomId = contentModule.generateRandom();
                         host.listMessRandomAccept.push(randomId);
-                        host.connector.send({
-                            content: {
-                                type: "change_group_avatar",
-                                sessionid: sessionid,
-                                avatarSrc: window.domainGoup_avatars + avatar,
-                                listMember: host.database.chat_sessions.items[sessionIndex].membersIdList,
-                                randomId: randomId
-                            },
-                            receivertype: "all", onsent: function () {
-
-                            }
+                        host.funcs.sendMessage({
+                            tabid: host.holder.id,
+                            type: "change_group_avatar",
+                            sessionid: sessionid,
+                            avatarSrc: window.domainGoup_avatars + avatar,
+                            listMember: host.database.chat_sessions.items[sessionIndex].membersIdList,
+                            randomId: randomId
                         });
                     }
                     else {
@@ -490,17 +484,13 @@ carddone.chats.changeNameGroup = function(host, sessionid, name){
                         resolve();
                         var randomId = contentModule.generateRandom();
                         host.listMessRandomAccept.push(randomId);
-                        host.connector.send({
-                            content: {
-                                type: "change_group_name",
-                                sessionid: sessionid,
-                                name: name,
-                                listMember: host.database.chat_sessions.items[sessionIndex].membersIdList,
-                                randomId: randomId
-                            },
-                            receivertype: "all", onsent: function () {
-
-                            }
+                        host.funcs.sendMessage({
+                            tabid: host.holder.id,
+                            type: "change_group_name",
+                            sessionid: sessionid,
+                            name: name,
+                            listMember: host.database.chat_sessions.items[sessionIndex].membersIdList,
+                            randomId: randomId
                         });
                     }
                     else {
@@ -528,26 +518,22 @@ carddone.chats.addMemberGroup = function(host, sessionid, listMember){
                 if (success){
                     if (message.substr(0, 2) == "ok"){
                         var st = EncodingClass.string.toVariable(message.substr(2));
-                        console.log(st);
+                        // console.log(st);
                         var sessionIndex = host.database.chat_sessions.getIndex(sessionid);
                         host.database.chat_sessions.items[sessionIndex].membersIdList = host.database.chat_sessions.items[sessionIndex].membersIdList.concat(listMember);
                         st.newMess.fullname = systemconfig.fullname;
                         resolve(st.newMess);
                         var randomId = contentModule.generateRandom();
                         host.listMessRandomAccept.push(randomId);
-                        host.connector.send({
-                            content: {
-                                type: "add_member_group",
-                                sessionid: sessionid,
-                                listMember: host.database.chat_sessions.items[sessionIndex].membersIdList,
-                                listMemberAdd: listMember,
-                                newMess: st.newMess,
-                                userid: systemconfig.userid,
-                                randomId: randomId
-                            },
-                            receivertype: "all", onsent: function () {
-
-                            }
+                        host.funcs.sendMessage({
+                            tabid: host.holder.id,
+                            type: "add_member_group",
+                            sessionid: sessionid,
+                            listMember: host.database.chat_sessions.items[sessionIndex].membersIdList,
+                            listMemberAdd: listMember,
+                            newMess: st.newMess,
+                            userid: systemconfig.userid,
+                            randomId: randomId
                         });
                     }
                     else {
@@ -595,9 +581,9 @@ carddone.chats.generateDataChat = function(host, item){
     }
 
     item.sendFunc = function(host, item){
-        return function(text, files, images){
+        return function(text, files, images, listIdLocal){
             return new Promise(function(resolve, reject){
-                carddone.chats.sendMess(host, item.id, text, files, images).then(function(value){
+                carddone.chats.sendMess(host, item.id, text, files, images, listIdLocal).then(function(value){
                     resolve(value);
                 });
             });
@@ -670,6 +656,7 @@ carddone.chats.generateDataChat = function(host, item){
 
 carddone.chats.loadChat_sessionsOld = function(host){
     return new Promise(function(resolve, reject){
+        if (host.isOver) return;
         ModalElement.show_loading();
         FormClass.api_call({
             url: "database_load.php",
@@ -685,6 +672,7 @@ carddone.chats.loadChat_sessionsOld = function(host){
                     if (message.substr(0, 2) == "ok"){
                         var st = EncodingClass.string.toVariable(message.substr(2));
                         var sessionDel = -1;
+                        if (st.chat_sessions.length == 0) host.isOver = true;
                         for (var i = 0; i < st.chat_sessions.length; i++){
                             host.database.chat_sessions.items.push(st.chat_sessions[i]);
                         }
@@ -834,294 +822,278 @@ carddone.chats.loadChatSessionDetails = function(host, sessionid){
 };
 
 carddone.chats.init = function(host){
-    if (!data_module.users || !data_module.companies || !data_module.contact){
-        for (var i = 0; i < ModalElement.layerstatus.length; i++){
-            if ((ModalElement.layerstatus[i].index == -1) && (!ModalElement.layerstatus[i].visible)) ModalElement.show_loading();
+    return new Promise(function(rs, rj){
+        if (!data_module.users || !data_module.companies || !data_module.contact){
+            for (var i = 0; i < ModalElement.layerstatus.length; i++){
+                if ((ModalElement.layerstatus[i].index == -1) && (!ModalElement.layerstatus[i].visible)) ModalElement.show_loading();
+            }
+            setTimeout(function(){
+                 rs(carddone.chats.init(host));
+            }, 50);
         }
-        setTimeout(function(){
-            carddone.chats.init(host);
-        }, 50);
-        return;
-    }
-    if (host.cardid === undefined) host.cardid = 0;
-    host.listMessRandomAccept = [];
-    ModalElement.show_loading();
-    FormClass.api_call({
-        url: "database_load.php",
-        params: [
-            {name: "task", value: "chats_load_list"},
-            {name: "cardid", value: host.cardid},
-            {name: "localid", value: (new Date()).getTime()}
-        ],
-        func: function(success, message){
-            ModalElement.close(-1);
-            if (success){
-                if (message.substr(0, 2) == "ok"){
-                    var st = EncodingClass.string.toVariable(message.substr(2));
-                    host.database = {};
-                    systemconfig.card_permission_list = st.card_permission_list;
-                    delete st.card_permission_list;
-                    contentModule.makeDatabaseContent(host.database, st);
-                    contentModule.makeChat_session_membersIndex(host);
-                    contentModule.makeChat_sessionsContent(host);
-                    contentModule.makeAvatarUser();
-                    console.log(host.database);
-                    data_module.users.getByhomeid = function(homeid){
-                        for (var i = 0; i < data_module.users.items.length; i++){
-                            if (data_module.users.items[i].homeid == homeid){
-                                return i;
+        else {
+            host.isOver = false;
+            if (host.cardid === undefined) host.cardid = 0;
+            host.listMessRandomAccept = [];
+            ModalElement.show_loading();
+            FormClass.api_call({
+                url: "database_load.php",
+                params: [
+                    {name: "task", value: "chats_load_list"},
+                    {name: "cardid", value: host.cardid},
+                    {name: "localid", value: (new Date()).getTime()}
+                ],
+                func: function(success, message){
+                    ModalElement.close(-1);
+                    if (success){
+                        if (message.substr(0, 2) == "ok"){
+                            var st = EncodingClass.string.toVariable(message.substr(2));
+                            host.database = {};
+                            systemconfig.card_permission_list = st.card_permission_list;
+                            delete st.card_permission_list;
+                            contentModule.makeDatabaseContent(host.database, st);
+                            contentModule.makeChat_session_membersIndex(host);
+                            contentModule.makeChat_sessionsContent(host);
+                            contentModule.makeAvatarUser();
+                            console.log(host.database);
+                            data_module.users.getByhomeid = function(homeid){
+                                for (var i = 0; i < data_module.users.items.length; i++){
+                                    if (data_module.users.items[i].homeid == homeid){
+                                        return i;
+                                    }
+                                }
+                                return -1;
+                            };
+                            for (var i = 0; i < host.database.chat_sessions.items.length; i++){
+                                carddone.chats.generateDataChat(host, host.database.chat_sessions.items[i]);
                             }
-                        }
-                        return -1;
-                    };
-                    for (var i = 0; i < host.database.chat_sessions.items.length; i++){
-                        carddone.chats.generateDataChat(host, host.database.chat_sessions.items[i]);
-                    }
-                    host.database.chat_sessions.items.functionMessage = function(){
-                        return new Promise(function(resolve, reject){
-                            var hostName = window.domain;
-                            var x = hostName.indexOf("://");
-                            if (x >= 0) hostName = hostName.substr(x + 3);
-                            x = hostName.indexOf("/");
-                            hostName = hostName.substr(0, x);
-                            var x = window.domain.indexOf(hostName);
-                            var y = window.domain.indexOf("/carddone");
-                            var channel = window.domain.substr(x + hostName.length + 1, y - (x + hostName.length + 1));
-                            host.connector = ChatClass.connect({
-                                host: hostName,
-                                channel: channel,
-                                onMessage: function (message) {
-                                    var content = message.content;
-                                    console.log(content);
-                                    switch (content.type) {
-                                        case "addmessage":
-                                            if (content.listMember.indexOf(systemconfig.userid) < 0) return;
-                                            if (host.listMessRandomAccept.indexOf(content.randomId) >= 0) return;
-                                            host.listMessRandomAccept.push(content.randomId);
-                                            var sessionIndex = host.database.chat_sessions.getIndex(content.sessionid);
-                                            if (sessionIndex < 0) {
-                                                carddone.chats.loadChatSessionDetails(host, content.sessionid).then(function(value){
-                                                    resolve(value);
-                                                });
-                                            }
-                                            else {
-                                                for (var i = 0; i < content.dataDraw.length; i++){
-                                                    if (content.dataDraw[i].userid == systemconfig.userid){
-                                                        content.dataDraw[i].type = "me";
-                                                    }
-                                                    else {
-                                                        content.dataDraw[i].type = "other";
-                                                    }
+                            host.database.chat_sessions.items.functionMessage = function(){
+                                var temp = new Promise(function(resolve, reject){
+                                    new Promise(function(tempResolve,tempReject){
+                                        host.resolveMessage = tempResolve;
+
+                                    }).then(function(message){
+                                        var content = message.content;
+                                        if (host.listMessRandomAccept.indexOf(content.randomId) >= 0) return;
+                                        host.listMessRandomAccept.push(content.randomId);
+                                        switch (content.type) {
+                                            case "addmessage":
+                                                if (content.listMember.indexOf(systemconfig.userid) < 0) return;
+                                                var sessionIndex = host.database.chat_sessions.getIndex(content.sessionid);
+                                                if (sessionIndex < 0) {
+                                                    carddone.chats.loadChatSessionDetails(host, content.sessionid).then(function(value){
+                                                        resolve(value);
+                                                    });
                                                 }
-                                                resolve({
-                                                    type: "addmessage",
-                                                    content: content
-                                                });
-                                            }
-                                            break;
-                                        case "add_session":
-                                            if (content.listMember.indexOf(systemconfig.userid) < 0) return;
-                                            if (host.listMessRandomAccept.indexOf(content.randomId) >= 0) return;
-                                            host.listMessRandomAccept.push(content.randomId);
-                                            carddone.chats.loadChatSessionDetails(host, content.dataSession.id).then(function(value){
-                                                resolve(value);
-                                            });
-                                        case "say_hi":
-                                            var userIndex = data_module.users.getByhomeid(content.userSend);
-                                            if (userIndex < 0){
-                                                console.log(content.userSend);
-                                                return;
-                                            }
-                                            data_module.users.items[userIndex].clientid = message.senderinfo.clientid;
-                                            this.send({
-                                                content: {
-                                                    type: "response",
-                                                    userSend: systemconfig.userid
-                                                },
-                                                receivertype: "single",
-                                                receiverid: message.senderinfo.clientid,
-                                                onsent: function () {
-                                                    // console.log("response");
-                                                }
-                                            });
-                                            break;
-                                        case "response":
-                                            if (content.userSend == systemconfig.userid) return;
-                                            var userIndex = data_module.users.getByhomeid(content.userSend);
-                                            if (userIndex < 0){
-                                                // console.log(content.userSend);
-                                                return;
-                                            }
-                                            data_module.users.items[userIndex].clientid = message.senderinfo.clientid;
-                                            break;
-                                        case "editmessage":
-                                            if (content.listMember.indexOf(systemconfig.userid) < 0) return;
-                                            if (host.listMessRandomAccept.indexOf(content.randomId) >= 0) return;
-                                            host.listMessRandomAccept.push(content.randomId);
-                                            var sessionIndex = host.database.chat_sessions.getIndex(content.sessionid);
-                                            console.log(sessionIndex, host.database.chat_sessions, content.sessionid);
-                                            if (sessionIndex >= 0){
-                                                for (var j = 0; j < host.database.chat_sessions.items[sessionIndex].content.length; j++){
-                                                    if (host.database.chat_sessions.items[sessionIndex].content[j].localid == content.localid){
-                                                        host.database.chat_sessions.items[sessionIndex].content[j].content = content.content;
-                                                        host.database.chat_sessions.items[sessionIndex].content[j].isEdit = 1;
+                                                else {
+                                                    var uIndex;
+                                                    for (var i = 0; i < content.dataDraw.length; i++){
+                                                        if (content.dataDraw[i].userid == systemconfig.userid){
+                                                            content.dataDraw[i].type = "me";
+                                                        }
+                                                        else {
+                                                            content.dataDraw[i].type = "other";
+                                                            uIndex = data_module.users.getByhomeid(content.dataDraw[i].userid);
+                                                            if (uIndex < 0) continue;
+                                                            content.dataDraw[i].avatarSrc = data_module.users.items[uIndex].avatarSrc;
+                                                        }
                                                     }
+                                                    resolve({
+                                                        type: "addmessage",
+                                                        content: content
+                                                    });
                                                 }
-                                                resolve({
-                                                    type: "editmessage",
-                                                    content: content
-                                                });
-                                            }
-                                            break;
-                                        case "deletemessage":
-                                            if (content.listMember.indexOf(systemconfig.userid) < 0) return;
-                                            if (host.listMessRandomAccept.indexOf(content.randomId) >= 0) return;
-                                            host.listMessRandomAccept.push(content.randomId);
-                                            var sessionIndex = host.database.chat_sessions.getIndex(content.sessionid);
-                                            if (sessionIndex >= 0){
-                                                for (var j = 0; j < host.database.chat_sessions.items[sessionIndex].content.length; j++){
-                                                    if (host.database.chat_sessions.items[sessionIndex].content[j].localid == content.localid){
-                                                        host.database.chat_sessions.items[sessionIndex].content.splice(j, 1);
-                                                    }
-                                                }
-                                                resolve({
-                                                    type: "deletemessage",
-                                                    content: content
-                                                });
-                                            }
-                                            break;
-                                        case "change_group_name":
-                                            if (content.listMember.indexOf(systemconfig.userid) < 0) return;
-                                            if (host.listMessRandomAccept.indexOf(content.randomId) >= 0) return;
-                                            host.listMessRandomAccept.push(content.randomId);
-                                            var sessionIndex = host.database.chat_sessions.getIndex(content.sessionid);
-                                            // console.log(sessionIndex);
-                                            if (sessionIndex < 0) return;
-                                            resolve(content);
-                                            break;
-                                        case "change_group_avatar":
-                                            if (content.listMember.indexOf(systemconfig.userid) < 0) return;
-                                            if (host.listMessRandomAccept.indexOf(content.randomId) >= 0) return;
-                                            host.listMessRandomAccept.push(content.randomId);
-                                            var sessionIndex = host.database.chat_sessions.getIndex(content.sessionid);
-                                            if (sessionIndex < 0) return;
-                                            resolve(content);
-                                            break;
-                                        case "add_member_group":
-                                            if (content.listMember.indexOf(systemconfig.userid) < 0) return;
-                                            if (host.listMessRandomAccept.indexOf(content.randomId) >= 0) return;
-                                            host.listMessRandomAccept.push(content.randomId);
-                                            var sessionIndex = host.database.chat_sessions.getIndex(content.sessionid);
-                                            if (sessionIndex < 0) {
+                                                break;
+                                            case "add_session":
+                                                if (content.listMember.indexOf(systemconfig.userid) < 0) return;
                                                 carddone.chats.loadChatSessionDetails(host, content.dataSession.id).then(function(value){
                                                     resolve(value);
                                                 });
-                                            }
-                                            else {
-                                                host.database.chat_sessions.items[sessionIndex].membersIdList = content.listMember;
-                                                var uIndex;
-                                                for (var i = 0; i < content.listMemberAdd.length; i++){
-                                                    uIndex = data_module.users.getByhomeid(content.listMemberAdd[i]);
-                                                    host.database.chat_sessions.items[sessionIndex].memberList.push({
-                                                        id: content.listMemberAdd[i],
-                                                        username: data_module.users.items[uIndex].username,
-                                                        fullname: data_module.users.items[uIndex].fullname,
-                                                        avatarSrc: data_module.users.items[uIndex].avatarSrc
+                                            case "say_hi":
+                                                var userIndex = data_module.users.getByhomeid(content.userSend);
+                                                if (userIndex < 0){
+                                                    console.log(content.userSend);
+                                                    return;
+                                                }
+                                                data_module.users.items[userIndex].clientid = message.senderinfo.clientid;
+                                                this.send({
+                                                    content: {
+                                                        type: "response",
+                                                        userSend: systemconfig.userid
+                                                    },
+                                                    receivertype: "single",
+                                                    receiverid: message.senderinfo.clientid,
+                                                    onsent: function () {
+                                                        // console.log("response");
+                                                    }
+                                                });
+                                                break;
+                                            case "response":
+                                                if (content.userSend == systemconfig.userid) return;
+                                                var userIndex = data_module.users.getByhomeid(content.userSend);
+                                                if (userIndex < 0){
+                                                    // console.log(content.userSend);
+                                                    return;
+                                                }
+                                                data_module.users.items[userIndex].clientid = message.senderinfo.clientid;
+                                                break;
+                                            case "editmessage":
+                                                if (content.listMember.indexOf(systemconfig.userid) < 0) return;
+                                                var sessionIndex = host.database.chat_sessions.getIndex(content.sessionid);
+                                                // console.log(sessionIndex, host.database.chat_sessions, content.sessionid);
+                                                if (sessionIndex >= 0){
+                                                    for (var j = 0; j < host.database.chat_sessions.items[sessionIndex].content.length; j++){
+                                                        if (host.database.chat_sessions.items[sessionIndex].content[j].localid == content.localid){
+                                                            host.database.chat_sessions.items[sessionIndex].content[j].content = content.content;
+                                                            host.database.chat_sessions.items[sessionIndex].content[j].isEdit = 1;
+                                                        }
+                                                    }
+                                                    resolve({
+                                                        type: "editmessage",
+                                                        content: content
                                                     });
                                                 }
-                                            }
-                                            break;
-                                        default:
+                                                break;
+                                            case "deletemessage":
+                                                if (content.listMember.indexOf(systemconfig.userid) < 0) return;
+                                                var sessionIndex = host.database.chat_sessions.getIndex(content.sessionid);
+                                                if (sessionIndex >= 0){
+                                                    for (var j = 0; j < host.database.chat_sessions.items[sessionIndex].content.length; j++){
+                                                        if (host.database.chat_sessions.items[sessionIndex].content[j].localid == content.localid){
+                                                            host.database.chat_sessions.items[sessionIndex].content.splice(j, 1);
+                                                        }
+                                                    }
+                                                    resolve({
+                                                        type: "deletemessage",
+                                                        content: content
+                                                    });
+                                                }
+                                                break;
+                                            case "change_group_name":
+                                                if (content.listMember.indexOf(systemconfig.userid) < 0) return;
+                                                var sessionIndex = host.database.chat_sessions.getIndex(content.sessionid);
+                                                // console.log(sessionIndex);
+                                                if (sessionIndex < 0) return;
+                                                resolve(content);
+                                                break;
+                                            case "change_group_avatar":
+                                                if (content.listMember.indexOf(systemconfig.userid) < 0) return;
+                                                var sessionIndex = host.database.chat_sessions.getIndex(content.sessionid);
+                                                if (sessionIndex < 0) return;
+                                                resolve(content);
+                                                break;
+                                            case "add_member_group":
+                                                if (content.listMember.indexOf(systemconfig.userid) < 0) return;
+                                                var sessionIndex = host.database.chat_sessions.getIndex(content.sessionid);
+                                                if (sessionIndex < 0) {
+                                                    carddone.chats.loadChatSessionDetails(host, content.dataSession.id).then(function(value){
+                                                        resolve(value);
+                                                    });
+                                                }
+                                                else {
+                                                    host.database.chat_sessions.items[sessionIndex].membersIdList = content.listMember;
+                                                    var uIndex;
+                                                    for (var i = 0; i < content.listMemberAdd.length; i++){
+                                                        uIndex = data_module.users.getByhomeid(content.listMemberAdd[i]);
+                                                        host.database.chat_sessions.items[sessionIndex].memberList.push({
+                                                            id: content.listMemberAdd[i],
+                                                            username: data_module.users.items[uIndex].username,
+                                                            fullname: data_module.users.items[uIndex].fullname,
+                                                            avatarSrc: data_module.users.items[uIndex].avatarSrc
+                                                        });
+                                                    }
+                                                }
+                                                break;
+                                            default:
 
                                             break;
 
-                                    }
-                                },
-                                onConnectionLost: function(message){
-                                    // console.log("onConnectionLost");
-                                },
-                                onConnect: function(){
-                                    console.log("connect_" + (new Date()).getTime());
-                                    // this.send({
-                                    //     content: {
-                                    //         type: "say_hi",
-                                    //         userSend: systemconfig.userid
-                                    //     },
-                                    //     receivertype: "all", onsent: function () {
-                                    //         // console.log("say hi");
-                                    //     }
-                                    // });
-                                },
-                                onClosed: function(message){
-                                    console.log("onClosed");
+                                        }
+                                    });
+                                });
+                                return temp;
+                            }
+
+                            host.database.chat_sessions.items.functionOpenChat = function(){
+                                var temp = new Promise(function(resolve, reject){
+                                    new Promise(function(tempResolve,tempReject){
+                                        host.resolveOpenChat = tempResolve;
+
+                                    }).then(function(message){
+                                        console.log(message);
+                                        resolve(message);
+                                    });
+                                });
+                                return temp;
+                            }
+                            host.database.chat_sessions.items.addgroupFunc = function(dataSess){
+                                return new Promise(function(resolve, reject){
+                                    carddone.chats.addSession(host, dataSess).then(function(value){
+                                        resolve(value);
+                                    });
+                                });
+                            };
+                            host.database.chat_sessions.items.loadChat_sessionsOldFunc = function(){
+                                return new Promise(function(resolve, reject){
+                                    carddone.chats.loadChat_sessionsOld(host).then(function(value){
+                                        resolve(value);
+                                    });
+                                });
+                            };
+                            var cmdbutton = {
+                                close: function () {
+                                    carddone.menu.tabPanel.removeTab(host.holder.id);
                                 }
+                            };
+                            var listUserAdd = [];
+                            for (var i = 0; i < data_module.users.items.length; i++){
+                                if (data_module.users.items[i].homeid == systemconfig.userid) continue;
+                                listUserAdd.push({
+                                    value: data_module.users.items[i].homeid,
+                                    text: data_module.users.items[i].username + " (" + data_module.users.items[i].fullname + ")"
+                                });
+                            }
+                            host.database.chat_sessions.items.listUserAdd = listUserAdd;
+                            var openChat = false;
+                            if (host.cardid > 0) {
+                                openChat = true;
+                                carddone.chats.generateDataChat(host, st.dataChatCard);
+                            }
+                            var usersList = [];
+                            for (var i = 0; i < data_module.users.items.length; i++){
+                                usersList.push({
+                                    id: data_module.users.items[i].homeid,
+                                    username: data_module.users.items[i].username,
+                                    fullname: data_module.users.items[i].fullname,
+                                    avatarSrc: data_module.users.items[i].avatarSrc
+                                });
+                            }
+                            host.funcs.formChatsInit({
+                                holder: host.holder,
+                                cmdbutton: cmdbutton,
+                                data: host.database.chat_sessions.items,
+                                openChat: openChat,
+                                sessionActive: st.dataChatCard,
+                                usersList: usersList
                             });
-                        });
-                    }
-                    host.database.chat_sessions.items.addgroupFunc = function(dataSess){
-                        return new Promise(function(resolve, reject){
-                            carddone.chats.addSession(host, dataSess).then(function(value){
-                                resolve(value);
-                            });
-                        });
-                    };
-                    host.database.chat_sessions.items.loadChat_sessionsOldFunc = function(){
-                        return new Promise(function(resolve, reject){
-                            carddone.chats.loadChat_sessionsOld(host).then(function(value){
-                                resolve(value);
-                            });
-                        });
-                    };
-                    var cmdbutton = {
-                        close: function () {
-                            carddone.menu.tabPanel.removeTab(host.holder.id);
+                            if (host.cardid > 0){
+                                if (host.database.chat_sessions.getIndex(st.dataChatCard.id) < 0){
+                                    host.database.chat_sessions.items.push(st.dataChatCard);
+                                }
+                            }
+                            rs();
                         }
-                    };
-                    var listUserAdd = [];
-                    for (var i = 0; i < data_module.users.items.length; i++){
-                        if (data_module.users.items[i].homeid == systemconfig.userid) continue;
-                        listUserAdd.push({
-                            value: data_module.users.items[i].homeid,
-                            text: data_module.users.items[i].username + " (" + data_module.users.items[i].fullname + ")"
-                        });
-                    }
-                    host.database.chat_sessions.items.listUserAdd = listUserAdd;
-                    var openChat = false;
-                    if (host.cardid > 0) {
-                        openChat = true;
-                        carddone.chats.generateDataChat(host, st.dataChatCard);
-                    }
-                    var usersList = [];
-                    for (var i = 0; i < data_module.users.items.length; i++){
-                        usersList.push({
-                            id: data_module.users.items[i].homeid,
-                            username: data_module.users.items[i].username,
-                            fullname: data_module.users.items[i].fullname,
-                            avatarSrc: data_module.users.items[i].avatarSrc
-                        });
-                    }
-                    host.funcs.formChatsInit({
-                        holder: host.holder,
-                        cmdbutton: cmdbutton,
-                        data: host.database.chat_sessions.items,
-                        openChat: openChat,
-                        sessionActive: st.dataChatCard,
-                        usersList: usersList
-                    });
-                    if (host.cardid > 0){
-                        if (host.database.chat_sessions.getIndex(st.dataChatCard.id) < 0){
-                            host.database.chat_sessions.items.push(st.dataChatCard);
+                        else {
+                            ModalElement.alert({message: message});
                         }
                     }
+                    else {
+                        ModalElement.alert({message: message});
+                    }
                 }
-                else {
-                    ModalElement.alert({message: message});
-                }
-            }
-            else {
-                ModalElement.alert({message: message});
-            }
+            });
         }
+
     });
 };
 ModuleManagerClass.register({

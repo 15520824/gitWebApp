@@ -1,4 +1,4 @@
-function LanguageModule_load() {
+window.LanguageModule_load = function() {
     return new Promise(function(resolve, reject){
         FormClass.api_call({
             url: "languagemodule_load.php",
@@ -20,9 +20,9 @@ function LanguageModule_load() {
     });
 }
 
-var LanguageModule;
+window.LanguageModule = {};
 
-function printf(st, values) {
+window.printf = function(st, values) {
     var sx, sc, i, j, k;
     sx = "";
     k = st.length;
@@ -52,7 +52,7 @@ function printf(st, values) {
     return sx;
 };
 
-function LanguageModule_writeJavascript(code) {
+window.LanguageModule_writeJavascript = function(code) {
     var codes = [];
     for (i = 0; i < LanguageModule_v_languageCode.length; i++) {
         codes.push({id: LanguageModule_v_languageCode[i][2], name: LanguageModule_v_languageCode[i][0], value: LanguageModule_v_languageCode[i][1]});

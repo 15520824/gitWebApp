@@ -9,7 +9,7 @@ FormClass.readFileAsync = function(file){
 
 
 
-var contentModule = {};
+window.contentModule = {};
 
 contentModule.copyToClipboard = function(str){
     var el = document.createElement('textarea');
@@ -865,6 +865,7 @@ contentModule.makeReportToUser = function(){
     for (var i = 0; i < buf.length; i++){
         getChildFunc(buf[i]);
     }
+    data_module.users.isMakeIndex = true;
 };
 
 contentModule.makeOwnerCompanyContact = function(){
@@ -1101,6 +1102,8 @@ contentModule.makeListsIndex2 = function(host){
 contentModule.makeListsIndex3 = function(host){
     var index, t, index2;
     for (var i = 0; i < host.database.cards.items.length; i++){
+        host.database.cards.items[i].contactList = [];
+        host.database.cards.items[i].companyList = [];
         index = host.database.lists.getIndex(host.database.cards.items[i].parentid);
         if (index != -1){
             index2 = host.database.boards.getIndex(host.database.lists.items[index].boardid);
@@ -2419,7 +2422,7 @@ contentModule.getObjectbyTypeView = function(host, typeid, valueid, require, def
         case "enum":
             var localid, value;
             if (valueid > 0) {
-                localid = host.database.values.items[host.database.values.getIndex(valueid)].localid;
+                localid = host.database.values.items[host.database.values.getIndex(valueid)].content;
             }
             else localid = defaultValue;
             for (var i = 0; i < data_module.typelists.items[typeIndex].content.details.length; i++){
@@ -2872,7 +2875,7 @@ contentModule.getFieldDataToReport = function(host, typeid, valueid, require, de
         case "enum":
             var localid, value;
             if (valueid > 0) {
-                localid = host.database.values.items[host.database.values.getIndex(valueid)].localid;
+                localid = host.database.values.items[host.database.values.getIndex(valueid)].content;
             }
             else localid = defaultValue;
             for (var i = 0; i < data_module.typelists.items[typeIndex].content.details.length; i++){
@@ -3209,6 +3212,7 @@ contentModule.reminderActivityLost = function(listReminderLost){
 };
 
 contentModule.reminderForm = function(listReminderLost){
+    if (listReminderLost.length == 0) return;
     contentModule.reminderActivityLost(listReminderLost).then(function(value){
         ModalElement.showWindow({
             title: LanguageModule.text("txt_reminder"),
@@ -3226,7 +3230,7 @@ contentModule.reminderForm = function(listReminderLost){
 };
 
 contentModule.showReminder = function(){
-    if (!data_module.companies || !data_module.users || !data_module.contact){
+    if (!data_module.companies || !data_module.users || !data_module.contact || !data_module.owner_company_contact){
         setTimeout(function(){
             contentModule.showReminder();
         }, 50);
