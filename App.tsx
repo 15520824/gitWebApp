@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {Platform, StyleSheet, Alert, View, AppState} from 'react-native';
+import {Platform, StyleSheet, Alert, View, AppState, AppRegistry, NativeModules, BackHandler} from 'react-native';
 import {WebView} from 'react-native-webview';
 import firebase from 'react-native-firebase';
 import AsyncStorage from '@react-native-community/async-storage';
@@ -8,7 +8,7 @@ const isAndroid = Platform.OS === 'android';
 
 try {
   const draftJsHtml = require('./dist/index.html');
-  var indexfile = isAndroid ? 'file:///android_asset/index.html' : draftJsHtml;
+  var indexfile = isAndroid ? {uri:'file:///android_asset/index.html'} : draftJsHtml;
   // console.log(indexfile);
 } catch (error) {
   // console.log(error);
@@ -21,12 +21,13 @@ const styles = StyleSheet.create({
   },
 });
 
-const channel = new firebase.notifications.Android.Channel(
-  'reminder',
-  'Reminders Channel',
-  firebase.notifications.Android.Importance.High
-  ).setDescription("Used for getting reminder notification");
-firebase.notifications().android.createChannel(channel);
+// const channel = new firebase.notifications.Android.Channel(
+//   'reminder19001080',
+//   'reminder19001080',
+//   firebase.notifications.Android.Importance.Max
+//   ).setDescription("Used for getting reminder notification");
+// firebase.notifications().android.createChannel(channel);
+
 
 function displayNotification(notification: { notificationId: string; title: string; subtitle: string; body: string; moredata: any; data: any; })
 {
@@ -38,8 +39,9 @@ function displayNotification(notification: { notificationId: string; title: stri
           .setSubtitle(notification.subtitle)
           .setBody(notification.body)
           .setData({moredata: notification.moredata})
-          .android.setChannelId('reminder') // e.g. the id you chose above
+          .android.setChannelId('reminder19001080') // e.g. the id you chose above
           .android.setColor('#ff0000') // you can set a color here
+          .android.setAutoCancel(true)
           .android.setPriority(firebase.notifications.Android.Priority.High);
       firebase.notifications()
           .displayNotification(localNotification)
@@ -55,7 +57,7 @@ function displayNotification(notification: { notificationId: string; title: stri
             .setBody(notification.body)
             .setData(notification.data)
             .ios.setBadge(1);
-  
+
         firebase.notifications()
             .displayNotification(localNotification)
             .then(function(){
@@ -64,17 +66,20 @@ function displayNotification(notification: { notificationId: string; title: stri
             .catch(err => {reject(err)});
     }
   })
-  
+
 }
+
 
 class App extends Component {
   [x: string]: any;
   async componentDidMount() {
+    BackHandler.addEventListener('hardwareBackPress', this.handleBackButtonClick);
     this.checkPermission();
     this.createNotificationListeners();
   }
   componentWillUnmount() {
     // this.messageListener();
+    BackHandler.removeEventListener('hardwareBackPress', this.handleBackButtonClick);
     this.notificationListener();
     this.notificationOpenedListener();
   }
@@ -91,17 +96,17 @@ class App extends Component {
     this.notificationListener = firebase
       .notifications()
       .onNotification(async notification => {
-        // console.log("abc", notification);        
+        // console.log("abc", notification);
         const clientResponseCode = `
           window.postMessage(${JSON.stringify({name:"checkShowNotiChat",value:  {
-            notificationId: notification.notificationId, 
+            notificationId: notification.notificationId,
             title: notification.title,
-            body: notification.body, 
+            body: notification.body,
             moredata: notification.data.moredata
           }})}, "*");
           true;
         `;
-          
+
         if (this.webView) {
           this.webView.injectJavaScript(clientResponseCode);
         }
@@ -123,7 +128,9 @@ class App extends Component {
       .notifications()
       .onNotificationOpened(notificationOpen => {
         var notification = notificationOpen.notification;
-        this.clickNotiChatFuncClose(notification.data.moredata);   
+        console.log("background" + 1111111, notification);
+
+        this.clickNotiChatFuncClose(notification.data.moredata);
       });
     /*
      * If your app is closed, you can check if it was opened by a notification being clicked / tapped / opened as follows:
@@ -133,7 +140,8 @@ class App extends Component {
       .getInitialNotification();
     if (notificationOpen) {
       var notification = notificationOpen.notification;
-      this.clickNotiChatFuncClose(notification.data.moredata);      
+      console.log("closed" + 1111111, notification);
+      this.clickNotiChatFuncClose(notification.data.moredata);
     }
     /*
      * Triggered for data only payload in foreground
@@ -151,7 +159,7 @@ class App extends Component {
       const clientResponseCode = `
         if(window.loadEvent === true){
           window.postMessage(${JSON.stringify({name: "openchatMobile", value: moredata})}, "*");
-        } 
+        }
         else {
           var x = setInterval(function(){
             if (window.loadEvent === true){
@@ -162,9 +170,9 @@ class App extends Component {
         }
         true;
       `;
-        
+
       self.webView.injectJavaScript(clientResponseCode);
-      
+
     }
     else {
       if (count == 100){
@@ -202,7 +210,7 @@ class App extends Component {
           }
         })
     })
-    
+
   }
 
   async getToken() {
@@ -229,9 +237,9 @@ class App extends Component {
             self.fcmToken = value;
           }
       })
-      
+
     })
-    
+
   }
 
   requestPermission() {
@@ -250,9 +258,32 @@ class App extends Component {
         reject();
       }
     })
-    
+
   }
-  
+
+  checkBackApp(){
+      var self = this;
+      if (self.webView) {
+          const clientResponseCode = `
+          window.postMessage(${JSON.stringify({name: "checkBackApp", value: ""})}, "*");
+          true;
+          `;
+        self.webView.injectJavaScript(clientResponseCode);
+      }
+      else {
+          BackHandler.exitApp();
+      }
+  };
+  constructor(props) {
+      super(props)
+      this.handleBackButtonClick = this.handleBackButtonClick.bind(this);
+  }
+
+  handleBackButtonClick(){
+      this.checkBackApp();
+      return true;
+  }
+
   saveStorage = async (name: string,value: string) => {
     try {
       await AsyncStorage.setItem(name, value);
@@ -287,6 +318,12 @@ class App extends Component {
             var data = JSON.parse(event.nativeEvent.data);
             var self = this;
             switch(data.name){
+            case "removeAllNotification":
+                NativeModules.myBaseJavaModule.removeAllNotification();
+                break;
+            case "removeNotificationBySessionid":
+                NativeModules.myBaseJavaModule.removeNotificationBySessionid();
+                break;
               case "getUserToken":
                 if(self.fcmToken===undefined){
                   self.checkPermission().then(function(value){
@@ -309,7 +346,7 @@ class App extends Component {
                   }
                 }
 
-                
+
                 break;
               case "saveDomain":
                 var promiseall = [];
@@ -353,7 +390,7 @@ class App extends Component {
               case "pushNotification":
                 displayNotification(data.value);
                 break;
-              case "getStatusApp":                
+              case "getStatusApp":
                   const clientResponseCode = `
                   window.postMessage(${JSON.stringify({name: "getStatusApp", value: AppState.currentState})}, "*");
                   true;
@@ -362,7 +399,10 @@ class App extends Component {
                   self.webView.injectJavaScript(clientResponseCode);
                 }
                 break;
-                
+            case "backApp":
+                BackHandler.exitApp();
+                break;
+
             }
           }}
           onLoad={() => {}}

@@ -1,10 +1,11 @@
 'use strict';
 
-theme.decorationElt = function(content, selection){
+theme.decorationElt = function(content, selection, isPriv){
     var colorRadio, colorPicker, pictureRadio, picturePicker, st, radio_name;
     radio_name = "decoration_radio";
     st = {
-        mode: 'RGBA'
+        mode: 'RGBA',
+        disabled: !(isPriv > 0)
     };
     if (content.color.value) st.value = "#" + content.color.value;
     colorPicker = absol._({
@@ -25,7 +26,8 @@ theme.decorationElt = function(content, selection){
             border: 'var(--control-border)'
         },
         props: {
-            align: "center"
+            align: "center",
+            disabled: !(isPriv > 0)
         },
         on: {
             click: function(){
@@ -49,7 +51,7 @@ theme.decorationElt = function(content, selection){
                 display: "inline-block"
             },
             props: {
-                src: content.picture.value
+                src: window.domain + content.picture.value
             }
         },
         '.cd-image-holder-icon'
@@ -62,7 +64,8 @@ theme.decorationElt = function(content, selection){
             name: radio_name,
             text: content.color.title,
             value: "color",
-            checked: (selection == 'color')
+            checked: (selection == 'color'),
+            disabled: !(isPriv > 0)
         }
     });
     pictureRadio = absol._({
@@ -71,7 +74,8 @@ theme.decorationElt = function(content, selection){
             name: radio_name,
             text: content.picture.title,
             value: "picture",
-            checked: (selection == 'picture')
+            checked: (selection == 'picture'),
+            disabled: !(isPriv > 0)
         }
     });
     var x = absol._({
@@ -112,7 +116,7 @@ theme.decorationElt = function(content, selection){
     return x;
 };
 
-theme.stageDataForm = function(list){
+theme.stageDataForm = function(list, formatid, isPriv){
     var tempId = -1;
     var additionalStatus = [], finishStatus = [];
     var additionalTable, finishTable;
@@ -120,13 +124,15 @@ theme.stageDataForm = function(list){
         var st = theme.input({
             type: "text",
             style: {width: "250px"},
-            value: value
+            value: value,
+            disabled: formatid ? true : !(isPriv > 0)
         });
         return st;
     };
     var colorElt = function(value){
         var st = {
-            mode: 'RGBA'
+            mode: 'RGBA',
+            disabled: formatid ? true : !(isPriv > 0)
         };
         if (value) st.value = '#' + value;
         return absol._({
@@ -214,12 +220,12 @@ theme.stageDataForm = function(list){
     };
     var generateHeader = function(functionClickMore, title){
         var stageHeader = [
-            {type: 'dragzone', sort: false},
+            {type: 'dragzone', sort: false, hidden: formatid ? true : !(isPriv > 0)},
             {hidden: true},
             {value: title, sort: false},
             {value: LanguageModule.text("txt_color"), sort: false},
             {value: LanguageModule.text("txt_type"), sort: false},
-            {sort: false, functionClickAll: functionClickMore,icon: ""}
+            {sort: false, functionClickAll: functionClickMore,icon: "", hidden: formatid ? true : !(isPriv > 0)}
         ];
         return stageHeader;
     };
@@ -251,14 +257,15 @@ theme.stageDataForm = function(list){
                     backgroundColor: '#f7f6f6',
                     paddingTop: "10px",
                     paddingBottom: '10px',
-                    paddingLeft: '10px'
+                    paddingLeft: '10px',
+                    display: formatid ? "none" : !(isPriv > 0) ? "none" : ""
                 },
                 child: {
                     tag: "a",
                     style: {
                         paddingTop: "10px",
                         paddingLeft: "20px",
-                        color: "#147af6",
+                        color: "var(--a-color)",
                         cursor: "pointer",
                         textDecoration: "underline"
                     },
@@ -283,14 +290,15 @@ theme.stageDataForm = function(list){
                     backgroundColor: '#f7f6f6',
                     paddingTop: "10px",
                     paddingBottom: '10px',
-                    paddingLeft: '10px'
+                    paddingLeft: '10px',
+                    display: formatid ? "none" : !(isPriv > 0) ? "none" : ""
                 },
                 child: {
                     tag: "a",
                     style: {
                         paddingTop: "10px",
                         paddingLeft: "20px",
-                        color: "#147af6",
+                        color: "var(--a-color)",
                         cursor: "pointer",
                         textDecoration: "underline"
                     },
@@ -357,7 +365,7 @@ theme.stageDataForm = function(list){
     return container;
 };
 
-theme.stageDataForm2 = function(list){
+theme.stageDataForm2 = function(list, formatid, isPriv){
     var tempId = -1;
     var initialStatus = [], additionalStatus = [], successStatus = [], unsuccessStatus = [];
     var initialTable, additionalTable, successTable, unsuccessTable;
@@ -365,13 +373,15 @@ theme.stageDataForm2 = function(list){
         var st = theme.input({
             type: "text",
             style: {width: "250px"},
-            value: value
+            value: value,
+            disabled: formatid ? true : !(isPriv > 0)
         });
         return st;
     };
     var colorElt = function(value){
         var st = {
-            mode: 'RGBA'
+            mode: 'RGBA',
+            disabled: formatid ? true : !(isPriv > 0)
         };
         if (value) st.value = '#' + value;
         return absol._({
@@ -471,12 +481,12 @@ theme.stageDataForm2 = function(list){
     };
     var generateHeader = function(functionClickMore, title){
         var stageHeader = [
-            {type: 'dragzone', sort: false},
+            {type: 'dragzone', sort: false, hidden: formatid ? true : !(isPriv > 0)},
             {hidden: true},
             {value: title, sort: false},
             {value: LanguageModule.text("txt_color"), sort: false},
             {value: LanguageModule.text("txt_type"), sort: false},
-            {sort: false, functionClickAll: functionClickMore,icon: ""}
+            {sort: false, functionClickAll: functionClickMore,icon: "", hidden: formatid ? true : !(isPriv > 0)}
         ];
         return stageHeader;
     };
@@ -521,14 +531,15 @@ theme.stageDataForm2 = function(list){
                     backgroundColor: '#f7f6f6',
                     paddingTop: "10px",
                     paddingBottom: '10px',
-                    paddingLeft: '10px'
+                    paddingLeft: '10px',
+                    display: formatid ? "none" : !(isPriv > 0) ? "none" : ""
                 },
                 child: {
                     tag: "a",
                     style: {
                         paddingTop: "10px",
                         paddingLeft: "20px",
-                        color: "#147af6",
+                        color: "var(--a-color)",
                         cursor: "pointer",
                         textDecoration: "underline"
                     },
@@ -560,14 +571,15 @@ theme.stageDataForm2 = function(list){
                     backgroundColor: '#f7f6f6',
                     paddingTop: "10px",
                     paddingBottom: '10px',
-                    paddingLeft: '10px'
+                    paddingLeft: '10px',
+                    display: formatid ? "none" : !(isPriv > 0) ? "none" : ""
                 },
                 child: {
                     tag: "a",
                     style: {
                         paddingTop: "10px",
                         paddingLeft: "20px",
-                        color: "#147af6",
+                        color: "var(--a-color)",
                         cursor: "pointer",
                         textDecoration: "underline"
                     },
@@ -686,7 +698,7 @@ theme.boardGetObjectGroupData = function(content){
     return data;
 };
 
-theme.boardFieldData = function(content, fieldList){
+theme.boardFieldData = function(content, fieldList, formatid, isPriv){
     var data, i;
     var tempId = -1;
     var deleteIcon = function(){
@@ -704,14 +716,15 @@ theme.boardFieldData = function(content, fieldList){
     }
     var nameElt = function(value){
         var st = {
-            items: fieldList
-        }
+            items: fieldList,
+            enableSearch: true,
+            disabled: formatid ? true : !(isPriv > 0)
+        };
         if (value) st.value = value;
         return absol._({
-            tag: "selectmenu",
+            tag: "mselectmenu",
             style: {
-                width: "100%",
-                backgroundColor: "white"
+                width: "100%"
             },
             props: st
         });
@@ -724,9 +737,9 @@ theme.boardFieldData = function(content, fieldList){
         data.push([{}, {element: nameElt(content[i].id)}, {style: {textAlign: "center"}, element: deleteIcon()}]);
     }
     var tableView = pizo.tableView([
-        {type: 'dragzone', sort: false},
+        {type: 'dragzone', sort: false, hidden: formatid ? true : !(isPriv > 0)},
         {value: LanguageModule.text("txt_field"), sort: false},
-        {sort: false, functionClickAll: functionClickMore,icon: "", style: {width: "40px"}}
+        {sort: false, functionClickAll: functionClickMore,icon: "", style: {width: "40px"}, hidden: formatid ? true : !(isPriv > 0)}
     ], data, false, true);
     tableView.style.width = "100%";
     var addNewField = function(){
@@ -745,13 +758,15 @@ theme.boardFieldData = function(content, fieldList){
                     backgroundColor: '#f7f6f6',
                     paddingTop: "10px",
                     paddingBottom: '10px',
-                    paddingLeft: '10px'
+                    paddingLeft: '10px',
+                    display: formatid ? "none" : !(isPriv > 0) ? "none" : ""
                 },
                 child: {
                     tag: "a",
                     style: {
                         paddingTop: "10px",
-                        color: "#147af6",
+                        paddingLeft: "20px",
+                        color: "var(--a-color)",
                         cursor: "pointer",
                         textDecoration: "underline"
                     },
@@ -778,86 +793,606 @@ theme.boardFieldData = function(content, fieldList){
     return container;
 };
 
-theme.editBoardForm = function(params){
-    var name, color, picture, favorite, available, board_type, object_of_board, object_type, list, object_group, fields;
-    var buttons, data, keys, maxWidth;
+theme.boardSelectMemberForm = function(users, content, owner, callbackFunc){
+    var selectList = [], userTable, userSelect;
+    var changeFunc = function(id, checked){
+        if (checked){
+            selectList.push(id);
+            userSelect.addItem(id);
+        }
+        else {
+            selectList = selectList.filter(function(elt){
+                return elt != id;
+            });
+            userSelect.saferemoveItem(id);
+        }
+    };
+    var selectMemberFunc = function(){
+        var rs = absol._({});
+        rs.data = [];
+        rs.addItem = function(id){
+            var item = contentModule.getUsernameByhomeid2(users, id);
+            var st = absol._({
+                class: ["absol-selectbox-item", "card_contact_selected"],
+                style: {
+                    display: "inline-block"
+                },
+                child: [
+                    {
+                        class: "absol-selectbox-item-text",
+                        child: {
+                            tag: 'span',
+                            child: {text: item}
+                        }
+                    },
+                    {
+                        class: "absol-selectbox-item-close",
+                        child: {
+                            tag: 'span',
+                            class: ["mdi", "mdi-close"]
+                        },
+                        on: {
+                            click: function(id){
+                                return function(){
+                                    rs.saferemoveItem(id);
+                                }
+                            }(id)
+                        }
+                    }
+                ]
+            });
+            st.id = id;
+            rs.data.push(st);
+            st.addTo(rs);
+            userTable.parentNode.style.maxHeight = "calc(90vh - " + (250 + userSelect.offsetHeight) + "px)";
+        }
+        rs.saferemoveItem = function(id){
+            selectList = selectList.filter(function(elt){
+                return elt != id;
+            });
+            for (var i = 0; i < rs.data.length; i++){
+                if (rs.data[i].id == id) {
+                    rs.removeChild(rs.data[i]);
+                    rs.data.splice(i, 1);
+                    break;
+                }
+            }
+            for (var i = 0; i < userTable.data.length; i++){
+                if (userTable.data[i][1].value == id){
+                    userTable.data[i][0].element.checked = false;
+                }
+            }
+            userTable.parentNode.style.maxHeight = "calc(90vh - " + (250 + userSelect.offsetHeight) + "px)";
+        }
+        selectList.forEach(function(elt){
+            rs.addItem(elt);
+        });
+        rs.getValue = function(){
+            return rs.data.map(function(elt){
+                return {
+                    id: -1,
+                    userid: parseInt(elt.id, 10),
+                    type: 0
+                };
+            });
+        };
+        return rs;
+    }
+    userSelect = selectMemberFunc();
+    var generateUserTable = function(){
+        var data = [];
+        users.items.forEach(function(elt){
+            if (!content.some(function(elt2){
+                return elt2.userid == elt.homeid
+            })){
+                var username, fullname, email, comment, icon;
+                username = absol._({
+                    class: "sortTable-cell-view",
+                    child: {text: elt.username}
+                });
+                fullname = absol._({
+                    class: "sortTable-cell-view",
+                    child: {text: elt.fullname}
+                });
+                email = absol._({
+                    class: "sortTable-cell-view",
+                    child: {text: elt.email}
+                });
+                comment = absol._({
+                    class: "sortTable-cell-view",
+                    child: {text: elt.comment}
+                });
+                icon = absol._({
+                    tag: 'checkbox',
+                    props: {
+                        checked: false
+                    },
+                    on: {
+                        change: function(id){
+                            return function(){
+                                changeFunc(id, this.checked);
+                            }
+                        }(elt.homeid)
+                    }
+                });
+                data.push([
+                    {style: {textAlign: "center"}, element: icon},
+                    {value: elt.homeid},
+                    {value: elt.username, element: username},
+                    {element: fullname, value: elt.fullname},
+                    {element: email, value: elt.email},
+                    {element: comment, value: elt.comment}
+                ]);
+            }
+        });
+        var header = [
+            {},
+            {hidden: true},
+            {value: LanguageModule.text("txt_username")},
+            {value: LanguageModule.text("txt_fullname")},
+            {value: LanguageModule.text("txt_email")},
+            {value: LanguageModule.text("txt_comment")}
+        ];
+        return pizo.tableView(header, data, false, false);
+    }
+    var inputsearchbox = absol.buildDom({
+        tag:'searchcrosstextinput',
+        style: {
+            width: "100%",
+            marginBottom: "10px"
+        },
+        props:{
+            placeholder: LanguageModule.text("txt_search")
+        }
+    });
+    userTable = generateUserTable();
+    userTable.addInputSearch(inputsearchbox);
+    userTable.style.width = "100%";
+    var st = absol._({
+        child: [
+            {
+                child: [
+                    userSelect,
+                    {
+                        style: {
+                            overflow: "auto"
+                        },
+                        child: [
+                            inputsearchbox,
+                            userTable
+                        ]
+                    }
+                ]
+            },
+            {
+                style: {
+                    paddingTop: "20px"
+                },
+                props: {
+                    align: "center"
+                },
+                child: DOMElement.table({
+                    data: [[
+                        {
+                            children: [theme.okButton({
+                                onclick: function(){
+                                    callbackFunc(userSelect.getValue());
+                                    ModalElement.close(1);
+                                }
+                            })]
+                        },
+                        {attrs: {style: {
+                            width: "10px"
+                        }}},
+                        {
+                            children: [theme.cancelButton({
+                                onclick: function(){
+                                    ModalElement.close(1);
+                                }
+                            })]
+                        }
+                    ]]
+                })
+            }
+        ]
+    });
+    ModalElement.showWindow({
+        index: 1,
+        title: LanguageModule.text("txt_select_member"),
+        overflow: 'hidden',
+        bodycontent: st
+    });
+    userSelect.style.width = userTable.parentNode.offsetWidth+ "px";
+    userTable.parentNode.style.maxHeight = "calc(90vh - " + (250 + userSelect.offsetHeight) + "px)";
+}
+
+theme.boardMemberData = function(content, users, owner, isPriv){
+    var data, i, originData, superElt = {}, superIndex = [];
+    var tempId = -1;
+    var deleteIcon = function(){
+        return absol._({
+            class: "card-icon-remove-cover",
+            child: {
+                tag: "i",
+                style: {
+                    verticalAlign: 'middle'
+                },
+                class: ["material-icons", "card-icon-remove"],
+                child:{text: "remove_circle"}
+            }
+        });
+    }
+    var nameElt = function(value){
+        var username = contentModule.getUsernameByhomeid2(users, value);
+        var fullname = contentModule.getFullnameByhomeid2(users, value);
+        var st = absol._({
+            class: "sortTable-cell-view",
+            child: {text: username + " - " + fullname}
+        });
+        st.value = value;
+        return st;
+    }
+
+    var typeElt = function(value, index){
+        var items = [
+            {value: 0, text: LanguageModule.text("txt_employee")},
+            {value: 1, text: LanguageModule.text("txt_administrator")}
+        ];
+        if (value == 2 || isPriv == 2) items.push({value: 2, text: LanguageModule.text("txt_super_administrator")});
+        var st = absol._({
+            tag: "mselectmenu",
+            style: {
+                width: "100%"
+            },
+            props: {
+                items: items,
+                value: value,
+                disabled: (isPriv == 0) || (isPriv == 1 && value == 2)
+            },
+            on: {
+                change: function(){
+                    content[this.rowIndex].type = this.value;
+                    if ((this.oldValue == 2) || ((this.oldValue != 2) && (this.value == 2))){
+                        superElt = {};
+                        superIndex = [];
+                        var data = generateData(content);
+                        if (superIndex.length == 1){
+                            data[superIndex[0]][2].element.disabled = true;
+                            data[superIndex[0]][3] = {style: {textAlign: "center"}, functionClick: function(){}};
+                        }
+                        tableView.updateTable(tableView.header, data, false, false);
+                    }
+                    this.oldValue = this.value;
+                }
+            }
+        });
+        st.oldValue = value;
+        st.rowIndex = index;
+        return st;
+    }
+
+    var functionClickMore = function(event,me,index,data,row){
+        tableView.dropRow(index).then(function(){
+            content.splice(index, 1);
+            if (row[2].element.value == 2){
+                superElt = {};
+                superIndex = [];
+                var data = generateData(content);
+                if (superIndex.length == 1){
+                    data[superIndex[0]][2].element.disabled = true;
+                    data[superIndex[0]][3] = {style: {textAlign: "center"}, functionClick: function(){}};
+                }
+                tableView.updateTable(tableView.header, data, false, false);
+            }
+        });
+    }
+    var generateData = function(content){
+        var data = [], icon, items, type;
+        for (i = 0; i < content.length; i++){
+            if ((isPriv == 0) || (isPriv == 1 && content[i].type == 2)) icon = {style: {textAlign: "center"}, functionClick: function(){}};
+            else icon = {style: {textAlign: "center"}, element: deleteIcon()};
+            type = typeElt(content[i].type, i);
+            items = [{value: content[i].id}, {element: nameElt(content[i].userid)}, {element: type}, icon];
+            if (isPriv == 2){
+                if (content[i].type == 2) {
+                    superElt[i] = items;
+                    superIndex.push(i);
+                }
+            }
+            data.push(items);
+        }
+        return data;
+    }
+    data = generateData(content);
+    if (superIndex.length == 1){
+        data[superIndex[0]][2].element.disabled = true;
+        data[superIndex[0]][3] = {style: {textAlign: "center"}, functionClick: function(){}};
+    }
+    var header = [
+        {hidden: true},
+        {value: LanguageModule.text("txt_username")},
+        {value: LanguageModule.text("txt_type")},
+        {sort: false, functionClickAll: functionClickMore,icon: "", style: {width: "40px"}, hidden: !(isPriv > 0)}
+    ];
+    var tableView = pizo.tableView(header, data, false, true);
+    tableView.style.width = "100%";
+    DOMElement.hiddendiv.appendChild(tableView);
+    DOMElement.hiddendiv.removeChild(tableView);
+    var container = absol._({
+        style: {
+            overflowY: "hidden"
+        }
+    });
+    tableView.addTo(container);
+    var addNewField = function(){
+        var callbackFunc = function(value){
+            if (value.length == 0) return;
+            content = content.concat(value);
+            superElt = {};
+            superIndex = [];
+            var data = generateData(value);
+            data.forEach(function(elt){
+                tableView.insertRow(elt);
+            });
+        }
+        theme.boardSelectMemberForm(users, content, owner, callbackFunc);
+    }
+    var add_link = absol._({
+        style: {
+            backgroundColor: '#f7f6f6',
+            paddingTop: "10px",
+            paddingBottom: '10px',
+            paddingLeft: '10px'
+        },
+        child: {
+            tag: "a",
+            style: {
+                paddingTop: "10px",
+                paddingLeft: "20px",
+                color: "var(--a-color)",
+                cursor: "pointer",
+                textDecoration: "underline"
+            },
+            child: {text: "+ " + LanguageModule.text("txt_add")},
+            on: {
+                click: function(){
+                    originData = tableView.data;
+                    addNewField();
+                }
+            }
+        }
+    });
+    if (isPriv > 0) add_link.addTo(container);
+
+    container.getValue = function(){
+        var data = tableView.data;
+        var tempData = data.map(function(elt){
+            return {
+                id: parseInt(elt[0].value, 10),
+                userid: parseInt(elt[1].element.value, 10),
+                type: parseInt(elt[2].element.value, 10)
+            };
+        });
+        return tempData;
+    };
+    return container;
+};
+
+theme.settingMasterButton = function(params){
+    return button071218.showButton({
+        sym: DOMElement.i({
+            attrs: {
+                className: "mdi mdi-cog"
+            }
+        }),
+        typebutton: 0,
+        text: LanguageModule.text("txt_link_to_master_board"),
+        onclick: params.onclick
+    });
+};
+
+theme.settingMasterBoard = function(list, value){
+    return new Promise(function(rs){
+        var props = {
+            items: list,
+            enableSearch: true,
+        };
+        if (value) props.value = value;
+        var selector = absol._({
+            tag: "mselectmenu",
+            props: props
+        });
+        ModalElement.showWindow({
+            index: 1,
+            title: LanguageModule.text("txt_link_to_master_board"),
+            bodycontent: absol._({
+                child: [
+                    {
+                        tag: "span",
+                        child: selector
+                    },
+                    {
+                        style: {
+                            paddingTop: "20px"
+                        },
+                        child: [
+                            {
+                                style: {
+                                    display: "inline-block"
+                                },
+                                child: theme.okButton({
+                                    onclick: function(){
+                                        rs(parseInt(selector.value));
+                                        ModalElement.close(1);
+                                    }
+                                })
+                            },
+                            {
+                                style: {
+                                    paddingLeft: "20px",
+                                    display: "inline-block"
+                                },
+                                child: theme.cancelButton({
+                                    onclick: function(){
+                                        ModalElement.close(1);
+                                    }
+                                })
+                            }
+                        ]
+                    }
+                ]
+            })
+        });
+    });
+};
+
+theme.boardEditForm = function(params){
+    var name, color, picture, favorite, available, board_type, list, fields, members, permission;
+    var buttons, data, keys;
     var stageData, stageHeader, stage, returnData;
-    buttons = [];
-    for (var i = 0; i < params.buttons.length; i++){
-        buttons.push(absol._({
-            class: "single-button-header",
-            child: params.buttons[i]
-        }));
+    var stageContainer, fieldsContainer;
+    var originalList = params.content.list.value;
+    var originalFields = params.content.fields.value;
+    var originalBoardType = params.content.board_type.value;
+    stageContainer = absol._({});
+    fieldsContainer = absol._({});
+    var commands = [
+        {
+            icon:  DOMElement.i({
+                attrs: {
+                    className: "material-icons"
+                },
+                text: "save"
+            })
+        }
+    ];
+    var props = {
+        actionIcon: DOMElement.i({
+            attrs: {
+                className: "material-icons"
+            },
+            text: "arrow_back_ios"
+        }),
+        title: LanguageModule.text("txt_board"),
+        commands: commands
+    };
+    if (!params.formatid) {
+        props.quickmenu = {
+            getMenuProps: function(){
+                return {
+                    items: [
+                        {
+                            icon: DOMElement.i({
+                                attrs: {
+                                    className: "mdi mdi-cog"
+                                }
+                            }),
+                            text: LanguageModule.text("txt_link_to_master_board"),
+                            cmd: function(){
+                                var formatList;
+                                formatList = data_module.formats.items.map(function(elt){
+                                    return {
+                                        value: elt.id,
+                                        text: elt.name
+                                    };
+                                });
+                                formatList.unshift({value: -1, text: LanguageModule.text("txt_no_select_master_board")});
+                                theme.settingMasterBoard(formatList, params.formatid).then(function rs(value){
+                                    params.formatid = value;
+                                    if (params.formatid == -1) params.formatid = undefined;
+                                    if (params.formatid){
+                                        var template = data_module.formats.items[data_module.formats.getIndex(value)].content;
+                                        params.content.list.value = template.list;
+                                        params.content.fields.value = template.fields.map(function(elt){
+                                            return {
+                                                id: elt,
+                                                name: params.typelists.items[params.typelists.getIndex(elt)].name
+                                            }
+                                        });
+                                        board_type.value = template.board_type;
+                                        board_type.disabled = true;
+                                    }
+                                    else {
+                                        params.content.list.value = originalList;
+                                        params.content.fields.value = originalFields;
+                                        board_type.value = originalBoardType;
+                                        if (params.id == 0) board_type.disabled = false;
+                                    }
+                                    if (board_type.value == 'general') stage = theme.stageDataForm(params.content.list.value, params.formatid, params.isPriv);
+                                    else stage = theme.stageDataForm2(params.content.list.value, params.formatid, params.isPriv);
+                                    stageContainer.clearChild();
+                                    stage.addTo(stageContainer);
+                                    fields = theme.boardFieldData(params.content.fields.value, params.fieldList, params.formatid, params.isPriv);
+                                    fieldsContainer.clearChild();
+                                    fields.addTo(fieldsContainer);
+                                });
+                            }
+                        }
+                    ]
+                }
+            },
+            onSelect: function(item){
+                item.cmd();
+            }
+        };
     }
+    var header = absol.buildDom({
+        tag: 'mheaderbar',
+        props: props,
+        on: {
+            action: params.cmdButton.close,
+            command: params.cmdButton.save
+        }
+    });
     keys = Object.keys(params.content);
-    for (var i = 0; i < keys.length; i++){
-        var tempText = DOMElement.span({text: params.content[keys[i]].title});
-        DOMElement.hiddendiv.appendChild(tempText);
-        if (maxWidth < tempText.offsetWidth) maxWidth = tempText.offsetWidth;
-        DOMElement.hiddendiv.removeChild(tempText);
-    }
-    maxWidth += 20;
     data = [];
     name = theme.input({
         type: "text",
-        style: {width: "400px"},
-        value: params.content.name.value
+        style: {width: "100%"},
+        value: params.content.name.value,
+        disabled: !(params.isPriv > 0)
     });
-    var decoration = theme.decorationElt(params.content.decoration.content, params.content.decoration.value);
+    var decoration = theme.decorationElt(params.content.decoration.content, params.content.decoration.value, params.isPriv);
+    decoration.align = "center";
     favorite = absol.buildDom({
         tag: 'switch',
         style: {
-            'font-size': 'var(--switch-fontsize)'
+            'font-size': 'var(--switch-fontsize)',
+            position: "absolute",
+            right: "0px"
         },
         props:{
-            checked: params.content.favorite.value == 1
+            checked: params.content.favorite.value == 1,
+            disabled: !(params.isPriv > 0)
+        }
+    });
+    permission = absol.buildDom({
+        tag: 'mselectmenu',
+        style: {
+            width: '100%'
+        },
+        props:{
+            items: params.permissionList,
+            value: params.content.permission.value,
+            disabled: !(params.isPriv > 0)
         }
     });
     available = absol.buildDom({
         tag: 'switch',
         style: {
-            'font-size': 'var(--switch-fontsize)'
+            'font-size': 'var(--switch-fontsize)',
+            position: "absolute",
+            right: "0px"
         },
         props:{
-            checked: params.content.available.value == 1
-        }
-    });
-    object_of_board = absol.buildDom({
-        tag: 'switch',
-        style: {
-            'font-size': 'var(--switch-fontsize)'
-        },
-        props:{
-            checked: params.content.object_of_board.value,
-            disabled: params.id > 0
-        },
-        on: {
-            change: function(){
-                var displayText;
-                if (this.checked) displayText = "";
-                else displayText = "none";
-                var elt = document.getElementsByClassName("card-edit-board-object-type");
-                for (var i = 0; i < elt.length; i++){
-                    elt[i].parentNode.style.display = displayText;
-                }
-            }
-        }
-    });
-    object_type = absol._({
-        tag: "selectmenu",
-        style: {
-            width: "400px"
-        },
-        props: {
-            items: params.objectTypeList,
-            value: params.content.object_type.value,
-            disabled: params.id > 0
+            checked: params.content.available.value == 1,
+            disabled: !(params.isPriv > 0)
         }
     });
     board_type = absol._({
-        tag: "selectmenu",
+        tag: "mselectmenu",
         style: {
-            width: "400px"
+            width: "100%"
         },
         props: {
             items: [
@@ -872,10 +1407,6 @@ theme.editBoardForm = function(params){
             change: function(){
                 var data, newData, systemData;
                 newData = [];
-                // data = stage.getValue();
-                // newData = data.filter(function(elt){
-                //     return elt.type == 'user_defined'
-                // });
                 switch (this.value) {
                     case 'general':
                         systemData = [
@@ -902,7 +1433,7 @@ theme.editBoardForm = function(params){
                             }
                         ];
                         newData = systemData.concat(newData);
-                        stage = theme.stageDataForm(newData);
+                        stage = theme.stageDataForm(newData, params.formatid, params.isPriv);
                         break;
                     case 'lead':
                         newData = [
@@ -954,7 +1485,7 @@ theme.editBoardForm = function(params){
                                 ]
                             }
                         ];
-                        stage = theme.stageDataForm2(newData);
+                        stage = theme.stageDataForm2(newData, params.formatid, params.isPriv);
                         break;
                     case 'deal':
                         newData = [
@@ -1006,7 +1537,7 @@ theme.editBoardForm = function(params){
                                 ]
                             }
                         ];
-                        stage = theme.stageDataForm2(newData);
+                        stage = theme.stageDataForm2(newData, params.formatid, params.isPriv);
                         break;
                     default:
                 }
@@ -1016,172 +1547,169 @@ theme.editBoardForm = function(params){
             }
         }
     });
-    if (board_type.value == 'general') stage = theme.stageDataForm(params.content.list.value);
-    else stage = theme.stageDataForm2(params.content.list.value);
-    object_group = pizo.tableView([
-        {hidden: true},
-        {value: LanguageModule.text("txt_object_group"), sort: false},
-        {sort: false}
-    ], theme.boardCategoryData(params.content.object_group.value), false, false, 0);
-    object_group.style.width = "100%";
-    fields = theme.boardFieldData(params.content.fields.value, params.fieldList);
+    if (board_type.value == 'general') stage = theme.stageDataForm(params.content.list.value, params.formatid, params.isPriv);
+    else stage = theme.stageDataForm2(params.content.list.value, params.formatid, params.isPriv);
+    stage.addTo(stageContainer);
+    fields = theme.boardFieldData(params.content.fields.value, params.fieldList, params.formatid, params.isPriv);
+    members = theme.boardMemberData(EncodingClass.string.duplicate(params.content.members.value), params.users, params.owner, params.isPriv);
+    fields.addTo(fieldsContainer);
     data = [
-        [
-            {
-                text: params.content.name.title
-            },
-            {attrs: {style: {width: "10px"}}},
-            {
-                children: [name]
-            }
-        ],
-        [{attrs: {style: {height: "20px"}}}],
-        [
-            {
-                text: params.content.decoration.title
-            },
-            {attrs: {style: {width: "10px"}}},
-            {
-                children: [decoration]
-            }
-        ],
-        [{attrs: {style: {height: "20px"}}}],
-        [
-            {
-                text: params.content.favorite.title
-            },
-            {attrs: {style: {width: "10px"}}},
-            {
-                children: [favorite]
-            }
-        ],
-        [{attrs: {style: {height: "20px"}}}],
-        [
-            {
-                text: params.content.available.title
-            },
-            {attrs: {style: {width: "10px"}}},
-            {
-                children: [available]
-            }
-        ],
-        [{attrs: {style: {height: "20px", display: "none"}}}],
-        [
-            {
-                attrs: {style: {display: "none"}},
-                text: params.content.object_of_board.title
-            },
-            {attrs: {style: {width: "10px", display: "none"}}},
-            {
-                attrs: {style: {display: "none"}},
-                children: [object_of_board]
-            }
-        ],
-        [{attrs: {
-            className: "card-edit-board-object-type",
+        {
+            class: "card-mobile-label-form-edit-first",
+            child: {text: params.content.name.title}
+        },
+        name,
+        {
+            class: "card-mobile-label-form-edit",
+            child: {text: params.content.decoration.title}
+        },
+        decoration,
+        {
+            class: "card-mobile-label-form-edit",
             style: {
-                height: "20px"
-            }
-        }}],
-        [
-            {
-                attrs: {
-                    className: "card-edit-board-object-type"
-                },
-                text: params.content.object_type.title
+                position: "relative",
+                height: "22px"
             },
-            {attrs: {style: {width: "10px"}}},
-            {
-                children: [object_type]
-            }
-        ],
-        [{attrs: {style: {height: "20px"}}}],
-        [
-            {
-                text: params.content.board_type.title
-            },
-            {attrs: {style: {width: "10px"}}},
-            {
-                children: [board_type]
-            }
-        ],
-        [{attrs: {style: {height: "20px"}}}],
-        [
-            {
-                attrs: {
+            child: [
+                {
                     style: {
-                        verticalAlign: "top"
+                        display: "inline-block",
+                        verticalAlign: "middle"
+                    },
+                    child: {
+                        tag: "span",
+                        child: {text: params.content.favorite.title}
                     }
                 },
-                text: params.content.list.title
-            },
-            {attrs: {style: {width: "10px"}}},
-            {
-                attrs: {
-                    className: "card-edit-board-stage-container"
-                },
-                children: [stage]
-            }
-        ],
-        [{attrs: {style: {height: "20px"}}}],
-        [
-            {
-                attrs: {
-                    style: {
-                        verticalAlign: "top"
-                    }
-                },
-                text: params.content.fields.title
-            },
-            {attrs: {style: {width: "10px"}}},
-            {
-                children: [fields]
-            }
-        ],
-        [{attrs: {
-            className: "card-edit-board-object-type",
+                favorite
+            ]
+        },
+        {
+            class: "card-mobile-label-form-edit",
             style: {
-                height: "20px"
-            }
-        }}],
-        [
-            {
-                attrs: {
-                    className: "card-edit-board-object-type",
-                    style: {
-                        verticalAlign: "top"
-                    }
-                },
-                text: params.content.object_group.title
+                position: "relative",
+                height: "22px"
             },
-            {attrs: {style: {width: "10px"}}},
-            {
-                attrs: {
-                    className: "cardsimpletableclass",
+            child: [
+                {
                     style: {
-                        overflowY: "hidden"
+                        display: "inline-block",
+                        verticalAlign: "middle"
+                    },
+                    child: {
+                        tag: "span",
+                        child: {text: params.content.available.title}
                     }
                 },
-                children: [object_group]
-            }
-        ]
+                available
+            ]
+        },
+        {
+            class: "card-mobile-label-form-edit",
+            child: {text: params.content.permission.title}
+        },
+        permission,
+        {
+            class: "card-mobile-label-form-edit",
+            child: {text: params.content.board_type.title}
+        },
+        board_type,
+        {
+            class: "card-mobile-label-form-edit",
+            child: {text: params.content.list.title}
+        },
+        stageContainer,
+        {
+            class: "card-mobile-label-form-edit",
+            child: {text: params.content.fields.title}
+        },
+        fieldsContainer,
+        {
+            class: "card-mobile-label-form-edit",
+            child: {text: params.content.members.title}
+        },
+        members
     ];
-    returnData = absol.buildDom({
-        tag: "singlepagenfooter",
-        child: [
+    var formBoardGroupsGetRowFunc = function(content){
+        var child = [];
+        for (var i = 0; i < content.child.length; i++){
+            child.push(formBoardGroupsGetRowFunc(content.child[i]));
+        }
+        inputidBoxes["checked_" + content.id] = absol.buildDom({
+            tag: "checkbox",
+            props: {
+                checked: content.checked
+            }
+        });
+        var row = [
             {
-                class: ["absol-single-page-header", "button-panel-header"],
-                child: buttons
+                style: {whiteSpace: "nowrap"},
+                value: content.name,
+                element: DOMElement.div({
+                    attrs: {
+                        className: "sortTable-cell-view"
+                    },
+                    text: content.name
+                })
             },
             {
-                child: DOMElement.table({
-                    data: data
+                element: DOMElement.div({
+                    attrs: {
+                        className: "sortTable-cell-view-cmd"
+                    },
+                    children: [
+                        DOMElement.div({
+                            attrs: {
+                                className: "card-icon-cover-disabled"
+                            },
+                            children: [inputidBoxes["checked_" + content.id]]
+                        })
+                    ]
                 })
+            }
+        ];
+        if (child.length > 0) row.child = child;
+        return row;
+    };
+    var dataGroups = [], inputidBoxes = [];
+    for (var i = 0; i < params.board_groupsList.length; i++){
+        dataGroups.push(formBoardGroupsGetRowFunc(params.board_groupsList[i]));
+    }
+    var tableGroup = pizo.tableView(
+        [
+            {value: LanguageModule.text("txt_name"), sort: true},
+            {value: ""}
+        ],
+        dataGroups,
+        false,
+        false,
+        0
+    );
+    tableGroup.style.width = "100%";
+    var groups = DOMElement.div({
+        attrs: {
+            style: {overflowY: "hidden"}
+        },
+        children: [tableGroup]
+    });
+    data.push(
+        {
+            class: "card-mobile-label-form-edit",
+            child: {text: LanguageModule.text("txt_group")}
+        },
+        groups
+    );
+    returnData = absol.buildDom({
+        tag: "tabframe",
+        child: [
+            header,
+            {
+                class: "card-mobile-content",
+                child: data
             }
         ]
     });
     absol.$('.card-edit-board-object-type', returnData, function(elt){
-        // elt.parentNode.style.display = params.content.object_of_board.value ? "" : "none";
         elt.parentNode.style.display = "none";
     });
     returnData.getValue = function(){
@@ -1201,33 +1729,35 @@ theme.editBoardForm = function(params){
             ModalElement.alert({message: LanguageModule.text("war_txt_no_list_of_board")});
             return false;
         }
+        var groupAdd = [], groupDel = [];
+        for (var i = 0; i < params.board_groupsIdList.length; i++){
+            if (inputidBoxes["checked_" + params.board_groupsIdList[i]].checked){
+                if (params.board_groupsIdCheckedList.indexOf(params.board_groupsIdList[i]) < 0) groupAdd.push(params.board_groupsIdList[i]);
+            }
+            else {
+                if (params.board_groupsIdCheckedList.indexOf(params.board_groupsIdList[i]) >= 0) groupDel.push(params.board_groupsIdList[i]);
+            }
+        }
         return {
             name: nameValue,
             decoration: decoration.getValue(),
             favorite: favorite.checked ? 1: 0,
             available: available.checked ? 1 : 0,
-            object_of_board: object_of_board.checked,
-            object_type: object_type.value,
+            permission: permission.value,
             board_type: board_type.value,
             list: stageValue,
-            object_group: theme.boardGetObjectGroupData(object_group.data),
-            fields: fields.getValue()
+            fields: fields.getValue(),
+            formatid: params.formatid,
+            members: members.getValue(),
+            groupAdd: groupAdd,
+            groupDel: groupDel
         };
     }
     return returnData;
 };
 
-theme.boardInitForm = function(params){
-    var buttonlist, data;
-    buttonlist = [];
-    for (var i = 0; i < params.buttonlist.length; i++){
-        buttonlist.push(DOMElement.div({
-            attrs: {
-                className: "single-button-header"
-            },
-            children: [params.buttonlist[i]]
-        }));
-    }
+theme.boardContentDataForm = function(params){
+    var data;
     var mBoardMng = absol._({
         tag:'boardmanager',
         props:{
@@ -1255,6 +1785,57 @@ theme.boardInitForm = function(params){
         }
     });
     params.content.forEach(function(elt, index){
+        var iconButton = [
+            {
+                text: LanguageModule.text("txt_open"),
+                extendClasses: "bsc-quickmenu",
+                icon: {
+                    tag: "i",
+                    class: "material-icons",
+                    child: { text: "launch" }
+                },
+                cmd: elt.openCardManager
+            }
+        ];
+        iconButton.push({
+            text: LanguageModule.text("txt_edit"),
+            extendClasses: "bsc-quickmenu",
+            icon: {
+                tag: "i",
+                class: "material-icons",
+                child: { text: "mode_edit" }
+            },
+            cmd: elt.editFunc
+        });
+        if (elt.isPriv == 2) {
+            iconButton.push({
+                text: LanguageModule.text("txt_delete"),
+                extendClasses: "bsc-quickmenu red",
+                icon: {
+                    tag: "i",
+                    class: "material-icons",
+                    child: { text: "delete" }
+                },
+                cmd: function(){
+                    var title = LanguageModule.text("txt_delete_board");
+                    var message = LanguageModule.text("war_delete_board");
+                    theme.deleteConfirm(title, message).then(function(){
+                        elt.deleteBoard().then(function(value){
+                            if (value) board.selfRemove();
+                        });
+                    })
+                }
+            });
+            if (!elt.formatid) iconButton.push({
+                text: LanguageModule.text("txt_make_master_board"),
+                extendClasses: "bsc-quickmenu",
+                icon: {
+                    tag: "i",
+                    class: ["mdi", "mdi-tablet-dashboard"],
+                },
+                cmd: elt.makeMasterBoard
+            });
+        }
         var board = absol._({
             tag:'representativeboard',
             props:{
@@ -1264,30 +1845,7 @@ theme.boardInitForm = function(params){
                 boardIdent:'board_'+ (index + 1),
                 quickmenu: {
                     props: {
-                        items: [
-                            {
-                                text: LanguageModule.text("txt_edit"),
-                                extendClasses: "bsc-quickmenu",
-                                icon: {
-                                    tag: "i",
-                                    class: "material-icons",
-                                    child: { text: "mode_edit" }
-                                },
-                                cmd: elt.editFunc
-                            },
-                            {
-                                text: LanguageModule.text("txt_delete"),
-                                extendClasses: "bsc-quickmenu red",
-                                icon: {
-                                    tag: "i",
-                                    class: "material-icons",
-                                    child: { text: "delete" }
-                                },
-                                cmd: function(){
-                                    alert("TODO: delete");
-                                }
-                            }
-                        ]
+                        items: iconButton
                     },
                     onSelect: function(item){
                         if (typeof item.cmd =='function')
@@ -1302,19 +1860,112 @@ theme.boardInitForm = function(params){
         mBoardMng.addBoard(board);
     });
     return absol.buildDom({
-        child: [
-            {
-                class: ["absol-single-page-header", "button-panel-header"],
-                child: buttonlist
+        child: [mBoardMng]
+    });
+};
+
+theme.boardInitForm = function(params){
+    var groups = absol.buildDom({
+        tag: "mselecttreemenu",
+        style: {
+            verticalAlign: "middle"
+        },
+        props: {
+            items: params.groups_select.items
+        },
+        on: {
+            change: params.groups_select.cmd
+        }
+    });
+    var filterFunc = function(){
+        var header = absol.buildDom({
+            tag: 'mheaderbar',
+            props: {
+                actionIcon: DOMElement.i({
+                    attrs: {
+                        className: "material-icons"
+                    },
+                    text: "arrow_back_ios"
+                }),
+                title: LanguageModule.text("txt_filter")
             },
-            {
-                style: {
-                    paddingTop: "70px"
-                },
-                child: mBoardMng
+            on: {
+                action: function(){
+                    params.frameList.removeLast();
+                }
             }
+        });
+        groups.style.display = "block";
+        groups.style.width = "100%";
+        var filter_container = absol.buildDom({
+            tag: 'tabframe',
+            child:[
+                header,
+                DOMElement.div({
+                    attrs: {
+                        className: "card-mobile-content"
+                    },
+                    children: [
+                        DOMElement.div({
+                            attrs: {
+                                className: "card-mobile-label-form-edit-first"
+                            },
+                            text: LanguageModule.text("txt_group")
+                        }),
+                        groups,
+                    ]
+                })
+            ]
+        });
+        params.frameList.addChild(filter_container);
+        filter_container.requestActive();
+    };
+    var commands = [
+        {
+            icon:  DOMElement.i({
+                attrs: {
+                    className: "material-icons"
+                },
+                text: "add"
+            }),
+            cmd: params.addNew
+        },
+        {
+            icon:  DOMElement.i({
+                attrs: {
+                    className: "material-icons"
+                },
+                text: "filter_alt"
+            }),
+            cmd: filterFunc
+        }
+    ];
+    var header = absol.buildDom({
+        tag: 'mheaderbar',
+        props: {
+            title: LanguageModule.text("txt_board"),
+            commands: commands
+        },
+        on: {
+            command: function(event){
+                event.commandItem.cmd();
+            }
+        }
+    });
+    var returnData = absol.buildDom({
+        tag: 'tabframe',
+        child:[
+            header,
+            DOMElement.div({
+                attrs: {
+                    className: "card-mobile-content"
+                },
+                children: [params.board_container]
+            })
         ]
     });
+    returnData.groupElt = groups;
+    return returnData
 };
 
 ModuleManagerClass.register({

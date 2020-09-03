@@ -75,6 +75,7 @@
 			    });
 			};
             var initUI = function () {
+				window.backLayoutFunc = [];
 				window.addEventListener("message", function(message){
 					var data = message.data;
 					console.log(data);
@@ -91,6 +92,14 @@
 							console.log("loadchatend");
 							carddone.menu.openChatMobile(moredata.sessionid);
 						});
+					}
+					else if (data.name == "checkBackApp"){
+						if (window.backLayoutFunc.length == 0){
+							window.ReactNativeWebView.postMessage(JSON.stringify({name: "backApp"}));
+						}
+						else {
+							window.backLayoutFunc[window.backLayoutFunc.length -1]();
+						}
 					}
 				});
 				loadMainternance().then(function(st){

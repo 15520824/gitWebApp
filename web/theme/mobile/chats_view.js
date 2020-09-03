@@ -295,6 +295,7 @@ theme.ChatBox.prototype.nameChat = function () {
                 self.frameList.getAllChild()[0].requestActive();
                 carddone.sessionIdActive = 0;
                 carddone.menu.showMobileTabbar(true);
+                window.backLayoutFunc = [];
             }
         }
     });
@@ -902,6 +903,7 @@ theme.ChatBox.prototype.seenMessage = function () {
     var self = this;
     if (this.content.length == 0) return;
     self.seenFunc(this.content[this.content.length - 1].localid).then(function (values) {
+        carddone.menu.mobileTabbar.items[1].counter--;
         self.messageitem.new_noseen = 0;
     });
 };
@@ -1073,8 +1075,9 @@ theme.ChatBox.prototype.addMessage = function(content){
 };
 
 theme.ChatBox.prototype.addOldMessage = function(content){
+    var self = this;
     var oldTime, oldMonth, oldDate, oldYear;
-    if (this.firstMessTime != 0){
+    if (this.firstMessTime.getTime() != 0){
         oldTime = this.firstMessTime.getTime()/86400000;
         oldDate = this.firstMessTime.getDate();
         oldMonth = this.firstMessTime.getMonth() + 1;
@@ -1117,7 +1120,7 @@ theme.ChatBox.prototype.addOldMessage = function(content){
         });
         this.vBoxMessage.insertBefore(singleMessage, this.vBoxMessage.firstChild);
         this.firstUserid = 0;
-        this.firstMessTime = 0;
+        this.firstMessTime = new Date(0);
     }
     if (content.content_type == "file" || content.content_type == "img" || content.content_type == "text"){
         if (this.firstUserid !== content.userid || this.firstMessTime.getTime() + 60000 < content.m_time.getTime()){
@@ -1213,7 +1216,7 @@ theme.ChatBox.prototype.addOldMessage = function(content){
 
 theme.ChatBox.prototype.loadOldMess = function(){
     var self = this;
-    // console.log(this.data);
+    console.log(this.data);
     self.vMessContainer.addEventListener("scroll", function(){
         if (self.vMessContainer.scrollTop == 0){
             var x = self.vBoxMessage.firstChild;
@@ -1224,7 +1227,7 @@ theme.ChatBox.prototype.loadOldMess = function(){
                 }
                 else {
                     self.firstUserid = 0;
-                    self.firstMessTime = 0;
+                    self.firstMessTime = new Date(0);
                 }
                 for (var i = values.length -1; i >= 0; i--){
                     self.addOldMessage(values[i]);
@@ -1432,6 +1435,10 @@ theme.ChatBar.prototype.drawListMessage = function (data, openChat, sessionActiv
                         });
                         // console.log(self.frameList);
                         self.frameList.addChild(newChat);
+                        window.backLayoutFunc.push(function(){
+                            self.frameList.getAllChild()[0].requestActive();
+                            window.backLayoutFunc.splice(window.backLayoutFunc.length - 1, 1);
+                        });
                         newChat.requestActive();
                         carddone.sessionIdActive = item.id;
                         if (chatBox.messageitem.new_noseen > 0){
@@ -1518,6 +1525,10 @@ theme.ChatBar.prototype.drawListMessage = function (data, openChat, sessionActiv
                     ]
                 });
                 self.frameList.addChild(newChat);
+                window.backLayoutFunc.push(function(){
+                    self.frameList.getAllChild()[0].requestActive();
+                    window.backLayoutFunc.splice(window.backLayoutFunc.length - 1, 1);
+                });
                 newChat.requestActive();
                 carddone.sessionIdActive = data[i].id;
                 if (chatBox.messageitem.new_noseen > 0){
@@ -1592,6 +1603,10 @@ theme.ChatBar.prototype.drawListMessage = function (data, openChat, sessionActiv
                             ]
                         });
                         self.frameList.addChild(newChat);
+                        window.backLayoutFunc.push(function(){
+                            self.frameList.getAllChild()[0].requestActive();
+                            window.backLayoutFunc.splice(window.backLayoutFunc.length - 1, 1);
+                        });
                         newChat.requestActive();
                         carddone.sessionIdActive = sessionActive.id;
                         if (chatBox.messageitem.new_noseen > 0){
@@ -1627,6 +1642,10 @@ theme.ChatBar.prototype.drawListMessage = function (data, openChat, sessionActiv
                 ]
             });
             self.frameList.addChild(newChat);
+            window.backLayoutFunc.push(function(){
+                self.frameList.getAllChild()[0].requestActive();
+                window.backLayoutFunc.splice(window.backLayoutFunc.length - 1, 1);
+            });
             newChat.requestActive();
             carddone.sessionIdActive = sessionActive.id;
             if (chatBox.messageitem.new_noseen > 0){
@@ -1680,9 +1699,11 @@ theme.ChatBar.prototype.getMessView = function () {
                             var new_noseen = self.listChatView[i].elt.new_noseen;
                             if (new_noseen === undefined) new_noseen = 0;
                             if (values.content.dataDraw[0].type == "other"){
+                                if (new_noseen == 0) carddone.menu.mobileTabbar.items[1].counter++;
                                 self.listChatView[i].elt.new_noseen = values.content.dataDraw.length + new_noseen;
                             }
                             else {
+                                if (new_noseen > 0 && carddone.menu.mobileTabbar.items[1].counter > 0) carddone.menu.mobileTabbar.items[1].counter--;
                                 self.listChatView[i].elt.new_noseen = 0;
                             }
                             //console.log(values.content.dataDraw);
@@ -1782,6 +1803,10 @@ theme.ChatBar.prototype.getMessView = function () {
                                 });
                                 self.frameList.addChild(newChat);
                                 newChat.requestActive();
+                                window.backLayoutFunc.push(function(){
+                                    self.frameList.getAllChild()[0].requestActive();
+                                    window.backLayoutFunc.splice(window.backLayoutFunc.length - 1, 1);
+                                });
                                 carddone.sessionIdActive = values.item.id;
                                 if (chatBox.messageitem.new_noseen > 0){
                                     setTimeout(function(){
@@ -1804,6 +1829,7 @@ theme.ChatBar.prototype.getMessView = function () {
                         }
                     }
                     mItemsNew.new_noseen = new_noseen;
+                    if (new_noseen > 0) carddone.menu.mobileTabbar.items[1].counter++;
                     var lastLocalid = 0;
                     if (values.item.content.length > 0) {
                         var lastMess = values.item.content[values.item.content.length - 1];
@@ -1975,7 +2001,8 @@ theme.ChatBar.prototype.addgroupFuncSubmit = function () {
     };
     self.data.addgroupFunc(data).then(function (values) {
         //console.log(values);
-        self.frameList.removeLast();
+        self.frameList.getAllChild()[0].requestActive();
+        window.backLayoutFunc.splice(window.backLayoutFunc.length - 1, 1);
         var quickMenuItems = [];
         if (values.item.memberList.length > 2 || values.item.cardid > 0){
             quickMenuItems.push({
@@ -2029,6 +2056,10 @@ theme.ChatBar.prototype.addgroupFuncSubmit = function () {
                     });
                     self.frameList.addChild(newChat);
                     newChat.requestActive();
+                    window.backLayoutFunc.push(function(){
+                        self.frameList.getAllChild()[0].requestActive();
+                        window.backLayoutFunc.splice(window.backLayoutFunc.length - 1, 1);
+                    });
                     carddone.sessionIdActive = values.item.id;
                     if (chatBox.messageitem.new_noseen > 0){
                         setTimeout(function(){
@@ -2119,6 +2150,10 @@ theme.ChatBar.prototype.addgroupFuncSubmit = function () {
             ]
         });
         self.frameList.addChild(newChat);
+        window.backLayoutFunc.push(function(){
+            self.frameList.getAllChild()[0].requestActive();
+            window.backLayoutFunc.splice(window.backLayoutFunc.length - 1, 1);
+        });
         newChat.requestActive();
         carddone.sessionIdActive = values.item.id;
         if (chatBox.messageitem.new_noseen > 0){
@@ -2180,7 +2215,8 @@ theme.ChatBar.prototype.addgroupFunc = function () {
         },
         on: {
             action: function(){
-                self.frameList.removeLast();
+                self.frameList.getAllChild()[0].requestActive();
+                window.backLayoutFunc.splice(window.backLayoutFunc.length - 1, 1);
             },
             command: function(){
                 self.addgroupFuncSubmit();
@@ -2211,6 +2247,10 @@ theme.ChatBar.prototype.addgroupFunc = function () {
    });
    self.frameList.addChild(self.manageModal);
    self.manageModal.requestActive();
+   window.backLayoutFunc.push(function(){
+       self.frameList.getAllChild()[0].requestActive();
+       window.backLayoutFunc.splice(window.backLayoutFunc.length - 1, 1);
+   });
    carddone.sessionIdActive = 0;
    self._name_group_inputtext.focus();
 };
@@ -2218,7 +2258,7 @@ theme.ChatBar.prototype.addgroupFunc = function () {
 theme.ChatBar.prototype.loadOldChat_session = function () {
     var self = this;
     self.listChatContainer.addEventListener("scroll", function () {
-        if (self.listChatContainer.scrollTop + self.listChatContainer.offsetHeight == self.listChatContainer.scrollHeight) {
+        if (self.listChatContainer.scrollTop + self.listChatContainer.offsetHeight + 1 >= self.listChatContainer.scrollHeight) {
             self.data.loadChat_sessionsOldFunc().then(function (values) {
                 self.drawListMessage(values);
             });
@@ -2305,6 +2345,7 @@ theme.ChatBar.prototype.manageGroup = function(item){
             return;
         }
         self.frameList.removeLast();
+        window.backLayoutFunc.splice(window.backLayoutFunc.length - 1, 1);
         item.addMemberGroupFunc(listMemberAdd).then(function(value){
             var userIndex;
             for (var i = 0; i < listMemberAdd.length; i++){
@@ -2365,6 +2406,7 @@ theme.ChatBar.prototype.manageGroup = function(item){
             on: {
                 action: function(){
                     self.frameList.removeLast();
+                    window.backLayoutFunc.splice(window.backLayoutFunc.length - 1, 1);
                 },
                 command: function(){
                     addMemberSubmit(members_group_select);
@@ -2384,18 +2426,38 @@ theme.ChatBar.prototype.manageGroup = function(item){
             ]
         });
         self.frameList.addChild(addMemberElt);
+        window.backLayoutFunc.push(function(){
+            self.frameList.removeLast();
+            window.backLayoutFunc.splice(window.backLayoutFunc.length - 1, 1);
+        });
         addMemberElt.requestActive();
         carddone.sessionIdActive = 0;
     };
-    var listMemberElt = DOMElement.div({
-        attrs: {
-            className: "card-manage-group-participants-content"
-        }
+    var listMemberElt = absol.buildDom({
+        class: 'card-manage-group-participants-ctn',
+        child: [
+            DOMElement.div({
+                attrs: {
+                    className: "card-manage-group-participants-title"
+                },
+                text: LanguageModule.text2("txt_participants", [item.memberList.length])
+            }),
+            DOMElement.div({
+                attrs: {
+                    className: "card-manage-group-participants-content"
+                }
+            })
+        ]
     });
     var drawListMember = function(){
         DOMElement.removeAllChildren(listMemberElt);
+        var listMemberEltTemp = DOMElement.div({
+            attrs: {
+                className: "card-manage-group-participants-content"
+            }
+        });
         if (item.cardid == 0){
-            listMemberElt.appendChild(DOMElement.div({
+            listMemberEltTemp.appendChild(DOMElement.div({
                 attrs: {
                     className: "card-manage-group-participants-member",
                     onclick: function(){
@@ -2426,7 +2488,7 @@ theme.ChatBar.prototype.manageGroup = function(item){
             }));
         }
         for (var i = 0; i < item.memberList.length; i++){
-            listMemberElt.appendChild(DOMElement.div({
+            listMemberEltTemp.appendChild(DOMElement.div({
                 attrs: {
                     className: "card-manage-group-participants-member"
                 },
@@ -2453,6 +2515,13 @@ theme.ChatBar.prototype.manageGroup = function(item){
                 ]
             }));
         }
+        listMemberElt.appendChild(DOMElement.div({
+            attrs: {
+                className: "card-manage-group-participants-title"
+            },
+            text: LanguageModule.text2("txt_participants", [item.memberList.length])
+        }));
+        listMemberElt.appendChild(listMemberEltTemp);
     };
     drawListMember();
     var manageGroupDiv = absol.buildDom({
@@ -2484,7 +2553,8 @@ theme.ChatBar.prototype.manageGroup = function(item){
                    child: 'span.mdi.mdi-close',
                    on: {
                        click: function(){
-                           self.frameList.removeLast();
+                           self.frameList.getAllChild()[0].requestActive();
+                           window.backLayoutFunc.splice(window.backLayoutFunc.length - 1, 1);
                        }
                    }
                  }
@@ -2518,18 +2588,7 @@ theme.ChatBar.prototype.manageGroup = function(item){
              {
                  class: 'card-manage-group-demarcation-line'
              },
-             {
-                 class: 'card-manage-group-participants-ctn',
-                 child: [
-                     DOMElement.div({
-                         attrs: {
-                             className: "card-manage-group-participants-title"
-                         },
-                         text: LanguageModule.text2("txt_participants", [4])
-                     }),
-                     listMemberElt
-                 ]
-             }
+             listMemberElt
              ]
            }
          ]
@@ -2537,6 +2596,10 @@ theme.ChatBar.prototype.manageGroup = function(item){
    self.manageModal = absol.buildDom({
        tag: 'tabframe',
        child: [manageGroupDiv]
+   });
+   window.backLayoutFunc.push(function(){
+       self.frameList.getAllChild()[0].requestActive();
+       window.backLayoutFunc.splice(window.backLayoutFunc.length - 1, 1);
    });
    self.frameList.addChild(self.manageModal);
    self.manageModal.requestActive();

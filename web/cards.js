@@ -1,5 +1,61 @@
 'use strict';
 
+carddone.cards.restoreCard = function(host, id){
+    return new Promise(function(rs){
+        ModalElement.show_loading();
+        FormClass.api_call({
+            url: "card_restore_save.php",
+            params: [
+                {name: "cardid", value: id}
+            ],
+            func: function(success, message){
+                if (success){
+                    if (message.substr(0, 2) == "ok"){
+                        var index = host.database.cards.getIndex(id);
+                        var temp = host.database.cards.items[index];
+                        host.database.cards.items.splice(index, 1);
+                        host.currentCardData.push(temp);
+                        rs(true);
+                    }
+                    else {
+                        rs(false);
+                    }
+                }
+                else {
+                    rs(false);
+                }
+            }
+        });
+    })
+};
+
+carddone.cards.deleteCardFromArchived = function(host, id){
+    return new Promise(function(rs){
+        ModalElement.show_loading();
+        FormClass.api_call({
+            url: "card_delete_from_archived_save.php",
+            params: [
+                {name: "cardid", value: id}
+            ],
+            func: function(success, message){
+                if (success){
+                    if (message.substr(0, 2) == "ok"){
+                        var index = host.database.cards.getIndex(id);
+                        host.database.cards.items.splice(index, 1);
+                        rs(true);
+                    }
+                    else {
+                        rs(false);
+                    }
+                }
+                else {
+                    rs(false);
+                }
+            }
+        });
+    })
+};
+
 carddone.cards.loadArchivedCards = function(host){
     return new Promise(function(rs){
         var lists = host.database.lists.items.map(function(elt){
@@ -56,15 +112,15 @@ carddone.cards.loadArchivedCards = function(host){
                                 userid: elt.userid,
                                 parentid: elt.parentid,
                                 lindex: elt.lindex,
-                                editMode: 'view',
+                                editMode: 'edit',
                                 editFunc: function(parentid, id){
                                     return function(){
                                         if (data_module.cardList[id].content){
-                                            carddone.cards.prevEditCard(host, parentid, id);
+                                            carddone.cards.prevEditCard(host, parentid, id, "view");
                                         }
                                         else {
                                             data_module.pendingData[data_module.cardList[id].heapIndex].onLoad.push(function(){
-                                                carddone.cards.prevEditCard(host, parentid, id);
+                                                carddone.cards.prevEditCard(host, parentid, id, "view");
                                             });
                                             data_module.dataManager[-100] = {
                                                 startIndex: data_module.cardList[id].heapIndex,
@@ -77,12 +133,12 @@ carddone.cards.loadArchivedCards = function(host){
                                 }(elt.parentid, elt.id),
                                 deleteFunc: function(id){
                                     return function(){
-                                        return carddone.cards.deleteCard(host, id);
+                                        return carddone.cards.deleteCardFromArchived(host, id);
                                     }
                                 }(elt.id),
                                 restoreFunc: function(id){
                                     return function(){
-                                        return carddone.cards.archiveCard(host, id);
+                                        return carddone.cards.restoreCard(host, id);
                                     }
                                 }(elt.id)
                             }
@@ -1112,19 +1168,44 @@ carddone.boards.editCardSave = function(host, id, value, listid, mode){
                                 heapIndex: data_module.pendingData.length
                             };
                             var onLoad = [
-                                function(host, rs){
+                                function(host, rs, content){
                                     return function(){
                                         carddone.cards.redraw(host, parseInt(host.userCombobox.value, 10)).then(function(singlePage){
                                             host.userCombobox = singlePage.userCombobox;
                                             host.frameList.removeChild(host.frameList.getAllChild()[0]);
                                             host.frameList.addChildBefore(singlePage, host.frameList.getAllChild()[0]);
+											var cardid = content.data.id;
+											var index = host.database.cards.getIndex(cardid);
+											var parentid = content.data.parentid;
+											var content1 = data_module.cardList[cardid].content;
+											contentModule.makeDatabaseContent(host.database, content1);
+											contentModule.makeChatData(host);
+											contentModule.makeContactCardData(host);
+											contentModule.makeCompaniesCardData(host);
+											contentModule.makeCardActivitiesData(host);
+											contentModule.makeAvatarUser(host);
+											contentModule.makeChatCardIndex(host);
+											data_module.cardList[cardid].generateData = {
+												activitiesList: host.database.cards.items[index].activitiesList,
+												callList: host.database.cards.items[index].callList,
+												chatList: host.database.cards.items[index].chatList,
+												check_listList: host.database.cards.items[index].check_listList,
+												companyList: host.database.cards.items[index].companyList,
+												contactList: host.database.cards.items[index].contactList,
+												fieldList: host.database.cards.items[index].fieldList,
+												fileList: host.database.cards.items[index].fileList,
+												meetingList: host.database.cards.items[index].meetingList,
+												noteList: host.database.cards.items[index].noteList,
+												taskList: host.database.cards.items[index].taskList,
+												waitList: host.database.cards.items[index].waitList
+											};
                                             rs({
-                                                cardid: content.data.id,
-                                                listid: content.data.parentid
+                                                cardid: cardid,
+                                                listid: parentid
                                             });
                                         });
                                     }
-                                }(host, rs)
+                                }(host, rs, content)
                             ];
                             data_module.pendingData.push({
                                 type: "card",
@@ -2381,10 +2462,12 @@ carddone.cards.addFieldForm = function(host, cardid, id){
     singlePage.requestActive();
 };
 
-carddone.cards.prevEditCard = function(host, listId, id){
+carddone.cards.prevEditCard = function(host, listId, id, editMode){
     return new Promise(function(rs){
         if (id == 0) {
-            carddone.cards.editCard(host, listId, id);
+            host.database.chat_sessions = {};
+            host.database.chat_sessions.items = [];
+            carddone.cards.editCard(host, listId, id, editMode);
         }
         else {
             var index = host.database.cards.getIndex(id);
@@ -2420,13 +2503,13 @@ carddone.cards.prevEditCard = function(host, listId, id){
                     host.database.cards.items[index][elt] = data_module.cardList[id].generateData[elt];
                 });
             }
-            carddone.cards.editCard(host, parentid, id);
+            carddone.cards.editCard(host, parentid, id, editMode);
             rs();
         }
     });
 };
 
-carddone.cards.editCard = function(host, listId, id){
+carddone.cards.editCard = function(host, listId, id, editMode){
     var index, name, objectId, objectList, important, createdtime, username, contactList, companyList, activitiesList, editMode;
     var params, cmdButton, valuesList, typelists, object_type, lists, singlePage, contact, companies, company_class, cities, nations, users, activities;
     var knowledgeActive;
@@ -2467,7 +2550,6 @@ carddone.cards.editCard = function(host, listId, id){
         contactList = [];
         companyList = [];
         activitiesList = [];
-        editMode = 'edit';
         knowledgeActive = false;
     }
     else {
@@ -2505,19 +2587,19 @@ carddone.cards.editCard = function(host, listId, id){
         contactList = host.database.cards.items[index].contactList;
         companyList = host.database.cards.items[index].companyList;
         activitiesList = host.database.cards.items[index].activitiesList;
-        for (var i = 0; i < host.database.list_member.items.length; i++){
-            if (host.database.list_member.items[i].userid == systemconfig.userid) {
-                if (host.database.list_member.items[i].type > 0) editMode = 'edit';
-                else {
-                    if (host.database.boards.items[0].permission == 1) {
-                        if (host.database.cards.items[index].userid == systemconfig.userid) editMode = 'edit';
-                        else editMode = "view";
-                    }
-                    else editMode = "edit";
-                }
-                break;
-            }
-        }
+        // for (var i = 0; i < host.database.list_member.items.length; i++){
+        //     if (host.database.list_member.items[i].userid == systemconfig.userid) {
+        //         if (host.database.list_member.items[i].type > 0) editMode = 'edit';
+        //         else {
+        //             if (host.database.boards.items[0].permission == 1) {
+        //                 if (host.database.cards.items[index].userid == systemconfig.userid) editMode = 'edit';
+        //                 else editMode = "view";
+        //             }
+        //             else editMode = "edit";
+        //         }
+        //         break;
+        //     }
+        // }
         var chatIndex = host.database.cards.items[index].chatIndex;
         var fileTitle;
         if (chatIndex >= 0){
@@ -2575,6 +2657,7 @@ carddone.cards.editCard = function(host, listId, id){
         }
     }
     var userIndex;
+    editMode = editMode;
     for (var i = 0; i < host.imagesList.length; i++){
         userIndex = host.database.users.getByhomeid(host.imagesList[i].userid);
         host.imagesList[i].avatar = host.database.users.items[userIndex].avatarSrc;
@@ -2619,6 +2702,30 @@ carddone.cards.editCard = function(host, listId, id){
     nations = host.database.nations;
     users = host.database.users;
     company_class = host.database.company_class;
+    var chat_content = [];
+    if (host.database.chat_sessions.items.length > 0){
+        var lastMonth = 0, lastDate = 0, lastYear = 0;
+        var fDate, fMonth, fYear, chatGroup;
+        carddone.chats.generateDataChatContent(host, host.database.chat_sessions.items[0].content);
+        for (var i = 0; i < host.database.chat_sessions.items[0].content.length; i++){
+            var fDate = host.database.chat_sessions.items[0].content[i].m_time.getDate()
+            var fMonth = host.database.chat_sessions.items[0].content[i].m_time.getMonth() + 1;
+            var fYear = host.database.chat_sessions.items[0].content[i].m_time.getFullYear();
+            if (fDate != lastDate || fMonth != lastMonth || fYear != lastYear){
+                lastMonth = fMonth;
+                lastDate = fDate;
+                lastYear = fYear;
+                chatGroup = {
+                    index: chat_content.length,
+                    time: host.database.chat_sessions.items[0].content[i].m_time,
+                    listChat: []
+                };
+                chat_content.push(chatGroup);
+            }
+            chatGroup.listChat.push(host.database.chat_sessions.items[0].content[i]);
+        }
+    }
+    console.log(chat_content);
     lists = [];
     for (var i = 0; i < host.database.lists.items.length; i++){
         if (host.database.lists.items[i].type2 == "group") continue;
@@ -2738,6 +2845,7 @@ carddone.cards.editCard = function(host, listId, id){
         object_type: object_type,
         allFiles: host.allFiles,
         imagesList: host.imagesList,
+        chat_content: chat_content,
         important: {
             title: LanguageModule.text('txt_important'),
             value: important
@@ -2812,6 +2920,10 @@ carddone.cards.editCard = function(host, listId, id){
             editFileFunc: function(cardid, fileList){
                 if (editMode == 'view') return;
                 carddone.cards.addFileForm(host, cardid, fileList, "edit");
+            },
+            editChatFunc: function(){
+                if (editMode == 'view') return;
+                carddone.menu.loadPage(7, id);
             }
         }
     };
@@ -2872,14 +2984,14 @@ carddone.cards.redraw = function(host, userid){
                     parentid: host.database.cards.items[cIndex].parentid,
                     lindex: host.database.cards.items[cIndex].lindex,
                     editMode: editMode,
-                    editFunc: function(parentid, id){
+                    editFunc: function(parentid, id, editMode){
                         return function(){
                             if (data_module.cardList[id].content){
-                                carddone.cards.prevEditCard(host, parentid, id);
+                                carddone.cards.prevEditCard(host, parentid, id, editMode);
                             }
                             else {
                                 data_module.pendingData[data_module.cardList[id].heapIndex].onLoad.push(function(){
-                                    carddone.cards.prevEditCard(host, parentid, id);
+                                    carddone.cards.prevEditCard(host, parentid, id, editMode);
                                 });
                                 data_module.dataManager[-100] = {
                                     startIndex: data_module.cardList[id].heapIndex,
@@ -2889,7 +3001,7 @@ carddone.cards.redraw = function(host, userid){
                                 data_module.boardActive = -100;
                             }
                         }
-                    }(host.database.cards.items[cIndex].parentid, host.database.cards.items[cIndex].id),
+                    }(host.database.cards.items[cIndex].parentid, host.database.cards.items[cIndex].id, editMode),
                     deleteFunc: function(id){
                         return function(){
                             return carddone.cards.deleteCard(host, id);
@@ -2921,7 +3033,7 @@ carddone.cards.redraw = function(host, userid){
                 cards: cards,
                 addNewCardFunc: function(id){
                     return function(){
-                        carddone.cards.prevEditCard(host, id, 0);
+                        carddone.cards.prevEditCard(host, id, 0, "edit");
                     }
                 }(host.database.lists.items[i].id),
                 cardenter: function(host){

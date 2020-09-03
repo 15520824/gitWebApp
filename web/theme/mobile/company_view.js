@@ -656,6 +656,8 @@ theme.formCompanyInit = function(params){
         }
     });
     params.inputsearchbox.style.width = "calc(100vw - var(--tab-padding-left) - var(--tab-padding-right) - 20px)";
+    params.data_container.style.height = "calc(100% - 82px)";
+    params.data_container.style.overflowY = "auto";
     return absol.buildDom({
         tag: 'tabframe',
         child:[

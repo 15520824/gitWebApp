@@ -48,6 +48,7 @@ carddone.nations.deleteNationConfirm = function(host, id){
 carddone.nations.addNationSubmit = function(host, id, typesubmit){
     return new Promise(function(resolve,reject){
         var data = host.nationEdit.getValue();
+        if (!data) return;
         data.id = id;
         data.available = data.available? 1 : 0;
         if (id > 0){

@@ -10,7 +10,7 @@
       "client_info": {
         "mobilesdk_app_id": "1:226566755487:android:b007dc93a7198df49dfeaa",
         "android_client_info": {
-          "package_name": "com.reactnativewebapp"
+          "package_name": "com.carddone"
         }
       },
       "oauth_client": [
@@ -35,7 +35,7 @@
               "client_id": "226566755487-0d3qmamsnia5mnrgft4p221cdog8j40i.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.reactnativewebapp"
+                "bundle_id": "com.carddone"
               }
             }
           ]

@@ -1,14 +1,19 @@
-package com.reactnativewebapp;
+package com.carddone;
 
+import android.Manifest;
 import android.app.Application;
 import android.content.Context;
 import com.facebook.react.PackageList;
 import com.reactnativecommunity.webview.RNCWebViewPackage;
 
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.webkit.WebView;
+import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
+import androidx.core.app.ActivityCompat;
 
 import io.invertase.firebase.RNFirebasePackage;
 import com.facebook.react.ReactApplication;
@@ -20,13 +25,15 @@ import com.facebook.react.ReactNativeHost;
 import com.facebook.react.ReactPackage;
 import com.facebook.react.shell.MainReactPackage;
 import com.facebook.soloader.SoLoader;
+import com.carddone.BuildConfig;
+
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.List;
 
 public class MainApplication extends Application implements ReactApplication {
 
-  private final ReactNativeHost mReactNativeHost =
+    private final ReactNativeHost mReactNativeHost =
       new ReactNativeHost(this) {
         @Override
         public boolean getUseDeveloperSupport() {
@@ -41,7 +48,8 @@ public class MainApplication extends Application implements ReactApplication {
                     new RNCWebViewPackage(),
                     new RNFirebasePackage(),
                     new RNFirebaseMessagingPackage(),
-                    new RNFirebaseNotificationsPackage()
+                    new RNFirebaseNotificationsPackage(),
+                    new myBaseJavaModuleReactPackage()
             );
         }
 
@@ -70,6 +78,8 @@ public class MainApplication extends Application implements ReactApplication {
    *
    * @param context
    */
+
+
   private static void initializeFlipper(Context context) {
     if (BuildConfig.DEBUG) {
       try {

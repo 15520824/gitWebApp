@@ -48,6 +48,7 @@ carddone.cities.deleteCitiesConfirm = function(host, id){
 carddone.cities.addCitiesSubmit = function(host, id, typesubmit){
     return new Promise(function(resolve,reject){
         var data = host.cityEdit.getValue();
+        if (!data) return;
         data.id = id;
         data.available = data.available? 1 : 0;
         if (id > 0){

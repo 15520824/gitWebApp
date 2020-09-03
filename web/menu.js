@@ -9,6 +9,7 @@ if (carddone.isMobile){
         class: ["main-tabview", 'am-application-frameview']
     });
     carddone.menu.staticFrameTaskIds = [4, 7, 101, 100];
+    carddone.menu.staticFrameTaskCounter = [0, 0, 0, 0];
     carddone.menu.staticFrameTaskIcons = ['span.mdi.mdi-file-table-outline', 'span.mdi.mdi-chat-outline', 'span.mdi.mdi-bell-outline', 'span.mdi.mdi-menu'];
     carddone.menu.mobileTabbar = absol.buildDom({
         tag: 'mbottomtabbar',
@@ -17,8 +18,8 @@ if (carddone.isMobile){
             items: carddone.menu.staticFrameTaskIcons.map(function (icon, i) {
                 return {
                     icon: icon,
-                    value: carddone.menu.staticFrameTaskIds[i]//,
-                    // counter: app.tabActivities.counter
+                    value: carddone.menu.staticFrameTaskIds[i],
+                    counter: carddone.menu.staticFrameTaskCounter[i]
                 }
             })
         },
@@ -1241,7 +1242,7 @@ carddone.menu.logout = function(){
         FormClass.api_call({
             url: "logout_app.php",
             params: [
-                {name: "storage", value: window.userToken},
+                {name: "storage", value: "carddone_" + window.userToken},
                 {name: "cookie", value: getCookie("carddone_user")}
             ],
             func: function(success, message) {
@@ -1354,14 +1355,12 @@ carddone.menu.removeNotificationQueue = function(content){
 };
 
 carddone.menu.openChatMobile = function(sessionid){
-    console.log("wait");
     if (carddone.listTabChat.length == 0 || !carddone.listTabChat.status){
         setTimeout(function(){
             carddone.menu.openChatMobile(sessionid);
         }, 100);
         return;
     }
-    console.log(777777777777);
     carddone.listTabChat[0].resolveOpenChat(sessionid);
 };
 
@@ -1545,7 +1544,7 @@ carddone.menu.init = function(holder){
             if (message.content.listMember.indexOf(systemconfig.userid) < 0) return;
             if (message.content.type != "addmessage") return;
             if (!carddone.isMobile){
-                carddone.menu.removeNotificationQueue(message.content);
+                // carddone.menu.removeNotificationQueue(message.content);
                 var isActive = false;
                 if (document.hasFocus()){
                     var activetabid = carddone.menu.tabPanel.getActiveTabId();
@@ -1772,17 +1771,35 @@ carddone.menu.init = function(holder){
         });
         holder.appendChild(carddone.menu.layoutInit);
         if (carddone.isMobile){
-            // carddone.menu.loadPage(7);
+            carddone.menu.loadPage(7).then(function(value){
+                window.loadEvent = true;
+            });
             // carddone.menu.loadPage(101);
             // carddone.menu.loadPage(4);
             carddone.menu.loadPage(100);
+            FormClass.api_call({
+                url: "database_load.php",
+                params: [{name: "task", value: "load_seen_chat"}],
+                func: function(success, message){
+                    if (success){
+                        if (message.substr(0, 2) == "ok"){
+                            console.log(message);
+                            var st = EncodingClass.string.toVariable(message.substr(2));
+                            carddone.menu.mobileTabbar.items[1].counter = st.count;
+                        }
+                        else {
+                            console.log("failed_load_seen_chat: " + message);
+                        }
+                    }
+                    else {
+                        console.log("failed_load_seen_chat: " + message);
+                    }
+                }
+            });
         }
         else {
             carddone.menu.loadPage(4);
         }
-        setTimeout(() => {
-            window.loadEvent = true;
-        }, 2000);
         carddone.audioChatElt = DOMElement.div({
             attrs: {
                 style: {

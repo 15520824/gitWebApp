@@ -18,11 +18,6 @@ theme.noneIconButton = function(params){
     return res;
 };
 
-theme.openButton = function(params){
-    params.text = LanguageModule.text("txt_open_card");
-    return theme.noneIconButton(params);
-};
-
 theme.notNowButton = function(params){
     params.text = LanguageModule.text("txt_not_now");
     return theme.noneIconButton(params);

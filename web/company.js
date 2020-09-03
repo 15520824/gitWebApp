@@ -137,6 +137,7 @@ carddone.company.addCompanySubmit2 = function(host, id, data, isView, typesubmit
 carddone.company.addCompanySubmit = function(host, id, typesubmit){
     return new Promise(function(resolve,reject){
         var data = host.companyEdit.getValue();
+        if (!data) return;
         if (data.ownerList.length == 0){
             ModalElement.alert({message: LanguageModule.text("war_txt_owner_is_null")});
             return;
@@ -701,11 +702,7 @@ carddone.company.init2 = function(host){
             enableSearch: true
         }
     });
-    host.data_container = DOMElement.div({
-        attrs: {
-            className: "cardsimpletableclass row2colors cardtablehover"
-        }
-    });
+    host.data_container = DOMElement.div({});
     host.holder.addChild(host.frameList);
     var singlePage = host.funcs.formCompanyInit({
         cmdbutton: cmdbutton,

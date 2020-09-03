@@ -48,6 +48,7 @@ carddone.districts.deleteDistrictsConfirm = function(host, id){
 carddone.districts.addDistrictsSubmit = function(host, id, typesubmit){
     return new Promise(function(resolve,reject){
         var data = host.districtsEdit.getValue();
+        if (!data) return;
         data.id = id;
         data.available = data.available? 1 : 0;
         if (id > 0){

@@ -60,6 +60,7 @@ carddone.account.addAccountSubmit = function(host, id, type){
     return new Promise(function(resolve,reject){
         var selectedIndex = data_module.users.getIndex(id);
         var data = host.AccountEdit.getValue();
+        if (!data) return;
         var params = [];
         for (param in data){
             params.push({name: param, value: data[param]});
@@ -293,7 +294,8 @@ carddone.account.getCellAccount = function(host, id){
         username: nameDebug,
         fullname: data_module.users.items[index].fullname,
         email: data_module.users.items[index].email,
-        time: contentModule.getTimeSend(data_module.users.items[index].access_time)
+        time: contentModule.getTimeSend(data_module.users.items[index].access_time),
+        timeSort: data_module.users.items[index].access_time.getTime()
     };
     report_toIndex = data_module.users.getByhomeid(data_module.users.items[index].report_to);
     if (report_toIndex < 0){
@@ -381,6 +383,15 @@ carddone.account.init = function(host){
         return;
     }
     if (!data_module.users){
+        for (var i = 0; i < ModalElement.layerstatus.length; i++){
+            if ((ModalElement.layerstatus[i].index == -1) && (!ModalElement.layerstatus[i].visible)) ModalElement.show_loading();
+        }
+        setTimeout(function(){
+            carddone.account.init(host);
+        }, 50);
+        return;
+    }
+    if (!data_module.users.isMakeIndex){
         for (var i = 0; i < ModalElement.layerstatus.length; i++){
             if ((ModalElement.layerstatus[i].index == -1) && (!ModalElement.layerstatus[i].visible)) ModalElement.show_loading();
         }
