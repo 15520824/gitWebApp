@@ -37,9 +37,12 @@
                 contact: {},
 				reminder: {},
                 activities: {},
-                my_calendar: {}
+                my_calendar: {},
+                account_group: {},
+				maps: {}
             };
             var data_module = {};
+			var dbcache;
             var theme = {};
 			var systemconfig = {
                 separateSign: ",",
@@ -49,6 +52,9 @@
 			var LanguageModule_v_languagesData;
             var LanguageModule_v_languageCode;
             var LanguageModule_v_defaultcode;
+        </script>
+		<script async defer
+            src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDYe7fnyvFCkU3q-mnZJfJIvadeWwWvytw&libraries=geometry">
         </script>
 		<script type="text/javascript">
 			var loadMainternance = function(){
@@ -379,7 +385,8 @@
 							}
 						}
 					}
-					data_module.penddingHeap();
+					data_module.makeCache();
+                    data_module.loadData();
 					initUI();
 					setTimeout("checkLogin();", 1000);
 				});

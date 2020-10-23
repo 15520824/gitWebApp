@@ -53,6 +53,7 @@ task.submitLogin = function() {
         ],
         func: function(success, message){
             ModalElement.close(-1);
+            console.log(message);
             if (success){
                 if (message.substr(0, 2) == "ok"){
                     window.session = message.substr(2);
@@ -79,6 +80,7 @@ task.submitLogin = function() {
                                         {name: "cookvalueString", value: cookvalueString}
                                     ],
                                     func: function(success, message){
+                                        console.log(message);
                                         if (success){
                                             if (message.substr(0,2) == "ok"){
                                                 task.loadDatabase();
@@ -611,6 +613,7 @@ task.loadDatabase = function () {
 
                     //systemconfig
                     systemconfig.userHasApp = st.dataUser.hasApp;
+                    systemconfig.prefix = st.prefix;
                     systemconfig.userid = st.dataUser.homeid;
                     systemconfig.username = st.dataUser.username;
                     systemconfig.fullname = st.dataUser.fullname;

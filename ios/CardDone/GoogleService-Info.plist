@@ -3,9 +3,9 @@
 <plist version="1.0">
 <dict>
 	<key>CLIENT_ID</key>
-	<string>226566755487-0d3qmamsnia5mnrgft4p221cdog8j40i.apps.googleusercontent.com</string>
+	<string>226566755487-pcbksukch24clca3ht5kn1qjqf7jhg0s.apps.googleusercontent.com</string>
 	<key>REVERSED_CLIENT_ID</key>
-	<string>com.googleusercontent.apps.226566755487-0d3qmamsnia5mnrgft4p221cdog8j40i</string>
+	<string>com.googleusercontent.apps.226566755487-pcbksukch24clca3ht5kn1qjqf7jhg0s</string>
 	<key>API_KEY</key>
 	<string>AIzaSyAfH72r4ivm_--zKl-WvoRZhZOljDnX0H0</string>
 	<key>GCM_SENDER_ID</key>
@@ -13,7 +13,7 @@
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.reactnativewebapp</string>
+	<string>org.reactjs.native.example.CardDone</string>
 	<key>PROJECT_ID</key>
 	<string>labdaiminhbsc</string>
 	<key>STORAGE_BUCKET</key>
@@ -29,7 +29,7 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:226566755487:ios:00a828aeee451d549dfeaa</string>
+	<string>1:226566755487:ios:a21286faf0c9ff6d9dfeaa</string>
 	<key>DATABASE_URL</key>
 	<string>https://labdaiminhbsc.firebaseio.com</string>
 </dict>

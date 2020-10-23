@@ -18,6 +18,16 @@ theme.noneIconButton = function(params){
     return res;
 };
 
+theme.previewButton = function(params){
+    params.text = LanguageModule.text("txt_preview");
+    return theme.noneIconButton(params);
+};
+
+theme.sendButton = function(params){
+    params.text = LanguageModule.text("txt_send");
+    return theme.noneIconButton(params);
+};
+
 theme.notNowButton = function(params){
     params.text = LanguageModule.text("txt_not_now");
     return theme.noneIconButton(params);
@@ -94,6 +104,11 @@ theme.closeButton = function (params) {
 
  theme.viewReportButton = function(params){
      params.text = LanguageModule.text("txt_view_report");
+     return theme.noneIconButton(params);
+ };
+
+ theme.archiveButton = function(params){
+     params.text = LanguageModule.text("txt_archive");
      return theme.noneIconButton(params);
  };
  ModuleManagerClass.register({

@@ -83,9 +83,9 @@ carddone.account.addAccountSubmit = function(host, id, type){
                 if (success) {
                     if (message.substr(0, 2) == "ok") {
                         if (selectedIndex < 0) {
-                            id = parseInt(message.substr(2), 10);
+                            var st = EncodingClass.string.toVariable(message.substr(2));
                             data_module.users.items.push({
-                                id: id,
+                                id: st.id,
                                 fullname: data.fullname,
                                 username: data.username,
                                 password: data.password,
@@ -96,9 +96,11 @@ carddone.account.addAccountSubmit = function(host, id, type){
                                 available: data.available,
                                 language: data.language,
                                 report_to: data.report_to,
-                                descendanIdList: []
+                                descendanIdList: [],
+                                childIndexList: [],
+                                homeid: st.homeid
                             });
-                            if (data.report_to > 0) contentModule.makeReportToUser();
+                            if (data.report_to > 0) contentModule.makeReportToUserThanhYen();
                             host.dataView.insertRow(host.funcs.formAccountGetRow(carddone.account.getCellAccount(host, id)));
                         }
                         else {
@@ -110,7 +112,7 @@ carddone.account.addAccountSubmit = function(host, id, type){
                             data_module.users.items[selectedIndex].language = data.language;
                             if (data_module.users.items[selectedIndex].report_to != data.report_to){
                                 data_module.users.items[selectedIndex].report_to = data.report_to;
-                                contentModule.makeReportToUser();
+                                contentModule.makeReportToUserThanhYen();
                             }
                             resolve(carddone.account.getCellAccount(host, id));
                         }
@@ -162,7 +164,7 @@ carddone.account.addAccountSubmit = function(host, id, type){
                                                         report_to: data.report_to,
                                                         descendanIdList: []
                                                     });
-                                                    if (data.report_to > 0) contentModule.makeReportToUser();
+                                                    if (data.report_to > 0) contentModule.makeReportToUserThanhYen();
                                                     host.dataView.insertRow(host.funcs.formAccountGetRow(carddone.account.getCellAccount(host, id)));
                                                     if (type == 0){
                                                         carddone.account.addAccount(host,id);
@@ -253,7 +255,7 @@ carddone.account.addAccount = function(host, id){
                 username: data_module.users.items[index].username,
                 emailadd: data_module.users.items[index].email,
                 fullname: data_module.users.items[index].fullname,
-                privmode: (data_module.users.items[index].privilege >= 2)? 2 : 0,
+                privmode: data_module.users.items[index].privilege,
                 report_to: data_module.users.items[index].report_to,
                 comment: data_module.users.items[index].comment,
                 language: data_module.users.items[index].language,
@@ -263,8 +265,9 @@ carddone.account.addAccount = function(host, id){
         }
         data.languageList = contentModule.generateLanguageList();
         data.privmodeList = [
-            {value: 0, text: LanguageModule.text("txt_no")},
-            {value: 2, text: LanguageModule.text("txt_yes")}
+            {value: 0, text: LanguageModule.text("txt_user")},
+            {value: 1, text: LanguageModule.text("txt_manager")},
+            {value: 2, text: LanguageModule.text("txt_super_administrator")}
         ];
         data.report_toList = [{value: 0, text: LanguageModule.text("txt_no_select")}];
         for (var i = 0; i < data_module.users.items.length; i++){
@@ -304,11 +307,17 @@ carddone.account.getCellAccount = function(host, id){
     else {
         celldata.reportTo = data_module.users.items[report_toIndex].username;
     }
-    if(data_module.users.items[index].privilege >= 2){
-        celldata.privilege = LanguageModule.text("txt_yes");
-    }
-    else{
-        celldata.privilege = LanguageModule.text("txt_no");
+    switch (data_module.users.items[index].privilege) {
+        case 0:
+            celldata.privilege = LanguageModule.text("txt_user");
+            break;
+        case 1:
+            celldata.privilege = LanguageModule.text("txt_manager");
+            break;
+        case 2:
+            celldata.privilege = LanguageModule.text("txt_super_administrator");
+            break;
+
     }
     celldata.available = data_module.users.items[index].available;
     var languagevalue = "";
@@ -418,7 +427,7 @@ carddone.account.init = function(host){
             carddone.account.addAccount(host, 0);
         }
     };
-    host.data_container = DOMElement.div({attrs: {className: "cardsimpletableclass"}});
+    host.data_container = DOMElement.div({attrs: {style: {marginBottom: "200px"}}});
     host.holder.addChild(host.frameList);
     var singlePage = host.funcs.formAccountInit({
         cmdbutton: cmdbutton,

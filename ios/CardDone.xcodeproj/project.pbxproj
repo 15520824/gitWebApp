@@ -7,19 +7,19 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		00E356F31AD99517003FC87E /* ReactNativeWebAppTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 00E356F21AD99517003FC87E /* ReactNativeWebAppTests.m */; };
+		00E356F31AD99517003FC87E /* CardDoneTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 00E356F21AD99517003FC87E /* CardDoneTests.m */; };
 		13B07FBC1A68108700A75B9A /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB01A68108700A75B9A /* AppDelegate.m */; };
 		13B07FBD1A68108700A75B9A /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB11A68108700A75B9A /* LaunchScreen.xib */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		13B07FC11A68108700A75B9A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB71A68108700A75B9A /* main.m */; };
-		20AE005AC3F1EE4F1B1FEE3D /* libPods-ReactNativeWebApp-tvOSTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 98F1153459AD2175909988D3 /* libPods-ReactNativeWebApp-tvOSTests.a */; };
+		20AE005AC3F1EE4F1B1FEE3D /* libPods-CardDone-tvOSTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 98F1153459AD2175909988D3 /* libPods-CardDone-tvOSTests.a */; };
 		2D02E4BC1E0B4A80006451C7 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB01A68108700A75B9A /* AppDelegate.m */; };
 		2D02E4BD1E0B4A84006451C7 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		2D02E4BF1E0B4AB3006451C7 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB71A68108700A75B9A /* main.m */; };
-		2DCD954D1E0B4F2C00145EB5 /* ReactNativeWebAppTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 00E356F21AD99517003FC87E /* ReactNativeWebAppTests.m */; };
-		3C53B98C7020F46633D890FF /* libPods-ReactNativeWebAppTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 964DEDA7B7C70413BAB71B7C /* libPods-ReactNativeWebAppTests.a */; };
-		51E92ACB4CDDB6CF67AB5589 /* libPods-ReactNativeWebApp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 1F9A6295DDF65C565C237067 /* libPods-ReactNativeWebApp.a */; };
-		9CF795291AB2455CFC6861BD /* libPods-ReactNativeWebApp-tvOS.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 93FBE11EED2BB8DBA1320872 /* libPods-ReactNativeWebApp-tvOS.a */; };
+		2DCD954D1E0B4F2C00145EB5 /* CardDoneTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 00E356F21AD99517003FC87E /* CardDoneTests.m */; };
+		3C53B98C7020F46633D890FF /* libPods-CardDoneTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 964DEDA7B7C70413BAB71B7C /* libPods-CardDoneTests.a */; };
+		51E92ACB4CDDB6CF67AB5589 /* libPods-CardDone.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 1F9A6295DDF65C565C237067 /* libPods-CardDone.a */; };
+		9CF795291AB2455CFC6861BD /* libPods-CardDone-tvOS.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 93FBE11EED2BB8DBA1320872 /* libPods-CardDone-tvOS.a */; };
 		D6CA01B624C6FEC800E71A43 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = D6CA01B524C6FEC800E71A43 /* GoogleService-Info.plist */; };
 /* End PBXBuildFile section */
 
@@ -29,46 +29,46 @@
 			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 13B07F861A680F5B00A75B9A;
-			remoteInfo = ReactNativeWebApp;
+			remoteInfo = CardDone;
 		};
 		2D02E4911E0B4A5D006451C7 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 2D02E47A1E0B4A5D006451C7;
-			remoteInfo = "ReactNativeWebApp-tvOS";
+			remoteInfo = "CardDone-tvOS";
 		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		008F07F21AC5B25A0029DE68 /* main.jsbundle */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = main.jsbundle; sourceTree = "<group>"; };
-		00E356EE1AD99517003FC87E /* ReactNativeWebAppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ReactNativeWebAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		00E356EE1AD99517003FC87E /* CardDoneTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CardDoneTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		00E356F11AD99517003FC87E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		00E356F21AD99517003FC87E /* ReactNativeWebAppTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ReactNativeWebAppTests.m; sourceTree = "<group>"; };
-		13B07F961A680F5B00A75B9A /* ReactNativeWebApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ReactNativeWebApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		13B07FAF1A68108700A75B9A /* AppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AppDelegate.h; path = ReactNativeWebApp/AppDelegate.h; sourceTree = "<group>"; };
-		13B07FB01A68108700A75B9A /* AppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = AppDelegate.m; path = ReactNativeWebApp/AppDelegate.m; sourceTree = "<group>"; };
+		00E356F21AD99517003FC87E /* CardDoneTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CardDoneTests.m; sourceTree = "<group>"; };
+		13B07F961A680F5B00A75B9A /* CardDone.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CardDone.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		13B07FAF1A68108700A75B9A /* AppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AppDelegate.h; path = CardDone/AppDelegate.h; sourceTree = "<group>"; };
+		13B07FB01A68108700A75B9A /* AppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = AppDelegate.m; path = CardDone/AppDelegate.m; sourceTree = "<group>"; };
 		13B07FB21A68108700A75B9A /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/LaunchScreen.xib; sourceTree = "<group>"; };
-		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = ReactNativeWebApp/Images.xcassets; sourceTree = "<group>"; };
-		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = ReactNativeWebApp/Info.plist; sourceTree = "<group>"; };
-		13B07FB71A68108700A75B9A /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = ReactNativeWebApp/main.m; sourceTree = "<group>"; };
-		1F9A6295DDF65C565C237067 /* libPods-ReactNativeWebApp.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-ReactNativeWebApp.a"; sourceTree = BUILT_PRODUCTS_DIR; };
-		1FBC8312579D4001A50B2A32 /* Pods-ReactNativeWebApp-tvOS.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ReactNativeWebApp-tvOS.debug.xcconfig"; path = "Target Support Files/Pods-ReactNativeWebApp-tvOS/Pods-ReactNativeWebApp-tvOS.debug.xcconfig"; sourceTree = "<group>"; };
-		2D02E47B1E0B4A5D006451C7 /* ReactNativeWebApp-tvOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "ReactNativeWebApp-tvOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
-		2D02E4901E0B4A5D006451C7 /* ReactNativeWebApp-tvOSTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "ReactNativeWebApp-tvOSTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
-		6957AA892A9B1D132C4E06EA /* Pods-ReactNativeWebApp-tvOSTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ReactNativeWebApp-tvOSTests.debug.xcconfig"; path = "Target Support Files/Pods-ReactNativeWebApp-tvOSTests/Pods-ReactNativeWebApp-tvOSTests.debug.xcconfig"; sourceTree = "<group>"; };
-		7488EE02CCBE7DCC25B1D480 /* Pods-ReactNativeWebApp.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ReactNativeWebApp.debug.xcconfig"; path = "Target Support Files/Pods-ReactNativeWebApp/Pods-ReactNativeWebApp.debug.xcconfig"; sourceTree = "<group>"; };
-		93FBE11EED2BB8DBA1320872 /* libPods-ReactNativeWebApp-tvOS.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-ReactNativeWebApp-tvOS.a"; sourceTree = BUILT_PRODUCTS_DIR; };
-		964DEDA7B7C70413BAB71B7C /* libPods-ReactNativeWebAppTests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-ReactNativeWebAppTests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
-		98F1153459AD2175909988D3 /* libPods-ReactNativeWebApp-tvOSTests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-ReactNativeWebApp-tvOSTests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
-		9DE9AE0D1EFA0C61AF258FFD /* Pods-ReactNativeWebAppTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ReactNativeWebAppTests.debug.xcconfig"; path = "Target Support Files/Pods-ReactNativeWebAppTests/Pods-ReactNativeWebAppTests.debug.xcconfig"; sourceTree = "<group>"; };
-		A7EC3A0911FDF6AA5A6DAD0C /* Pods-ReactNativeWebAppTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ReactNativeWebAppTests.release.xcconfig"; path = "Target Support Files/Pods-ReactNativeWebAppTests/Pods-ReactNativeWebAppTests.release.xcconfig"; sourceTree = "<group>"; };
-		BEEC21F918D8204D1055FFDC /* Pods-ReactNativeWebApp.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ReactNativeWebApp.release.xcconfig"; path = "Target Support Files/Pods-ReactNativeWebApp/Pods-ReactNativeWebApp.release.xcconfig"; sourceTree = "<group>"; };
-		CF8DD27134FB76D86234A054 /* Pods-ReactNativeWebApp-tvOSTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ReactNativeWebApp-tvOSTests.release.xcconfig"; path = "Target Support Files/Pods-ReactNativeWebApp-tvOSTests/Pods-ReactNativeWebApp-tvOSTests.release.xcconfig"; sourceTree = "<group>"; };
-		D6CA01B524C6FEC800E71A43 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "GoogleService-Info.plist"; path = "ReactNativeWebApp/GoogleService-Info.plist"; sourceTree = "<group>"; };
+		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = CardDone/Images.xcassets; sourceTree = "<group>"; };
+		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = CardDone/Info.plist; sourceTree = "<group>"; };
+		13B07FB71A68108700A75B9A /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = CardDone/main.m; sourceTree = "<group>"; };
+		1F9A6295DDF65C565C237067 /* libPods-CardDone.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-CardDone.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		1FBC8312579D4001A50B2A32 /* Pods-CardDone-tvOS.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CardDone-tvOS.debug.xcconfig"; path = "Target Support Files/Pods-CardDone-tvOS/Pods-CardDone-tvOS.debug.xcconfig"; sourceTree = "<group>"; };
+		2D02E47B1E0B4A5D006451C7 /* CardDone-tvOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "CardDone-tvOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		2D02E4901E0B4A5D006451C7 /* CardDone-tvOSTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "CardDone-tvOSTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		6957AA892A9B1D132C4E06EA /* Pods-CardDone-tvOSTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CardDone-tvOSTests.debug.xcconfig"; path = "Target Support Files/Pods-CardDone-tvOSTests/Pods-CardDone-tvOSTests.debug.xcconfig"; sourceTree = "<group>"; };
+		7488EE02CCBE7DCC25B1D480 /* Pods-CardDone.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CardDone.debug.xcconfig"; path = "Target Support Files/Pods-CardDone/Pods-CardDone.debug.xcconfig"; sourceTree = "<group>"; };
+		93FBE11EED2BB8DBA1320872 /* libPods-CardDone-tvOS.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-CardDone-tvOS.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		964DEDA7B7C70413BAB71B7C /* libPods-CardDoneTests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-CardDoneTests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		98F1153459AD2175909988D3 /* libPods-CardDone-tvOSTests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-CardDone-tvOSTests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		9DE9AE0D1EFA0C61AF258FFD /* Pods-CardDoneTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CardDoneTests.debug.xcconfig"; path = "Target Support Files/Pods-CardDoneTests/Pods-CardDoneTests.debug.xcconfig"; sourceTree = "<group>"; };
+		A7EC3A0911FDF6AA5A6DAD0C /* Pods-CardDoneTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CardDoneTests.release.xcconfig"; path = "Target Support Files/Pods-CardDoneTests/Pods-CardDoneTests.release.xcconfig"; sourceTree = "<group>"; };
+		BEEC21F918D8204D1055FFDC /* Pods-CardDone.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CardDone.release.xcconfig"; path = "Target Support Files/Pods-CardDone/Pods-CardDone.release.xcconfig"; sourceTree = "<group>"; };
+		CF8DD27134FB76D86234A054 /* Pods-CardDone-tvOSTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CardDone-tvOSTests.release.xcconfig"; path = "Target Support Files/Pods-CardDone-tvOSTests/Pods-CardDone-tvOSTests.release.xcconfig"; sourceTree = "<group>"; };
+		D6CA01B524C6FEC800E71A43 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "GoogleService-Info.plist"; path = "CardDone/GoogleService-Info.plist"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		ED2971642150620600B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = Platforms/AppleTVOS.platform/Developer/SDKs/AppleTVOS12.0.sdk/System/Library/Frameworks/JavaScriptCore.framework; sourceTree = DEVELOPER_DIR; };
-		FA1BC26373C46AD5F6EEA8C4 /* Pods-ReactNativeWebApp-tvOS.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ReactNativeWebApp-tvOS.release.xcconfig"; path = "Target Support Files/Pods-ReactNativeWebApp-tvOS/Pods-ReactNativeWebApp-tvOS.release.xcconfig"; sourceTree = "<group>"; };
+		FA1BC26373C46AD5F6EEA8C4 /* Pods-CardDone-tvOS.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CardDone-tvOS.release.xcconfig"; path = "Target Support Files/Pods-CardDone-tvOS/Pods-CardDone-tvOS.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -76,7 +76,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				3C53B98C7020F46633D890FF /* libPods-ReactNativeWebAppTests.a in Frameworks */,
+				3C53B98C7020F46633D890FF /* libPods-CardDoneTests.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -84,7 +84,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				51E92ACB4CDDB6CF67AB5589 /* libPods-ReactNativeWebApp.a in Frameworks */,
+				51E92ACB4CDDB6CF67AB5589 /* libPods-CardDone.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -92,7 +92,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				9CF795291AB2455CFC6861BD /* libPods-ReactNativeWebApp-tvOS.a in Frameworks */,
+				9CF795291AB2455CFC6861BD /* libPods-CardDone-tvOS.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -100,20 +100,20 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				20AE005AC3F1EE4F1B1FEE3D /* libPods-ReactNativeWebApp-tvOSTests.a in Frameworks */,
+				20AE005AC3F1EE4F1B1FEE3D /* libPods-CardDone-tvOSTests.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		00E356EF1AD99517003FC87E /* ReactNativeWebAppTests */ = {
+		00E356EF1AD99517003FC87E /* CardDoneTests */ = {
 			isa = PBXGroup;
 			children = (
-				00E356F21AD99517003FC87E /* ReactNativeWebAppTests.m */,
+				00E356F21AD99517003FC87E /* CardDoneTests.m */,
 				00E356F01AD99517003FC87E /* Supporting Files */,
 			);
-			path = ReactNativeWebAppTests;
+			path = CardDoneTests;
 			sourceTree = "<group>";
 		};
 		00E356F01AD99517003FC87E /* Supporting Files */ = {
@@ -124,7 +124,7 @@
 			name = "Supporting Files";
 			sourceTree = "<group>";
 		};
-		13B07FAE1A68108700A75B9A /* ReactNativeWebApp */ = {
+		13B07FAE1A68108700A75B9A /* CardDone */ = {
 			isa = PBXGroup;
 			children = (
 				D6CA01B524C6FEC800E71A43 /* GoogleService-Info.plist */,
@@ -136,7 +136,7 @@
 				13B07FB11A68108700A75B9A /* LaunchScreen.xib */,
 				13B07FB71A68108700A75B9A /* main.m */,
 			);
-			name = ReactNativeWebApp;
+			name = CardDone;
 			sourceTree = "<group>";
 		};
 		2D16E6871FA4F8E400B85C8A /* Frameworks */ = {
@@ -144,10 +144,10 @@
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
 				ED2971642150620600B7C4FE /* JavaScriptCore.framework */,
-				1F9A6295DDF65C565C237067 /* libPods-ReactNativeWebApp.a */,
-				93FBE11EED2BB8DBA1320872 /* libPods-ReactNativeWebApp-tvOS.a */,
-				98F1153459AD2175909988D3 /* libPods-ReactNativeWebApp-tvOSTests.a */,
-				964DEDA7B7C70413BAB71B7C /* libPods-ReactNativeWebAppTests.a */,
+				1F9A6295DDF65C565C237067 /* libPods-CardDone.a */,
+				93FBE11EED2BB8DBA1320872 /* libPods-CardDone-tvOS.a */,
+				98F1153459AD2175909988D3 /* libPods-CardDone-tvOSTests.a */,
+				964DEDA7B7C70413BAB71B7C /* libPods-CardDoneTests.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -155,14 +155,14 @@
 		6697D0CADA331670A90EF456 /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				7488EE02CCBE7DCC25B1D480 /* Pods-ReactNativeWebApp.debug.xcconfig */,
-				BEEC21F918D8204D1055FFDC /* Pods-ReactNativeWebApp.release.xcconfig */,
-				1FBC8312579D4001A50B2A32 /* Pods-ReactNativeWebApp-tvOS.debug.xcconfig */,
-				FA1BC26373C46AD5F6EEA8C4 /* Pods-ReactNativeWebApp-tvOS.release.xcconfig */,
-				6957AA892A9B1D132C4E06EA /* Pods-ReactNativeWebApp-tvOSTests.debug.xcconfig */,
-				CF8DD27134FB76D86234A054 /* Pods-ReactNativeWebApp-tvOSTests.release.xcconfig */,
-				9DE9AE0D1EFA0C61AF258FFD /* Pods-ReactNativeWebAppTests.debug.xcconfig */,
-				A7EC3A0911FDF6AA5A6DAD0C /* Pods-ReactNativeWebAppTests.release.xcconfig */,
+				7488EE02CCBE7DCC25B1D480 /* Pods-CardDone.debug.xcconfig */,
+				BEEC21F918D8204D1055FFDC /* Pods-CardDone.release.xcconfig */,
+				1FBC8312579D4001A50B2A32 /* Pods-CardDone-tvOS.debug.xcconfig */,
+				FA1BC26373C46AD5F6EEA8C4 /* Pods-CardDone-tvOS.release.xcconfig */,
+				6957AA892A9B1D132C4E06EA /* Pods-CardDone-tvOSTests.debug.xcconfig */,
+				CF8DD27134FB76D86234A054 /* Pods-CardDone-tvOSTests.release.xcconfig */,
+				9DE9AE0D1EFA0C61AF258FFD /* Pods-CardDoneTests.debug.xcconfig */,
+				A7EC3A0911FDF6AA5A6DAD0C /* Pods-CardDoneTests.release.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -177,9 +177,9 @@
 		83CBB9F61A601CBA00E9B192 = {
 			isa = PBXGroup;
 			children = (
-				13B07FAE1A68108700A75B9A /* ReactNativeWebApp */,
+				13B07FAE1A68108700A75B9A /* CardDone */,
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
-				00E356EF1AD99517003FC87E /* ReactNativeWebAppTests */,
+				00E356EF1AD99517003FC87E /* CardDoneTests */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
 				6697D0CADA331670A90EF456 /* Pods */,
@@ -192,10 +192,10 @@
 		83CBBA001A601CBA00E9B192 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				13B07F961A680F5B00A75B9A /* ReactNativeWebApp.app */,
-				00E356EE1AD99517003FC87E /* ReactNativeWebAppTests.xctest */,
-				2D02E47B1E0B4A5D006451C7 /* ReactNativeWebApp-tvOS.app */,
-				2D02E4901E0B4A5D006451C7 /* ReactNativeWebApp-tvOSTests.xctest */,
+				13B07F961A680F5B00A75B9A /* CardDone.app */,
+				00E356EE1AD99517003FC87E /* CardDoneTests.xctest */,
+				2D02E47B1E0B4A5D006451C7 /* CardDone-tvOS.app */,
+				2D02E4901E0B4A5D006451C7 /* CardDone-tvOSTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -203,9 +203,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		00E356ED1AD99517003FC87E /* ReactNativeWebAppTests */ = {
+		00E356ED1AD99517003FC87E /* CardDoneTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 00E357021AD99517003FC87E /* Build configuration list for PBXNativeTarget "ReactNativeWebAppTests" */;
+			buildConfigurationList = 00E357021AD99517003FC87E /* Build configuration list for PBXNativeTarget "CardDoneTests" */;
 			buildPhases = (
 				87DC6D1FC13A6CF8FC70D127 /* [CP] Check Pods Manifest.lock */,
 				00E356EA1AD99517003FC87E /* Sources */,
@@ -217,14 +217,14 @@
 			dependencies = (
 				00E356F51AD99517003FC87E /* PBXTargetDependency */,
 			);
-			name = ReactNativeWebAppTests;
-			productName = ReactNativeWebAppTests;
-			productReference = 00E356EE1AD99517003FC87E /* ReactNativeWebAppTests.xctest */;
+			name = CardDoneTests;
+			productName = CardDoneTests;
+			productReference = 00E356EE1AD99517003FC87E /* CardDoneTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		13B07F861A680F5B00A75B9A /* ReactNativeWebApp */ = {
+		13B07F861A680F5B00A75B9A /* CardDone */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "ReactNativeWebApp" */;
+			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "CardDone" */;
 			buildPhases = (
 				0EAE8E8E3916B8D9ADACED5E /* [CP] Check Pods Manifest.lock */,
 				FD10A7F022414F080027D42C /* Start Packager */,
@@ -237,14 +237,14 @@
 			);
 			dependencies = (
 			);
-			name = ReactNativeWebApp;
-			productName = ReactNativeWebApp;
-			productReference = 13B07F961A680F5B00A75B9A /* ReactNativeWebApp.app */;
+			name = CardDone;
+			productName = CardDone;
+			productReference = 13B07F961A680F5B00A75B9A /* CardDone.app */;
 			productType = "com.apple.product-type.application";
 		};
-		2D02E47A1E0B4A5D006451C7 /* ReactNativeWebApp-tvOS */ = {
+		2D02E47A1E0B4A5D006451C7 /* CardDone-tvOS */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 2D02E4BA1E0B4A5E006451C7 /* Build configuration list for PBXNativeTarget "ReactNativeWebApp-tvOS" */;
+			buildConfigurationList = 2D02E4BA1E0B4A5E006451C7 /* Build configuration list for PBXNativeTarget "CardDone-tvOS" */;
 			buildPhases = (
 				4B52ED160E929F6523A8946D /* [CP] Check Pods Manifest.lock */,
 				FD10A7F122414F3F0027D42C /* Start Packager */,
@@ -257,14 +257,14 @@
 			);
 			dependencies = (
 			);
-			name = "ReactNativeWebApp-tvOS";
-			productName = "ReactNativeWebApp-tvOS";
-			productReference = 2D02E47B1E0B4A5D006451C7 /* ReactNativeWebApp-tvOS.app */;
+			name = "CardDone-tvOS";
+			productName = "CardDone-tvOS";
+			productReference = 2D02E47B1E0B4A5D006451C7 /* CardDone-tvOS.app */;
 			productType = "com.apple.product-type.application";
 		};
-		2D02E48F1E0B4A5D006451C7 /* ReactNativeWebApp-tvOSTests */ = {
+		2D02E48F1E0B4A5D006451C7 /* CardDone-tvOSTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 2D02E4BB1E0B4A5E006451C7 /* Build configuration list for PBXNativeTarget "ReactNativeWebApp-tvOSTests" */;
+			buildConfigurationList = 2D02E4BB1E0B4A5E006451C7 /* Build configuration list for PBXNativeTarget "CardDone-tvOSTests" */;
 			buildPhases = (
 				A285A3F0045E2C59324D50ED /* [CP] Check Pods Manifest.lock */,
 				2D02E48C1E0B4A5D006451C7 /* Sources */,
@@ -276,9 +276,9 @@
 			dependencies = (
 				2D02E4921E0B4A5D006451C7 /* PBXTargetDependency */,
 			);
-			name = "ReactNativeWebApp-tvOSTests";
-			productName = "ReactNativeWebApp-tvOSTests";
-			productReference = 2D02E4901E0B4A5D006451C7 /* ReactNativeWebApp-tvOSTests.xctest */;
+			name = "CardDone-tvOSTests";
+			productName = "CardDone-tvOSTests";
+			productReference = 2D02E4901E0B4A5D006451C7 /* CardDone-tvOSTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
 /* End PBXNativeTarget section */
@@ -292,20 +292,26 @@
 				TargetAttributes = {
 					00E356ED1AD99517003FC87E = {
 						CreatedOnToolsVersion = 6.2;
+						DevelopmentTeam = BUD5ADDGM4;
 						TestTargetID = 13B07F861A680F5B00A75B9A;
+					};
+					13B07F861A680F5B00A75B9A = {
+						DevelopmentTeam = BUD5ADDGM4;
 					};
 					2D02E47A1E0B4A5D006451C7 = {
 						CreatedOnToolsVersion = 8.2.1;
+						DevelopmentTeam = BUD5ADDGM4;
 						ProvisioningStyle = Automatic;
 					};
 					2D02E48F1E0B4A5D006451C7 = {
 						CreatedOnToolsVersion = 8.2.1;
+						DevelopmentTeam = BUD5ADDGM4;
 						ProvisioningStyle = Automatic;
 						TestTargetID = 2D02E47A1E0B4A5D006451C7;
 					};
 				};
 			};
-			buildConfigurationList = 83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "ReactNativeWebApp" */;
+			buildConfigurationList = 83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "CardDone" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
@@ -319,10 +325,10 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				13B07F861A680F5B00A75B9A /* ReactNativeWebApp */,
-				00E356ED1AD99517003FC87E /* ReactNativeWebAppTests */,
-				2D02E47A1E0B4A5D006451C7 /* ReactNativeWebApp-tvOS */,
-				2D02E48F1E0B4A5D006451C7 /* ReactNativeWebApp-tvOSTests */,
+				13B07F861A680F5B00A75B9A /* CardDone */,
+				00E356ED1AD99517003FC87E /* CardDoneTests */,
+				2D02E47A1E0B4A5D006451C7 /* CardDone-tvOS */,
+				2D02E48F1E0B4A5D006451C7 /* CardDone-tvOSTests */,
 			);
 		};
 /* End PBXProject section */
@@ -392,7 +398,7 @@
 			outputFileListPaths = (
 			);
 			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-ReactNativeWebApp-checkManifestLockResult.txt",
+				"$(DERIVED_FILE_DIR)/Pods-CardDone-checkManifestLockResult.txt",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -428,7 +434,7 @@
 			outputFileListPaths = (
 			);
 			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-ReactNativeWebApp-tvOS-checkManifestLockResult.txt",
+				"$(DERIVED_FILE_DIR)/Pods-CardDone-tvOS-checkManifestLockResult.txt",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -450,7 +456,7 @@
 			outputFileListPaths = (
 			);
 			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-ReactNativeWebAppTests-checkManifestLockResult.txt",
+				"$(DERIVED_FILE_DIR)/Pods-CardDoneTests-checkManifestLockResult.txt",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -472,7 +478,7 @@
 			outputFileListPaths = (
 			);
 			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-ReactNativeWebApp-tvOSTests-checkManifestLockResult.txt",
+				"$(DERIVED_FILE_DIR)/Pods-CardDone-tvOSTests-checkManifestLockResult.txt",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -524,7 +530,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				00E356F31AD99517003FC87E /* ReactNativeWebAppTests.m in Sources */,
+				00E356F31AD99517003FC87E /* CardDoneTests.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -550,7 +556,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				2DCD954D1E0B4F2C00145EB5 /* ReactNativeWebAppTests.m in Sources */,
+				2DCD954D1E0B4F2C00145EB5 /* CardDoneTests.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -559,12 +565,12 @@
 /* Begin PBXTargetDependency section */
 		00E356F51AD99517003FC87E /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 13B07F861A680F5B00A75B9A /* ReactNativeWebApp */;
+			target = 13B07F861A680F5B00A75B9A /* CardDone */;
 			targetProxy = 00E356F41AD99517003FC87E /* PBXContainerItemProxy */;
 		};
 		2D02E4921E0B4A5D006451C7 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 2D02E47A1E0B4A5D006451C7 /* ReactNativeWebApp-tvOS */;
+			target = 2D02E47A1E0B4A5D006451C7 /* CardDone-tvOS */;
 			targetProxy = 2D02E4911E0B4A5D006451C7 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -576,7 +582,7 @@
 				13B07FB21A68108700A75B9A /* Base */,
 			);
 			name = LaunchScreen.xib;
-			path = ReactNativeWebApp;
+			path = CardDone;
 			sourceTree = "<group>";
 		};
 /* End PBXVariantGroup section */
@@ -584,14 +590,14 @@
 /* Begin XCBuildConfiguration section */
 		00E356F61AD99517003FC87E /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 9DE9AE0D1EFA0C61AF258FFD /* Pods-ReactNativeWebAppTests.debug.xcconfig */;
+			baseConfigurationReference = 9DE9AE0D1EFA0C61AF258FFD /* Pods-CardDoneTests.debug.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
 					"$(inherited)",
 				);
-				INFOPLIST_FILE = ReactNativeWebAppTests/Info.plist;
+				INFOPLIST_FILE = CardDoneTests/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				OTHER_LDFLAGS = (
@@ -601,17 +607,17 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ReactNativeWebApp.app/ReactNativeWebApp";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/CardDone.app/CardDone";
 			};
 			name = Debug;
 		};
 		00E356F71AD99517003FC87E /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = A7EC3A0911FDF6AA5A6DAD0C /* Pods-ReactNativeWebAppTests.release.xcconfig */;
+			baseConfigurationReference = A7EC3A0911FDF6AA5A6DAD0C /* Pods-CardDoneTests.release.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				COPY_PHASE_STRIP = NO;
-				INFOPLIST_FILE = ReactNativeWebAppTests/Info.plist;
+				INFOPLIST_FILE = CardDoneTests/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				OTHER_LDFLAGS = (
@@ -621,52 +627,54 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ReactNativeWebApp.app/ReactNativeWebApp";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/CardDone.app/CardDone";
 			};
 			name = Release;
 		};
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 7488EE02CCBE7DCC25B1D480 /* Pods-ReactNativeWebApp.debug.xcconfig */;
+			baseConfigurationReference = 7488EE02CCBE7DCC25B1D480 /* Pods-CardDone.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = NO;
-				INFOPLIST_FILE = ReactNativeWebApp/Info.plist;
+				DEVELOPMENT_TEAM = BUD5ADDGM4;
+				INFOPLIST_FILE = CardDone/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
 					"-lc++",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.$(PRODUCT_NAME:rfc1034identifier)";
-				PRODUCT_NAME = ReactNativeWebApp;
+				PRODUCT_BUNDLE_IDENTIFIER = org.reactjs.native.example.CardDone;
+				PRODUCT_NAME = CardDone;
 				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Debug;
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = BEEC21F918D8204D1055FFDC /* Pods-ReactNativeWebApp.release.xcconfig */;
+			baseConfigurationReference = BEEC21F918D8204D1055FFDC /* Pods-CardDone.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CURRENT_PROJECT_VERSION = 1;
-				INFOPLIST_FILE = ReactNativeWebApp/Info.plist;
+				DEVELOPMENT_TEAM = BUD5ADDGM4;
+				INFOPLIST_FILE = CardDone/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
 					"-lc++",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.$(PRODUCT_NAME:rfc1034identifier)";
-				PRODUCT_NAME = ReactNativeWebApp;
+				PRODUCT_BUNDLE_IDENTIFIER = org.reactjs.native.example.CardDone;
+				PRODUCT_NAME = CardDone;
 				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Release;
 		};
 		2D02E4971E0B4A5E006451C7 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 1FBC8312579D4001A50B2A32 /* Pods-ReactNativeWebApp-tvOS.debug.xcconfig */;
+			baseConfigurationReference = 1FBC8312579D4001A50B2A32 /* Pods-CardDone-tvOS.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = "App Icon & Top Shelf Image";
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
@@ -677,14 +685,14 @@
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_TESTABILITY = YES;
 				GCC_NO_COMMON_BLOCKS = YES;
-				INFOPLIST_FILE = "ReactNativeWebApp-tvOS/Info.plist";
+				INFOPLIST_FILE = "CardDone-tvOS/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
 					"-lc++",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "com.facebook.REACT.ReactNativeWebApp-tvOS";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.facebook.REACT.CardDone-tvOS";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = appletvos;
 				TARGETED_DEVICE_FAMILY = 3;
@@ -694,7 +702,7 @@
 		};
 		2D02E4981E0B4A5E006451C7 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = FA1BC26373C46AD5F6EEA8C4 /* Pods-ReactNativeWebApp-tvOS.release.xcconfig */;
+			baseConfigurationReference = FA1BC26373C46AD5F6EEA8C4 /* Pods-CardDone-tvOS.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = "App Icon & Top Shelf Image";
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
@@ -705,14 +713,14 @@
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_NO_COMMON_BLOCKS = YES;
-				INFOPLIST_FILE = "ReactNativeWebApp-tvOS/Info.plist";
+				INFOPLIST_FILE = "CardDone-tvOS/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
 					"-lc++",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "com.facebook.REACT.ReactNativeWebApp-tvOS";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.facebook.REACT.CardDone-tvOS";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = appletvos;
 				TARGETED_DEVICE_FAMILY = 3;
@@ -722,7 +730,7 @@
 		};
 		2D02E4991E0B4A5E006451C7 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 6957AA892A9B1D132C4E06EA /* Pods-ReactNativeWebApp-tvOSTests.debug.xcconfig */;
+			baseConfigurationReference = 6957AA892A9B1D132C4E06EA /* Pods-CardDone-tvOSTests.debug.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CLANG_ANALYZER_NONNULL = YES;
@@ -732,24 +740,24 @@
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_TESTABILITY = YES;
 				GCC_NO_COMMON_BLOCKS = YES;
-				INFOPLIST_FILE = "ReactNativeWebApp-tvOSTests/Info.plist";
+				INFOPLIST_FILE = "CardDone-tvOSTests/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
 					"-lc++",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "com.facebook.REACT.ReactNativeWebApp-tvOSTests";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.facebook.REACT.CardDone-tvOSTests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = appletvos;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ReactNativeWebApp-tvOS.app/ReactNativeWebApp-tvOS";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/CardDone-tvOS.app/CardDone-tvOS";
 				TVOS_DEPLOYMENT_TARGET = 10.1;
 			};
 			name = Debug;
 		};
 		2D02E49A1E0B4A5E006451C7 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = CF8DD27134FB76D86234A054 /* Pods-ReactNativeWebApp-tvOSTests.release.xcconfig */;
+			baseConfigurationReference = CF8DD27134FB76D86234A054 /* Pods-CardDone-tvOSTests.release.xcconfig */;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CLANG_ANALYZER_NONNULL = YES;
@@ -759,17 +767,17 @@
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_NO_COMMON_BLOCKS = YES;
-				INFOPLIST_FILE = "ReactNativeWebApp-tvOSTests/Info.plist";
+				INFOPLIST_FILE = "CardDone-tvOSTests/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
 					"-lc++",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "com.facebook.REACT.ReactNativeWebApp-tvOSTests";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.facebook.REACT.CardDone-tvOSTests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = appletvos;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ReactNativeWebApp-tvOS.app/ReactNativeWebApp-tvOS";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/CardDone-tvOS.app/CardDone-tvOS";
 				TVOS_DEPLOYMENT_TARGET = 10.1;
 			};
 			name = Release;
@@ -803,6 +811,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				COPY_PHASE_STRIP = NO;
+				DEVELOPMENT_TEAM = BUD5ADDGM4;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
@@ -856,6 +865,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				COPY_PHASE_STRIP = YES;
+				DEVELOPMENT_TEAM = BUD5ADDGM4;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
@@ -876,7 +886,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		00E357021AD99517003FC87E /* Build configuration list for PBXNativeTarget "ReactNativeWebAppTests" */ = {
+		00E357021AD99517003FC87E /* Build configuration list for PBXNativeTarget "CardDoneTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				00E356F61AD99517003FC87E /* Debug */,
@@ -885,7 +895,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "ReactNativeWebApp" */ = {
+		13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "CardDone" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				13B07F941A680F5B00A75B9A /* Debug */,
@@ -894,7 +904,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		2D02E4BA1E0B4A5E006451C7 /* Build configuration list for PBXNativeTarget "ReactNativeWebApp-tvOS" */ = {
+		2D02E4BA1E0B4A5E006451C7 /* Build configuration list for PBXNativeTarget "CardDone-tvOS" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				2D02E4971E0B4A5E006451C7 /* Debug */,
@@ -903,7 +913,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		2D02E4BB1E0B4A5E006451C7 /* Build configuration list for PBXNativeTarget "ReactNativeWebApp-tvOSTests" */ = {
+		2D02E4BB1E0B4A5E006451C7 /* Build configuration list for PBXNativeTarget "CardDone-tvOSTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				2D02E4991E0B4A5E006451C7 /* Debug */,
@@ -912,7 +922,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "ReactNativeWebApp" */ = {
+		83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "CardDone" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				83CBBA201A601CBA00E9B192 /* Debug */,

@@ -14,6 +14,7 @@ carddone.knowledge_groups.deleteKnowledgeGroup = function(host, id){
                         host.database.knowledge_groups.items.splice(index, 1);
                         contentModule.makeKnowledgeGroupIndex(host);
                         resolve();
+                        dbcache.refresh("knowledge_group");
                     }
                     else if (message == "failed_used"){
                         ModalElement.alert({
@@ -80,6 +81,7 @@ carddone.knowledge_groups.addKnowledgeGroupSubmit = function(host, parentid, id,
                         var oldid = id;
                         if (id == 0){
                             id = parseInt(message.substr(2));
+                            host.id = id;
                             host.database.knowledge_groups.items.push({
                                 id: id,
                                 name: name,
@@ -106,21 +108,13 @@ carddone.knowledge_groups.addKnowledgeGroupSubmit = function(host, parentid, id,
                             host.database.knowledge_groups.items[index] = host.dataKnowledgeGroupDetails;
                         }
                         var dataUpdate = carddone.knowledge_groups.getDataCell(host, id);
-                        if (parentid == 0 && oldid == 0){
-                            host.dataView.insertRow(host.funcs.formKnowledgeGroupsGetRow(dataUpdate));
-                        }
-                        else {
-                            resolve(dataUpdate);
-                        }
+                        resolve(dataUpdate);
                         if (typesubmit == 1){
                             while (host.frameList.getLength() > 1){
                                 host.frameList.removeLast();
                             }
                         }
-                        else {
-                            carddone.knowledge_groups.redrawAddKnowledgeGroup(host, parentid, id);
-                        }
-                        console.log(host.database.knowledge_groups.items);
+                        dbcache.refresh("knowledge_group");
                     }
                     else if (message == "failed_id"){
                         ModalElement.alert({
@@ -134,7 +128,7 @@ carddone.knowledge_groups.addKnowledgeGroupSubmit = function(host, parentid, id,
                         ModalElement.alert({
                             message: LanguageModule.text("war_text_evaluation_reload_data"),
                             func: function(){
-                                carddone.knowledge_groups.addKnowledgeGroup(host, parentid, );
+                                carddone.knowledge_groups.addKnowledgeGroup(host, parentid, id);
                             }
                         });
                     }
@@ -150,116 +144,129 @@ carddone.knowledge_groups.addKnowledgeGroupSubmit = function(host, parentid, id,
     });
 };
 
-carddone.knowledge_groups.redrawAddKnowledgeGroup = function(host, parentid, id){
-    return new Promise(function(resolve,reject){
-        var buttonlist = [
-            host.funcs.closeButton({
-                onclick: function(host){
-                    return function (event, me) {
-                        while (host.frameList.getLength() > 1){
-                            host.frameList.removeLast();
-                        }
+carddone.knowledge_groups.redrawAddKnowledgeGroup = function(host, parentid, id, resolve, resolveAdd){
+    host.id = id;
+    var buttonlist = [
+        host.funcs.closeButton({
+            onclick: function(host){
+                return function (event, me) {
+                    while (host.frameList.getLength() > 1){
+                        host.frameList.removeLast();
                     }
-                } (host)
-            }),
-            host.funcs.saveButton({
-                onclick: function(host, parentid, id){
-                    return function (event, me) {
-                        carddone.knowledge_groups.addKnowledgeGroupSubmit(host, parentid, id, 0).then(function(x){
+                }
+            } (host)
+        }),
+        host.funcs.saveButton({
+            onclick: function(host, parentid, id){
+                return function (event, me) {
+                    if (host.id == 0){
+                        carddone.knowledge_groups.addKnowledgeGroupSubmit(host, parentid, host.id, 0).then(function(x){
+                            resolveAdd(x);
+                        });
+                    }
+                    else {
+                        carddone.knowledge_groups.addKnowledgeGroupSubmit(host, parentid, host.id, 0).then(function(x){
                             resolve(x);
                         });
                     }
-                } (host, parentid, id)
-            }),
-            host.funcs.saveCloseButton({
-                onclick: function(host, parentid, id){
-                    return function (event, me) {
-                        carddone.knowledge_groups.addKnowledgeGroupSubmit(host, parentid, id, 1).then(function(x){
+                }
+            } (host, parentid, id)
+        }),
+        host.funcs.saveCloseButton({
+            onclick: function(host, parentid, id){
+                return function (event, me) {
+                    if (host.id == 0){
+                        carddone.knowledge_groups.addKnowledgeGroupSubmit(host, parentid, host.id, 1).then(function(x){
+                            resolveAdd(x);
+                        });
+                    }
+                    else {
+                        carddone.knowledge_groups.addKnowledgeGroupSubmit(host, parentid, host.id, 1).then(function(x){
                             resolve(x);
                         });
                     }
-                } (host, parentid, id)
-            })
-        ];
-        var parentName;
-        if (parentid > 0){
-            var pIndex = host.database.knowledge_groups.getIndex(parentid);
-            parentName = host.database.knowledge_groups.items[pIndex].name;
-        }
-        host.name_inputtext = host.funcs.input({
-            style: {minWidth: "400px", width: "100%"}
-        });
-        host.activated_inputselect = absol.buildDom({
-            tag: 'switch',
-            style: {
-                'font-size': "var(--switch-fontsize)"
-            }
-        });
-        if (id > 0) {
-            host.name_inputtext.value = host.dataKnowledgeGroupDetails.name;
-            host.activated_inputselect.checked = host.dataKnowledgeGroupDetails.available;
-        }
-        else {
-            host.activated_inputselect.checked = true;
-        }
-        var singlePage = host.funcs.formKnowledgeGroupsEdit({
-            buttonlist: buttonlist,
-            parentName: parentName,
-            name_inputtext: host.name_inputtext,
-            activated_inputselect: host.activated_inputselect,
-            isparent: (parentid > 0)
-        });
-        host.frameList.addChild(singlePage);
-        singlePage.requestActive();
-        host.name_inputtext.focus();
+                }
+            } (host, parentid, id)
+        })
+    ];
+    var parentName;
+    if (parentid > 0){
+        var pIndex = host.database.knowledge_groups.getIndex(parentid);
+        parentName = host.database.knowledge_groups.items[pIndex].name;
+    }
+    host.name_inputtext = host.funcs.input({
+        style: {minWidth: "400px", width: "100%"}
     });
-
+    host.activated_inputselect = absol.buildDom({
+        tag: 'switch',
+        style: {
+            'font-size': "var(--switch-fontsize)"
+        }
+    });
+    if (id > 0) {
+        host.name_inputtext.value = host.dataKnowledgeGroupDetails.name;
+        host.activated_inputselect.checked = host.dataKnowledgeGroupDetails.available;
+    }
+    else {
+        host.activated_inputselect.checked = true;
+    }
+    var params = {
+        id: id,
+        buttonlist: buttonlist,
+        parentName: parentName,
+        name_inputtext: host.name_inputtext,
+        activated_inputselect: host.activated_inputselect,
+        isparent: (parentid > 0)
+    };
+    if (id > 0){
+        params.createdby = contentModule.getUsernameByhomeidFromDataModule(host.dataKnowledgeGroupDetails.userid);
+        params.createdtime = contentModule.getTimeSend(host.dataKnowledgeGroupDetails.createdtime);
+        params.lastmodifiedtime = contentModule.getTimeSend(host.dataKnowledgeGroupDetails.lastmodifiedtime);
+    }
+    var singlePage = host.funcs.formKnowledgeGroupsEdit(params);
+    host.frameList.addChild(singlePage);
+    singlePage.requestActive();
+    host.name_inputtext.focus();
 };
 
-carddone.knowledge_groups.addKnowledgeGroup = function(host, parentid, id){
-    return new Promise(function(resolve,reject){
-        if (id > 0){
-            ModalElement.show_loading();
-            FormClass.api_call({
-                url: "database_load.php",
-                params: [
-                    {name: "task", value: "knowledge_groups_load_details"},
-                    {name: "id", value: id}
-                ],
-                func: function(success, message){
-                    ModalElement.close(-1);
-                    if (success){
-                        if (message.substr(0,2) == "ok"){
-                            host.dataKnowledgeGroupDetails = EncodingClass.string.toVariable(message.substr(2));
-                            console.log(host.dataKnowledgeGroupDetails);
-                            carddone.knowledge_groups.redrawAddKnowledgeGroup(host, parentid, id).then(function(value){
-                                resolve(value);
-                            });
-                        }
-                        else if (message == "fail_id"){
-                            ModalElement.alert({
-                                message: LanguageModule.text("war_text_evaluation_reload_data"),
-                                func: function(){
-                                    carddone.knowledge_groups.init(host);
-                                }
-                            });
-                        }
-                        else {
-                            ModalElement.alert({message: message});
-                        }
+carddone.knowledge_groups.addKnowledgeGroup = function(host, parentid, id, resolve, resolveAdd){
+    if (id > 0){
+        ModalElement.show_loading();
+        FormClass.api_call({
+            url: "database_load.php",
+            params: [
+                {name: "task", value: "knowledge_groups_load_details"},
+                {name: "id", value: id}
+            ],
+            func: function(success, message){
+                ModalElement.close(-1);
+                if (success){
+                    if (message.substr(0,2) == "ok"){
+                        host.dataKnowledgeGroupDetails = EncodingClass.string.toVariable(message.substr(2));
+                        console.log(host.dataKnowledgeGroupDetails);
+                        carddone.knowledge_groups.redrawAddKnowledgeGroup(host, parentid, id, resolve, resolveAdd);
+                    }
+                    else if (message == "fail_id"){
+                        ModalElement.alert({
+                            message: LanguageModule.text("war_text_evaluation_reload_data"),
+                            func: function(){
+                                carddone.knowledge_groups.init(host);
+                            }
+                        });
                     }
                     else {
                         ModalElement.alert({message: message});
                     }
                 }
-            });
-        }
-        else {
-            carddone.knowledge_groups.redrawAddKnowledgeGroup(host, parentid, id).then(function(value){
-                resolve(value);
-            });
-        }
-    });
+                else {
+                    ModalElement.alert({message: message});
+                }
+            }
+        });
+    }
+    else {
+        carddone.knowledge_groups.redrawAddKnowledgeGroup(host, parentid, id, resolve, resolveAdd);
+    }
 };
 
 carddone.knowledge_groups.getDataCell = function(host, id){
@@ -272,19 +279,11 @@ carddone.knowledge_groups.getDataCell = function(host, id){
     }
     var parentid = host.database.knowledge_groups.items[index].parentid;
     var func = {
-        edit: function(){
-            return new Promise(function(resolve,reject){
-                carddone.knowledge_groups.addKnowledgeGroup(host, parentid, id).then(function(value){
-                    resolve(value);
-                });
-            });
+        edit: function(resolve){
+            carddone.knowledge_groups.addKnowledgeGroup(host, parentid, id, resolve);
         },
-        add: function(){
-            return new Promise(function(resolve,reject){
-                carddone.knowledge_groups.addKnowledgeGroup(host, id, 0).then(function(value){
-                    resolve(value);
-                });
-            });
+        add: function(resolve, resolveAdd){
+            carddone.knowledge_groups.addKnowledgeGroup(host, id, 0, resolve, resolveAdd);
         },
         delete: function(){
             return new Promise(function(resolve,reject){
@@ -296,7 +295,7 @@ carddone.knowledge_groups.getDataCell = function(host, id){
     };
     return {
         name: host.database.knowledge_groups.items[index].name,
-        createdby: contentModule.getUsernameByhomeid(host, host.database.knowledge_groups.items[index].userid),
+        createdby: contentModule.getUsernameByhomeidFromDataModule(host.database.knowledge_groups.items[index].userid),
         available: contentModule.availableName(host.database.knowledge_groups.items[index].available),
         createdtime: contentModule.getTimeSend(host.database.knowledge_groups.items[index].createdtime),
         lastmodifiedtime: contentModule.getTimeSend(host.database.knowledge_groups.items[index].lastmodifiedtime),
@@ -319,67 +318,79 @@ carddone.knowledge_groups.redraw = function(host){
 };
 
 carddone.knowledge_groups.init = function(host){
+    if (!data_module.users){
+        for (var i = 0; i < ModalElement.layerstatus.length; i++){
+            if ((ModalElement.layerstatus[i].index == -1) && (!ModalElement.layerstatus[i].visible)) ModalElement.show_loading();
+        }
+        setTimeout(function(){
+            carddone.knowledge_groups.init(host);
+        }, 50);
+        return;
+    }
     ModalElement.show_loading();
-    FormClass.api_call({
-        url: "database_load.php",
-        params: [
-            {name: "task", value: "knowledge_groups_load_list"}
-        ],
-        func: function(success, message){
-            ModalElement.close(-1);
-            if (success){
-                if (message.substr(0, 2) == "ok"){
-                    var st = EncodingClass.string.toVariable(message.substr(2));
-                    host.database = {};
-                    contentModule.makeDatabaseContent(host.database, st);
-                    contentModule.makeKnowledgeGroupIndex(host);
-                    console.log(host.database);
-                    host.inputsearchbox = absol.buildDom({
-                        tag:'searchcrosstextinput',
-                        style: {
-                            width: "var(--searchbox-width)"
-                        },
-                        props:{
-                            placeholder: LanguageModule.text("txt_search")
-                        }
-                    });
-                    var cmdbutton = {
-                        close: function () {
-                            if (carddone.isMobile){
-                                host.holder.selfRemove();
-                                carddone.menu.loadPage(100);
-                            }
-                            else {
-                                carddone.menu.tabPanel.removeTab(host.holder.id);
-                            }
-                        }
-                    };
-                    cmdbutton.add = function () {
-                        carddone.knowledge_groups.addKnowledgeGroup(host, 0, 0);
-                    };
-                    host.data_container = DOMElement.div({
-                        attrs: {
-                            className: "cardsimpletableclass row2colors cardtablehover"
-                        }
-                    });
-                    host.holder.addChild(host.frameList);
-                    var singlePage = host.funcs.formKnowledgeGroupsInit({
-                        cmdbutton: cmdbutton,
-                        data_container: host.data_container,
-                        inputsearchbox: host.inputsearchbox
-                    });
-                    host.frameList.addChild(singlePage);
-                    singlePage.requestActive();
-                    carddone.knowledge_groups.redraw(host);
+    var st = {
+        knowledge_groups: []
+    }
+    host.database = {};
+    contentModule.makeDatabaseContent(host.database, st);
+    host.database.knowledge_groups.sync = new Promise(function(resolve, reject){
+        dbcache.loadByCondition({
+            name: "knowledge_group",
+            cond: function (record) {
+                return true;
+            },
+            callback: function (retval) {
+                host.database.knowledge_groups.items = EncodingClass.string.duplicate(retval);
+                resolve();
+            }
+        });
+    });
+    Promise.all([host.database.knowledge_groups.sync]).then(function(){
+        delete host.database.knowledge_groups.sync;
+        contentModule.makeKnowledgeGroupIndex(host);
+        ModalElement.close(-1);
+        console.log(host.database);
+        host.inputsearchbox = absol.buildDom({
+            tag:'searchcrosstextinput',
+            style: {
+                width: "var(--searchbox-width)"
+            },
+            props:{
+                placeholder: LanguageModule.text("txt_search")
+            }
+        });
+        var cmdbutton = {
+            close: function () {
+                if (carddone.isMobile){
+                    host.holder.selfRemove();
+                    carddone.menu.loadPage(100);
                 }
                 else {
-                    ModalElement.alert({message: message});
+                    carddone.menu.tabPanel.removeTab(host.holder.id);
                 }
             }
-            else {
-                ModalElement.alert({message: message});
+        };
+        cmdbutton.add = function () {
+            carddone.knowledge_groups.addKnowledgeGroup(host, 0, 0, function onSave(value){
+                host.newRecord = host.newRecord.updateCurrentRow(host.funcs.formKnowledgeGroupsGetRow(value));
+            }, function onAdd(value){
+                host.newRecord = host.dataView.insertRow(host.funcs.formKnowledgeGroupsGetRow(value));
+            });
+        };
+        host.data_container = DOMElement.div({
+            attrs: {
+                className: "cardsimpletableclass row2colors cardtablehover"
             }
-        }
+        });
+        host.holder.addChild(host.frameList);
+        var singlePage = host.funcs.formKnowledgeGroupsInit({
+            cmdbutton: cmdbutton,
+            data_container: host.data_container,
+            inputsearchbox: host.inputsearchbox
+        });
+        host.frameList.addChild(singlePage);
+        singlePage.requestActive();
+        carddone.knowledge_groups.redraw(host);
     });
 };
 

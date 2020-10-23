@@ -8,9 +8,10 @@ carddone.cities.deleteCities = function(host, id){
                 ModalElement.close(-1);
                 if (success){
                     if (message.substr(0, 2) == "ok"){
-                        var index = data_module.cities.getIndex(id);
-                        data_module.cities.items.splice(index, 1);
+                        var index = host.database.cities.getIndex(id);
+                        host.database.cities.items.splice(index, 1);
                         resolve();
+                        dbcache.refresh("cities");
                     }
                     else if (message == "failed_used"){
                         ModalElement.alert({
@@ -31,9 +32,10 @@ carddone.cities.deleteCities = function(host, id){
 
 carddone.cities.deleteCitiesConfirm = function(host, id){
     return new Promise(function(resolve,reject){
-        var index = data_module.cities.getIndex(id);
+        var index = host.database.cities.getIndex(id);
         ModalElement.question({
-            message: LanguageModule.text2("war_txt_detele", [data_module.cities.items[index].name]),
+            title: LanguageModule.text("war_title_delete_city"),
+            message: LanguageModule.text2("war_txt_detele", [host.database.cities.items[index].name]),
             onclick: function(sel){
                 if (sel == 0){
                     carddone.cities.deleteCities(host, id).then(function(value){
@@ -52,7 +54,7 @@ carddone.cities.addCitiesSubmit = function(host, id, typesubmit){
         data.id = id;
         data.available = data.available? 1 : 0;
         if (id > 0){
-            var index = data_module.cities.getIndex(id);
+            var index = host.database.cities.getIndex(id);
             data.ver = host.dataCityEdit.ver;
         }
         else {
@@ -68,37 +70,35 @@ carddone.cities.addCitiesSubmit = function(host, id, typesubmit){
                     if (message.substr(0, 2) == "ok"){
                         data.lastmodifiedtime = new Date();
                         if (id > 0){
-                            var index = data_module.cities.getIndex(id);
-                            data_module.cities.items[index].available = data.available;
-                            data_module.cities.items[index].name = data.name;
-                            data_module.cities.items[index].postalcode = data.postalcode;
-                            data_module.cities.items[index].phonecode = data.phonecode;
-                            data_module.cities.items[index].ver = data.ver + 1;
-                            data_module.cities.items[index].nationid = data.nationid;
-                            data_module.cities.items[index].nationIndex = data_module.nations.getIndex(data.nationid);
-                            host.dataCityEdit = data_module.cities.items[index];
-                            resolve(carddone.cities.getCellCities(host, id));
+                            var index = host.database.cities.getIndex(id);
+                            host.database.cities.items[index].available = data.available;
+                            host.database.cities.items[index].name = data.name;
+                            host.database.cities.items[index].postalcode = data.postalcode;
+                            host.database.cities.items[index].phonecode = data.phonecode;
+                            host.database.cities.items[index].ver = data.ver + 1;
+                            host.database.cities.items[index].nationid = data.nationid;
+                            host.database.cities.items[index].nationIndex = host.database.nations.getIndex(data.nationid);
+                            host.dataCityEdit = host.database.cities.items[index];
                         }
                         else {
                             id = parseInt(message.substr(2), 10);
                             data.id = id;
+                            host.id = id;
                             data.userid = systemconfig.userid;
                             data.createdtime = new Date();
                             data.districtIndexList = [];
-                            data.nationIndex = data_module.nations.getIndex(data.nationid);
-                            data_module.nations.items[data.nationIndex].cityIndexList.push(data_module.cities.items.length);
-                            data_module.cities.items.push(data);
+                            data.nationIndex = host.database.nations.getIndex(data.nationid);
+                            host.database.nations.items[data.nationIndex].cityIndexList.push(host.database.cities.items.length);
+                            host.database.cities.items.push(data);
                             host.dataCityEdit = data;
-                            host.dataView.insertRow(host.funcs.formCitiesGetRow(carddone.cities.getCellCities(host, id)));
                         }
+                        resolve(carddone.cities.getCellCities(host, id));
                         if (typesubmit == 1){
                             while (host.frameList.getLength() > 1){
                                 host.frameList.removeLast();
                             }
                         }
-                        else {
-                            carddone.cities.redrawDetails(host, id);
-                        }
+                        dbcache.refresh("cities");
                     }
                     else {
                         ModalElement.alert({message: message});
@@ -112,104 +112,109 @@ carddone.cities.addCitiesSubmit = function(host, id, typesubmit){
     });
 };
 
-carddone.cities.redrawDetails = function(host, id){
-    return new Promise(function(resolve,reject){
-        var cmdbutton = {
-            close: function (event, me) {
-                while (host.frameList.getLength() > 1){
-                    host.frameList.removeLast();
-                }
-            },
-            save: function (event, me) {
-                carddone.cities.addCitiesSubmit(host, id, 0).then(function(x){
-                    resolve(x);
+carddone.cities.redrawDetails = function(host, id, resolve, resolveAdd){
+    host.id = id;
+    var cmdbutton = {
+        close: function (event, me) {
+            while (host.frameList.getLength() > 1){
+                host.frameList.removeLast();
+            }
+        },
+        save: function (event, me) {
+            if (host.id == 0){
+                carddone.cities.addCitiesSubmit(host, host.id, 0).then(function(x){
+                    resolveAdd(x);
                 });
-            },
-            save_close: function (event, me) {
-                carddone.cities.addCitiesSubmit(host, id, 1).then(function(x){
+            }
+            else {
+                carddone.cities.addCitiesSubmit(host, host.id, 0).then(function(x){
                     resolve(x);
                 });
             }
-        };
-        var name, postalcode, phonecode, activemode, nationid;
-        if (id > 0){
-            name = host.dataCityEdit.name;
-            postalcode = host.dataCityEdit.postalcode;
-            phonecode = host.dataCityEdit.phonecode;
-            activemode = host.dataCityEdit.available;
-            nationid = host.dataCityEdit.nationid;
+        },
+        save_close: function (event, me) {
+            if (host.id == 0){
+                carddone.cities.addCitiesSubmit(host, host.id, 1).then(function(x){
+                    resolveAdd(x);
+                });
+            }
+            else {
+                carddone.cities.addCitiesSubmit(host, host.id, 1).then(function(x){
+                    resolve(x);
+                });
+            }
         }
-        else {
-            name = "";
-            postalcode = "";
-            phonecode = "";
-            activemode = true;
-            nationid = data_module.nations.items[0].id;
-        }
-        var listNation = [];
-        for (var i = 0; i < data_module.nations.items.length; i++){
-            listNation.push({value: data_module.nations.items[i].id, text: data_module.nations.items[i].name});
-        }
-        host.cityEdit = host.funcs.formCitiesEdit({
-            cmdbutton: cmdbutton,
-            name: name,
-            postalcode: postalcode,
-            phonecode: phonecode,
-            nationid: nationid,
-            listNation:listNation,
-            activemode: activemode
-        });
-        host.frameList.addChild(host.cityEdit);
-        host.cityEdit.requestActive();
+    };
+    var name, postalcode, phonecode, activemode, nationid, createdby, createdtime, lastmodifiedtime;
+    if (id > 0){
+        name = host.dataCityEdit.name;
+        postalcode = host.dataCityEdit.postalcode;
+        phonecode = host.dataCityEdit.phonecode;
+        activemode = host.dataCityEdit.available;
+        createdby = host.dataCityEdit.userid;
+        createdtime = host.dataCityEdit.createdtime;
+        lastmodifiedtime = host.dataCityEdit.lastmodifiedtime;
+        nationid = host.dataCityEdit.nationid;
+    }
+    else {
+        name = "";
+        postalcode = "";
+        phonecode = "";
+        activemode = true;
+        nationid = host.database.nations.items[0].id;
+        createdby = systemconfig.userid;
+        createdtime = new Date();
+        lastmodifiedtime = new Date();
+    }
+    var listNation = [];
+    for (var i = 0; i < host.database.nations.items.length; i++){
+        listNation.push({value: host.database.nations.items[i].id, text: host.database.nations.items[i].name});
+    }
+    host.cityEdit = host.funcs.formCitiesEdit({
+        id: id,
+        cmdbutton: cmdbutton,
+        name: name,
+        postalcode: postalcode,
+        phonecode: phonecode,
+        nationid: nationid,
+        listNation:listNation,
+        activemode: activemode,
+        createdby: contentModule.getUsernameByhomeidFromDataModule(createdby),
+        createdtime: contentModule.getTimeSend(createdtime),
+        lastmodifiedtime: contentModule.getTimeSend(lastmodifiedtime)
     });
+    host.frameList.addChild(host.cityEdit);
+    host.cityEdit.requestActive();
 };
 
-carddone.cities.addCities = function(host, id){
-    return new Promise(function(resolve,reject){
-        if (id == 0){
-            carddone.cities.redrawDetails(host, id);
-        }
-        else {
-            ModalElement.show_loading();
-            FormClass.api_call({
-                url: "database_load.php",
-                params: [
-                    {name: "task", value: "cities_load_details"},
-                    {name: "id", value: id}
-                ],
-                func: function(success, message){
-                    ModalElement.close(-1);
-                    if (success){
-                        if (message.substr(0, 2) == "ok"){
-                            var st = EncodingClass.string.toVariable(message.substr(2));
-                            var index = data_module.cities.getIndex(id);
-                            host.dataCityEdit = st.city_details;
-                            carddone.cities.redrawDetails(host, id).then(function(x){
-                                resolve(x);
-                            });
-                        }
-                        else {
-                            ModalElement.alert({message: message});
-                        }
-                    }
-                    else {
-                        ModalElement.alert({message: message});
-                    }
+carddone.cities.addCities = function(host, id, resolve, resolveAdd){
+    if (id == 0){
+        carddone.cities.redrawDetails(host, id, resolve, resolveAdd);
+    }
+    else {
+        ModalElement.show_loading();
+        dbcache.loadById({
+            name: "cities",
+            id: id,
+            callback: function (retval) {
+                ModalElement.close(-1);
+                if (retval !== undefined){
+                    host.dataCityEdit = retval;
+                    carddone.cities.redrawDetails(host, id, resolve, resolveAdd);
                 }
-            });
-        }
-    });
+                else {
+                    ModalElement.alert({message: LanguageModule.text("war_text_data_is_null")});
+                }
+            }
+        });
+    }
 };
 
 carddone.cities.getCellCities = function(host, id){
-    var index = data_module.cities.getIndex(id);
+    var index = host.database.cities.getIndex(id);
     var func = {
-        edit: function(){
-            return new Promise(function(resolve,reject){
-                carddone.cities.addCities(host, id).then(function(value){
-                    resolve(value);
-                });
-            });
+        edit: function(resolve){
+            carddone.cities.addCities(host, id, resolve);
         },
         delete: function(){
             return new Promise(function(resolve,reject){
@@ -220,23 +225,23 @@ carddone.cities.getCellCities = function(host, id){
         }
     };
     return {
-        name: data_module.cities.items[index].name,
-        postalcode: data_module.cities.items[index].postalcode,
-        phonecode: data_module.cities.items[index].phonecode,
-        nation: data_module.nations.items[data_module.cities.items[index].nationIndex].name,
-        nationid: data_module.cities.items[index].nationid,
-        createdby: contentModule.getUsernameByhomeidFromDataModule(data_module.cities.items[index].userid),
-        available: contentModule.availableName(data_module.cities.items[index].available),
-        createdtime: contentModule.getTimeSend(data_module.cities.items[index].createdtime),
-        lastmodifiedtime: contentModule.getTimeSend(data_module.cities.items[index].lastmodifiedtime),
+        name: host.database.cities.items[index].name,
+        postalcode: host.database.cities.items[index].postalcode,
+        phonecode: host.database.cities.items[index].phonecode,
+        nation: host.database.nations.items[host.database.cities.items[index].nationIndex].name,
+        nationid: host.database.cities.items[index].nationid,
+        createdby: contentModule.getUsernameByhomeidFromDataModule(host.database.cities.items[index].userid),
+        available: contentModule.availableName(host.database.cities.items[index].available),
+        createdtime: contentModule.getTimeSend(host.database.cities.items[index].createdtime),
+        lastmodifiedtime: contentModule.getTimeSend(host.database.cities.items[index].lastmodifiedtime),
         func: func
     };
 };
 
 carddone.cities.redraw = function(host){
     var data = [];
-    for (var i = 0; i < data_module.cities.items.length; i++){
-        data.push(carddone.cities.getCellCities(host, data_module.cities.items[i].id));
+    for (var i = 0; i < host.database.cities.items.length; i++){
+        data.push(carddone.cities.getCellCities(host, host.database.cities.items[i].id));
     }
     DOMElement.removeAllChildren(host.data_container);
     host.dataView = host.funcs.formCitiesContentData({
@@ -248,7 +253,7 @@ carddone.cities.redraw = function(host){
 };
 
 carddone.cities.init = function(host){
-    if (!data_module.users || !data_module.nations || !data_module.cities){
+    if (!data_module.users){
         for (var i = 0; i < ModalElement.layerstatus.length; i++){
             if ((ModalElement.layerstatus[i].index == -1) && (!ModalElement.layerstatus[i].visible)) ModalElement.show_loading();
         }
@@ -257,62 +262,99 @@ carddone.cities.init = function(host){
         }, 50);
         return;
     }
-    ModalElement.close(-1);
-    contentModule.makeCitiesIndex();
-    host.inputsearchbox = absol.buildDom({
-        tag:'searchcrosstextinput',
-        style: {
-            width: "var(--searchbox-width)"
-        },
-        props:{
-            placeholder: LanguageModule.text("txt_search")
-        }
+    var st = {
+        nations: [],
+        cities: []
+    }
+    host.database = {};
+    contentModule.makeDatabaseContent(host.database, st);
+    host.database.nations.sync = new Promise(function(resolve, reject){
+        dbcache.loadByCondition({
+            name: "nations",
+            cond: function (record) {
+                return true;
+            },
+            callback: function (retval) {
+                host.database.nations.items = EncodingClass.string.duplicate(retval);
+                resolve();
+            }
+        });
     });
-    var cmdbutton = {
-        close: function (event, me) {
-            if (carddone.isMobile){
-                host.holder.selfRemove();
-                carddone.menu.loadPage(100);
+    host.database.cities.sync = new Promise(function(resolve, reject){
+        dbcache.loadByCondition({
+            name: "cities",
+            cond: function (record) {
+                return true;
+            },
+            callback: function (retval) {
+                host.database.cities.items = EncodingClass.string.duplicate(retval);
+                resolve();
             }
-            else {
-                carddone.menu.tabPanel.removeTab(host.holder.id);
+        });
+    });
+    Promise.all([
+        host.database.nations.sync,
+        host.database.cities.sync
+    ]).then(function(){
+        delete host.database.nations.sync;
+        delete host.database.cities.sync;
+        contentModule.makeCitiesIndexThanhYen(host);
+        ModalElement.close(-1);
+        host.inputsearchbox = absol.buildDom({
+            tag:'searchcrosstextinput',
+            style: {
+                width: "var(--searchbox-width)"
+            },
+            props:{
+                placeholder: LanguageModule.text("txt_search")
             }
-        }
-    };
-    if (data_module.nations.items.length > 0){
-        cmdbutton.add = function (event, me) {
-            carddone.cities.addCities(host, 0);
+        });
+        var cmdbutton = {
+            close: function (event, me) {
+                if (carddone.isMobile){
+                    host.holder.selfRemove();
+                    carddone.menu.loadPage(100);
+                }
+                else {
+                    carddone.menu.tabPanel.removeTab(host.holder.id);
+                }
+            }
         };
-    }
-    var listNations = [{value: 0, text: LanguageModule.text("txt_all")}];
-    for (var i = 0; i < data_module.nations.items.length; i++){
-        listNations.push({value: data_module.nations.items[i].name + "_" + data_module.nations.items[i].id, text: data_module.nations.items[i].name});
-    }
-    host.nations_select = absol.buildDom({
-        tag: "selectmenu",
-        style: {
-            verticalAlign: "middle"
-        },
-        props: {
-            items: listNations,
-            enableSearch: true
+        if (host.database.nations.items.length > 0){
+            cmdbutton.add = function (event, me) {
+                carddone.cities.addCities(host, 0, function onSave(value){
+                    host.newRecord = host.newRecord.updateCurrentRow(host.funcs.formCitiesGetRow(value));
+                }, function onAdd(value){
+                    host.newRecord = host.dataView.insertRow(host.funcs.formCitiesGetRow(value));
+                });
+            };
         }
-    });
-    host.data_container = DOMElement.div({
-        attrs: {
-            className: "cardsimpletableclass row2colors cardtablehover"
+        var listNations = [{value: 0, text: LanguageModule.text("txt_all")}];
+        for (var i = 0; i < host.database.nations.items.length; i++){
+            listNations.push({value: host.database.nations.items[i].name + "_" + host.database.nations.items[i].id, text: host.database.nations.items[i].name});
         }
+        host.nations_select = absol.buildDom({
+            tag: "selectmenu",
+            style: {
+                verticalAlign: "middle"
+            },
+            props: {
+                items: listNations,
+                enableSearch: true
+            }
+        });
+        host.data_container = DOMElement.div({attrs: {style: {marginBottom: "200px"}}});
+        host.holder.addChild(host.frameList);
+        var singlePage = host.funcs.formCitiesInit({
+            cmdbutton: cmdbutton,
+            data_container: host.data_container,
+            nations_select: host.nations_select,
+            inputsearchbox: host.inputsearchbox
+        });
+        host.frameList.addChild(singlePage);
+        singlePage.requestActive();
+        carddone.cities.redraw(host);
     });
-    host.holder.addChild(host.frameList);
-    var singlePage = host.funcs.formCitiesInit({
-        cmdbutton: cmdbutton,
-        data_container: host.data_container,
-        nations_select: host.nations_select,
-        inputsearchbox: host.inputsearchbox
-    });
-    host.frameList.addChild(singlePage);
-    singlePage.requestActive();
-    carddone.cities.redraw(host);
 };
 ModuleManagerClass.register({
     name: "Cities",

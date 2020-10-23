@@ -176,11 +176,47 @@ window.FormClass = {
             }
         }
 
-        x.req.onreadystatechange = function (x) {
+        x.req.onreadystatechange = function (x, calldata) {
             return function () {
+                var getraw = false;
+                if (calldata.rawcontent === true) getraw = true;
                 if (x.req.readyState == 4) {
                     if (x.req.status == 200) {
-                        x.func(true, x.req.responseText);
+                        if (!getraw) {
+                            x.func(true, x.req.responseText);
+                        }
+                        else {
+                            var byteArray = new Uint8Array(x.req.response);
+                            var chars, code, i, isUCS2, len, _i;
+
+                            //var string = new TextDecoder("utf-8").decode(byteArray);
+                            var string = "";//String.fromCharCode.apply(null, Array.prototype.slice.apply(byteArray));
+                            len = byteArray.length;
+                            for (i = 0; i < len; i++) {
+                                string += String.fromCharCode(byteArray[i]); //String.fromCharCode.apply(null, Array.prototype.slice.apply([byteArray[i]]));
+                            }
+                            x.func(true, string);
+                            /*
+                            chars = [];
+                            isUCS2 = false;
+                            for (i = _i = 0; 0 <= len ? _i < len : _i > len; i = 0 <= len ? ++_i : --_i) {
+                                code = String.prototype.charCodeAt.call(string, i);
+                                if (code > 255) {
+                                    isUCS2 = true;
+                                    chars = null;
+                                    break;
+                                } else {
+                                    chars.push(code);
+                                }
+                            }
+                            if (isUCS2 === true) {
+                                x.func(true, unescape(encodeURIComponent(string)));
+                            } else {
+                                //x.func(true, new TextDecoder("utf-8").decode(chars));
+                                x.func(true, String.fromCharCode.apply(null, Array.prototype.slice.apply(chars)));
+                            }
+                            */
+                        }
                     }
                     else if (x.req.statusText != "") {
                         x.func(false, "Response Code: " + x.req.status + " / " + x.req.statusText);
@@ -190,7 +226,7 @@ window.FormClass = {
                     }
                 }
             }
-        }(x);
+        }(x, calldata);
 
         if ((params.length > 0) || (fileuploads.length > 0)) {
             x.req.open("POST", url, true);
@@ -215,10 +251,12 @@ window.FormClass = {
             for (var nIdx = 0; nIdx < nBytes; nIdx++) {
                 ui8Data[nIdx] = st.charCodeAt(nIdx) & 0xff;
             }
+            if (calldata.rawcontent === true) x.req.responseType = "arraybuffer";
             x.req.send(ui8Data);
         }
         else {
             x.req.open("GET", url, true);
+            if (calldata.rawcontent === true) x.req.responseType = "arraybuffer";
             x.req.send(null);
         }
     },
@@ -422,7 +460,7 @@ window.FormClass = {
         fi.click();
     }
 };
-if (ModuleManagerClass !== undefined) {
+if (window.ModuleManagerClass !== undefined) {
     ModuleManagerClass.register({
         name: "FormClass",
         prerequisites: ["EncodingClass"]

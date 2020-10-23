@@ -8,9 +8,10 @@ carddone.nations.deleteNation = function(host, id){
                 ModalElement.close(-1);
                 if (success){
                     if (message.substr(0, 2) == "ok"){
-                        var index = data_module.nations.getIndex(id);
-                        data_module.nations.items.splice(index, 1);
+                        var index = host.database.nations.getIndex(id);
+                        host.database.nations.items.splice(index, 1);
                         resolve();
+                        dbcache.refresh("nations");
                     }
                     else if (message == "failed_used"){
                         ModalElement.alert({
@@ -31,9 +32,10 @@ carddone.nations.deleteNation = function(host, id){
 
 carddone.nations.deleteNationConfirm = function(host, id){
     return new Promise(function(resolve,reject){
-        var index = data_module.nations.getIndex(id);
+        var index = host.database.nations.getIndex(id);
         ModalElement.question({
-            message: LanguageModule.text2("war_txt_detele", [data_module.nations.items[index].name]),
+            title: LanguageModule.text("war_title_delete_nation"),
+            message: LanguageModule.text2("war_txt_detele", [host.database.nations.items[index].name]),
             onclick: function(sel){
                 if (sel == 0){
                     carddone.nations.deleteNation(host, id).then(function(value){
@@ -52,7 +54,7 @@ carddone.nations.addNationSubmit = function(host, id, typesubmit){
         data.id = id;
         data.available = data.available? 1 : 0;
         if (id > 0){
-            var index = data_module.nations.getIndex(id);
+            var index = host.database.nations.getIndex(id);
             data.ver = host.dataNationEdit.ver;
         }
         else {
@@ -68,33 +70,31 @@ carddone.nations.addNationSubmit = function(host, id, typesubmit){
                     if (message.substr(0, 2) == "ok"){
                         data.lastmodifiedtime = new Date();
                         if (id > 0){
-                            var index = data_module.nations.getIndex(id);
-                            data_module.nations.items[index].available = data.available;
-                            data_module.nations.items[index].name = data.name;
-                            data_module.nations.items[index].shortname = data.shortname;
-                            data_module.nations.items[index].phonecode = data.phonecode;
-                            data_module.nations.items[index].ver = data.ver + 1;
-                            host.dataNationEdit = data_module.nations.items[index];
-                            resolve(carddone.nations.getCellNation(host, id));
+                            var index = host.database.nations.getIndex(id);
+                            host.database.nations.items[index].available = data.available;
+                            host.database.nations.items[index].name = data.name;
+                            host.database.nations.items[index].shortname = data.shortname;
+                            host.database.nations.items[index].phonecode = data.phonecode;
+                            host.database.nations.items[index].ver = data.ver + 1;
+                            host.dataNationEdit = host.database.nations.items[index];
                         }
                         else {
                             id = parseInt(message.substr(2), 10);
                             data.id = id;
+                            host.id = id;
                             data.userid = systemconfig.userid;
                             data.createdtime = new Date();
                             data.cityIndexList = [];
-                            data_module.nations.items.push(data);
+                            host.database.nations.items.push(data);
                             host.dataNationEdit = data;
-                            host.dataView.insertRow(host.funcs.formNationGetRow(carddone.nations.getCellNation(host, id)));
                         }
+                        resolve(carddone.nations.getCellNation(host, id));
                         if (typesubmit == 1){
                             while (host.frameList.getLength() > 1){
                                 host.frameList.removeLast();
                             }
                         }
-                        else {
-                            carddone.nations.redrawDetails(host, id);
-                        }
+                        dbcache.refresh("nations");
                     }
                     else {
                         ModalElement.alert({message: message});
@@ -108,95 +108,101 @@ carddone.nations.addNationSubmit = function(host, id, typesubmit){
     });
 };
 
-carddone.nations.redrawDetails = function(host, id){
-    return new Promise(function(resolve,reject){
-        var cmdbutton = {
-            close: function (event, me) {
-                while (host.frameList.getLength() > 1){
-                    host.frameList.removeLast();
-                }
-            },
-            save: function (event, me) {
-                carddone.nations.addNationSubmit(host, id, 0).then(function(x){
-                    resolve(x);
+carddone.nations.redrawDetails = function(host, id, resolve, resolveAdd){
+    host.id = id;
+    var cmdbutton = {
+        close: function (event, me) {
+            while (host.frameList.getLength() > 1){
+                host.frameList.removeLast();
+            }
+        },
+        save: function (event, me) {
+            if (host.id == 0){
+                carddone.nations.addNationSubmit(host, host.id, 0).then(function(x){
+                    resolveAdd(x);
                 });
-            },
-            save_close: function (event, me) {
-                carddone.nations.addNationSubmit(host, id, 1).then(function(x){
+            }
+            else {
+                carddone.nations.addNationSubmit(host, host.id, 0).then(function(x){
                     resolve(x);
                 });
             }
-        };
-        var name, shortname, phonecode, activemode;
-        if (id > 0){
-            name = host.dataNationEdit.name;
-            shortname = host.dataNationEdit.shortname;
-            phonecode = host.dataNationEdit.phonecode;
-            activemode = host.dataNationEdit.available;
+        },
+        save_close: function (event, me) {
+            if (host.id == 0){
+                carddone.nations.addNationSubmit(host, host.id, 1).then(function(x){
+                    resolveAdd(x);
+                });
+            }
+            else {
+                carddone.nations.addNationSubmit(host, host.id, 1).then(function(x){
+                    resolve(x);
+                });
+            }
         }
-        else {
-            name = "";
-            shortname = "";
-            phonecode = "";
-            activemode = true;
-        }
-        host.nationEdit = host.funcs.formNationEdit({
-            cmdbutton: cmdbutton,
-            name: name,
-            shortname: shortname,
-            phonecode: phonecode,
-            activemode: activemode
-        });
-        host.frameList.addChild(host.nationEdit);
-        host.nationEdit.requestActive();
+    };
+    var name, shortname, phonecode, activemode, createdby, createdtime, lastmodifiedtime;
+    if (id > 0){
+        name = host.dataNationEdit.name;
+        shortname = host.dataNationEdit.shortname;
+        phonecode = host.dataNationEdit.phonecode;
+        activemode = host.dataNationEdit.available;
+        createdby = host.dataNationEdit.userid;
+        createdtime = host.dataNationEdit.createdtime;
+        lastmodifiedtime = host.dataNationEdit.lastmodifiedtime;
+    }
+    else {
+        name = "";
+        shortname = "";
+        phonecode = "";
+        activemode = true;
+        createdby = systemconfig.userid;
+        createdtime = new Date();
+        lastmodifiedtime = new Date();
+    }
+    host.nationEdit = host.funcs.formNationEdit({
+        cmdbutton: cmdbutton,
+        id: id,
+        name: name,
+        shortname: shortname,
+        phonecode: phonecode,
+        activemode: activemode,
+        createdby: contentModule.getUsernameByhomeidFromDataModule(createdby),
+        createdtime: contentModule.getTimeSend(createdtime),
+        lastmodifiedtime: contentModule.getTimeSend(lastmodifiedtime)
     });
+    host.frameList.addChild(host.nationEdit);
+    host.nationEdit.requestActive();
 };
 
-carddone.nations.addNation = function(host, id){
-    return new Promise(function(resolve,reject){
-        if (id == 0){
-            carddone.nations.redrawDetails(host, id);
-        }
-        else {
-            ModalElement.show_loading();
-            FormClass.api_call({
-                url: "database_load.php",
-                params: [
-                    {name: "task", value: "nations_load_details"},
-                    {name: "id", value: id}
-                ],
-                func: function(success, message){
-                    ModalElement.close(-1);
-                    if (success){
-                        if (message.substr(0, 2) == "ok"){
-                            var st = EncodingClass.string.toVariable(message.substr(2));
-                            host.dataNationEdit = st.nation_details;
-                            carddone.nations.redrawDetails(host, id).then(function(x){
-                                resolve(x);
-                            });
-                        }
-                        else {
-                            ModalElement.alert({message: message});
-                        }
-                    }
-                    else {
-                        ModalElement.alert({message: message});
-                    }
+carddone.nations.addNation = function(host, id, resolve, resolveAdd){
+    if (id == 0){
+        carddone.nations.redrawDetails(host, id, resolve, resolveAdd);
+    }
+    else {
+        ModalElement.show_loading();
+        dbcache.loadById({
+            name: "nations",
+            id: id,
+            callback: function (retval) {
+                ModalElement.close(-1);
+                if (retval !== undefined){
+                    host.dataNationEdit = retval;
+                    carddone.nations.redrawDetails(host, id, resolve, resolveAdd);
                 }
-            });
-        }
-    });
+                else {
+                    ModalElement.alert({message: LanguageModule.text("war_text_data_is_null")});
+                }
+            }
+        });
+    }
 };
 
 carddone.nations.getCellNation = function(host, id){
-    var index = data_module.nations.getIndex(id);
+    var index = host.database.nations.getIndex(id);
     var func = {
-        edit: function(){
-            return new Promise(function(resolve,reject){
-                carddone.nations.addNation(host, id).then(function(value){
-                    resolve(value);
-                });
-            });
+        edit: function(resolve){
+            carddone.nations.addNation(host, id, resolve);
         },
         delete: function(){
             return new Promise(function(resolve,reject){
@@ -207,26 +213,26 @@ carddone.nations.getCellNation = function(host, id){
         }
     };
     return {
-        name: data_module.nations.items[index].name,
-        shortname: data_module.nations.items[index].shortname,
-        phonecode: data_module.nations.items[index].phonecode,
-        createdby: contentModule.getUsernameByhomeidFromDataModule(data_module.nations.items[index].userid),
-        available: contentModule.availableName(data_module.nations.items[index].available),
-        createdtime: contentModule.getTimeSend(data_module.nations.items[index].createdtime),
-        lastmodifiedtime: contentModule.getTimeSend(data_module.nations.items[index].lastmodifiedtime),
+        name: host.database.nations.items[index].name,
+        shortname: host.database.nations.items[index].shortname,
+        phonecode: host.database.nations.items[index].phonecode,
+        createdby: contentModule.getUsernameByhomeidFromDataModule(host.database.nations.items[index].userid),
+        available: contentModule.availableName(host.database.nations.items[index].available),
+        createdtime: contentModule.getTimeSend(host.database.nations.items[index].createdtime),
+        lastmodifiedtime: contentModule.getTimeSend(host.database.nations.items[index].lastmodifiedtime),
         func: func
     };
 };
 
 carddone.nations.redraw = function(host){
-    data_module.nations.items.sort(function (a, b) {
+    host.database.nations.items.sort(function (a, b) {
         if (absol.string.nonAccentVietnamese(b.name.toLowerCase()) > absol.string.nonAccentVietnamese(a.name.toLowerCase())) return -1;
         if (absol.string.nonAccentVietnamese(b.name.toLowerCase()) < absol.string.nonAccentVietnamese(a.name.toLowerCase())) return 1;
         return 0;
     });
     var data = [];
-    for (var i = 0; i < data_module.nations.items.length; i++){
-        data.push(carddone.nations.getCellNation(host, data_module.nations.items[i].id));
+    for (var i = 0; i < host.database.nations.items.length; i++){
+        data.push(carddone.nations.getCellNation(host, host.database.nations.items[i].id));
     }
     DOMElement.removeAllChildren(host.data_container);
     host.dataView = host.funcs.formNationsContentData({
@@ -237,7 +243,7 @@ carddone.nations.redraw = function(host){
 };
 
 carddone.nations.init = function(host){
-    if (!data_module.nations || !data_module.users){
+    if (!data_module.users){
         for (var i = 0; i < ModalElement.layerstatus.length; i++){
             if ((ModalElement.layerstatus[i].index == -1) && (!ModalElement.layerstatus[i].visible)) ModalElement.show_loading();
         }
@@ -246,48 +252,69 @@ carddone.nations.init = function(host){
         }, 50);
         return;
     }
-    ModalElement.close(-1);
-    host.inputsearchbox = absol.buildDom({
-        tag:'searchcrosstextinput',
-        style: {
-            width: "var(--searchbox-width)"
-        },
-        props:{
-            placeholder: LanguageModule.text("txt_search")
-        }
-    });
-    var cmdbutton = {
-        close: function(host){
-            return function (event, me) {
-                if (carddone.isMobile){
-                    host.holder.selfRemove();
-                    carddone.menu.loadPage(100);
-                }
-                else {
-                    carddone.menu.tabPanel.removeTab(host.holder.id);
-                }
+    ModalElement.show_loading();
+    var st = {
+        nations: []
+    }
+    host.database = {};
+    contentModule.makeDatabaseContent(host.database, st);
+    host.database.nations.sync = new Promise(function(resolve, reject){
+        dbcache.loadByCondition({
+            name: "nations",
+            cond: function (record) {
+                return true;
+            },
+            callback: function (retval) {
+                host.database.nations.items = EncodingClass.string.duplicate(retval);
+                resolve();
             }
-        } (host),
-        add: function(host){
-            return function (event, me) {
-                carddone.nations.addNation(host, 0);
+        });
+    });
+    Promise.all([host.database.nations.sync]).then(function(){
+        delete host.database.nations.sync;
+        ModalElement.close(-1);
+        host.inputsearchbox = absol.buildDom({
+            tag:'searchcrosstextinput',
+            style: {
+                width: "var(--searchbox-width)"
+            },
+            props:{
+                placeholder: LanguageModule.text("txt_search")
             }
-        } (host)
-    };
-    host.data_container = DOMElement.div({
-        attrs: {
-            className: "cardsimpletableclass row2colors cardtablehover"
-        }
+        });
+        var cmdbutton = {
+            close: function(host){
+                return function (event, me) {
+                    if (carddone.isMobile){
+                        host.holder.selfRemove();
+                        carddone.menu.loadPage(100);
+                    }
+                    else {
+                        carddone.menu.tabPanel.removeTab(host.holder.id);
+                    }
+                }
+            } (host),
+            add: function(host){
+                return function (event, me) {
+                    carddone.nations.addNation(host, 0, function onSave(value){
+                        host.newRecord = host.newRecord.updateCurrentRow(host.funcs.formNationGetRow(value));
+                    }, function onAdd(value){
+                        host.newRecord = host.dataView.insertRow(host.funcs.formNationGetRow(value));
+                    });
+                }
+            } (host)
+        };
+        host.data_container = DOMElement.div({attrs: {style: {marginBottom: "200px"}}});
+        host.holder.addChild(host.frameList);
+        var singlePage = host.funcs.formNationsInit({
+            cmdbutton: cmdbutton,
+            data_container: host.data_container,
+            inputsearchbox: host.inputsearchbox
+        });
+        host.frameList.addChild(singlePage);
+        singlePage.requestActive();
+        carddone.nations.redraw(host);
     });
-    host.holder.addChild(host.frameList);
-    var singlePage = host.funcs.formNationsInit({
-        cmdbutton: cmdbutton,
-        data_container: host.data_container,
-        inputsearchbox: host.inputsearchbox
-    });
-    host.frameList.addChild(singlePage);
-    singlePage.requestActive();
-    carddone.nations.redraw(host);
 };
 ModuleManagerClass.register({
     name: "Nations",

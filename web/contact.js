@@ -8,9 +8,12 @@ carddone.contact.deleteContact = function(host, id){
                 ModalElement.close(-1);
                 if (success){
                     if (message.substr(0, 2) == "ok"){
-                        var index = data_module.contact.getIndex(id);
-                        data_module.contact.items.splice(index, 1);
+                        var index = host.database.contact.getIndex(id);
+                        host.database.contact.items.splice(index, 1);
                         resolve();
+                        host.contactDic = contentModule.makeDictionaryIndex(host.database.contact.items);
+                        dbcache.refresh("contact");
+                        dbcache.refresh("owner_company_contact");
                     }
                     else if (message == "failed_used"){
                         ModalElement.alert({
@@ -31,9 +34,10 @@ carddone.contact.deleteContact = function(host, id){
 
 carddone.contact.deleteContactConfirm = function(host, id){
     return new Promise(function(resolve,reject){
-        var index = data_module.contact.getIndex(id);
+        var index = host.database.contact.getIndex(id);
         ModalElement.question({
-            message: LanguageModule.text2("war_txt_detele", [data_module.contact.items[index].firstname]),
+            title: LanguageModule.text("war_title_delete_contact"),
+            message: LanguageModule.text2("war_txt_detele", [host.database.contact.items[index].firstname]),
             onclick: function(sel){
                 if (sel == 0){
                     carddone.contact.deleteContact(host, id).then(function(value){
@@ -50,7 +54,7 @@ carddone.contact.addContactSubmit2 = function(host, id, data, isView, typesubmit
         data.id = id;
         data.available = data.available? 1 : 0;
         if (id > 0){
-            var index = data_module.contact.getIndex(id);
+            var index = host.database.contact.getIndex(id);
             data.ver = host.dataContactEdit.ver;
         }
         else {
@@ -78,16 +82,16 @@ carddone.contact.addContactSubmit2 = function(host, id, data, isView, typesubmit
                 if (success){
                     if (message.substr(0, 2) == "ok"){
                         data.lastmodifiedtime = new Date();
-                        data.companyIndex = data_module.companies.getIndex(data.companyid);
+                        data.companyIndex = host.database.companies.getIndex(data.companyid);
                         if (id > 0){
                             data.userid = host.dataContactEdit.userid;
                             data.ver = host.dataContactEdit.ver + 1;
                             data.createdtime = host.dataContactEdit.createdtime;
-                            var index = data_module.contact.getIndex(id);
-                            data_module.contact.items[index] = data;
-                            host.dataContactEdit = data_module.contact.items[index];
+                            var index = host.database.contact.getIndex(id);
+                            host.database.contact.items[index] = data;
+                            host.dataContactEdit = host.database.contact.items[index];
+                            host.contactDic = contentModule.makeDictionaryIndex(host.database.contact.items);
                             if (isView){
-                                console.log(companyid);
                                 if (companyid === undefined){
                                     resolve(carddone.contact.getCellContact(host, id));
                                 }
@@ -97,23 +101,24 @@ carddone.contact.addContactSubmit2 = function(host, id, data, isView, typesubmit
                             }
                             else {
                                 resolve(false);
-                                data_module.contact.items.splice(index, 1);
-
+                                host.database.contact.items.splice(index, 1);
                             }
                         }
                         else {
                             id = parseInt(message.substr(2), 10);
                             data.id = id;
+                            host.contactid = id;
                             data.userid = systemconfig.userid;
                             data.createdtime = new Date();
                             host.dataContactEdit = data;
                             if (isView){
-                                data_module.contact.items.push(data);
+                                host.database.contact.items.push(data);
+                                host.contactDic = contentModule.makeDictionaryIndex(host.database.contact.items);
                                 if (companyid === undefined){
-                                    host.dataViewContact.insertRow(host.funcs.formContactGetRow(carddone.contact.getCellContact(host, id)));
+                                    resolve(carddone.contact.getCellContact(host, id));
                                 }
                                 else {
-                                    host.dataViewContact.insertRow(host.funcs.formContactGetRow(carddone.company.getCellContact(host, id, companyid)));
+                                    resolve(carddone.company.getCellContact(host, id, companyid));
                                 }
                             }
                         }
@@ -121,13 +126,12 @@ carddone.contact.addContactSubmit2 = function(host, id, data, isView, typesubmit
                             host.frameList.removeLast();
                         }
                         else {
-                            if (isView){
-                                carddone.contact.redrawDetails(host, id, companyid);
-                            }
-                            else {
+                            if (!isView){
                                 host.frameList.removeLast();
                             }
                         }
+                        dbcache.refresh("contact");
+                        dbcache.refresh("owner_company_contact");
                     }
                     else {
                         ModalElement.alert({message: message});
@@ -144,11 +148,11 @@ carddone.contact.addContactSubmit2 = function(host, id, data, isView, typesubmit
 carddone.contact.addContactSubmit = function(host, id, typesubmit, companyid){
     return new Promise(function(resolve,reject){
         var data = host.contactEdit.getValue();
-        if (data.ownerList.length == 0){
-            ModalElement.alert({message: LanguageModule.text("war_txt_owner_is_null")});
-            return;
-        }
+        if (!data) return;
         var isView = false;
+        if (data.ownerList.length == 0){
+            isView = true;
+        }
         if (data.ownerList.indexOf(systemconfig.userid) >= 0) isView = true;
         if (!isView){
             var uIndex = data_module.users.getByhomeid(systemconfig.userid);
@@ -178,143 +182,152 @@ carddone.contact.addContactSubmit = function(host, id, typesubmit, companyid){
     });
 };
 
-carddone.contact.redrawDetails = function(host, id, companyid){
-    return new Promise(function(resolve,reject){
-        var cmdbutton = {
-            close: function () {
-                host.frameList.removeLast();
-            },
-            save: function () {
-                carddone.contact.addContactSubmit(host, id, 0, companyid).then(function(x){
-                    resolve(x);
+carddone.contact.redrawDetails = function(host, id, companyid, resolve, resolveAdd){
+    host.contactid = id;
+    var cmdbutton = {
+        close: function () {
+            host.frameList.removeLast();
+        },
+        save: function () {
+            if (host.contactid == 0){
+                carddone.contact.addContactSubmit(host, host.contactid, 0, companyid).then(function(x){
+                    resolveAdd(x);
                 });
-            },
-            save_close: function () {
-                carddone.contact.addContactSubmit(host, id, 1, companyid).then(function(x){
+            }
+            else {
+                carddone.contact.addContactSubmit(host, host.contactid, 0, companyid).then(function(x){
+                    console.log(x);
                     resolve(x);
                 });
             }
+        },
+        save_close: function () {
+            if (host.contactid == 0){
+                carddone.contact.addContactSubmit(host, host.contactid, 1, companyid).then(function(x){
+                    resolveAdd(x);
+                });
+            }
+            else {
+                carddone.contact.addContactSubmit(host, host.contactid, 1, companyid).then(function(x){
+                    resolve(x);
+                });
+            }
+        }
+    };
+    var data;
+    var listCompany = [{value: 0, text: LanguageModule.text("txt_no_select")}];
+    for (var i = 0; i < host.database.companies.items.length; i++){
+        listCompany.push({value: host.database.companies.items[i].id, text: host.database.companies.items[i].name});
+    }
+    var listOwnerAll = [];
+    if (id > 0){
+        for (var i = 0; i < data_module.users.items.length; i++){
+            listOwnerAll.push({value: data_module.users.items[i].homeid, text: data_module.users.items[i].username + " - " + data_module.users.items[i].fullname});
+        }
+        var ownerList = [];
+        for (var i = 0; i < host.dataContactEdit.ownerList.length; i++){
+            ownerList.push(host.dataContactEdit.ownerList[i]);
+        }
+        console.log(host.dataContactEdit);
+        console.log(ownerList);
+        data = {
+            id: host.contactid,
+            editCompany: (companyid === undefined),
+            firstname: host.dataContactEdit.firstname,
+            lastname: host.dataContactEdit.lastname,
+            phone: host.dataContactEdit.phone,
+            email: host.dataContactEdit.email,
+            phone2: host.dataContactEdit.phone2,
+            email2: host.dataContactEdit.email2,
+            position: host.dataContactEdit.position,
+            companyid: host.dataContactEdit.companyid,
+            department: host.dataContactEdit.department,
+            ownerList: ownerList,
+            comment: host.dataContactEdit.comment,
+            activemode: host.dataContactEdit.available,
+            createdby: contentModule.getUsernameByhomeidFromDataModule(host.dataContactEdit.userid),
+            createdtime: contentModule.getTimeSend(host.dataContactEdit.createdtime),
+            lastmodifiedtime: contentModule.getTimeSend(host.dataContactEdit.lastmodifiedtime),
+            listOwnerAll: listOwnerAll
         };
-        var data;
-        var listCompany = [{value: 0, text: LanguageModule.text("txt_no_select")}];
-        for (var i = 0; i < data_module.companies.items.length; i++){
-            listCompany.push({value: data_module.companies.items[i].id, text: data_module.companies.items[i].name});
+    }
+    else {
+        for (var i = 0; i < data_module.users.items.length; i++){
+            listOwnerAll.push({value: data_module.users.items[i].homeid, text: data_module.users.items[i].username + " - " + data_module.users.items[i].fullname});
         }
-        var listOwnerAll = [];
-        if (id > 0){
-            for (var i = 0; i < data_module.users.items.length; i++){
-                listOwnerAll.push({value: data_module.users.items[i].homeid, text: data_module.users.items[i].username + " - " + data_module.users.items[i].fullname});
-            }
-            var ownerList = [];
-            for (var i = 0; i < host.dataContactEdit.ownerList.length; i++){
-                ownerList.push(host.dataContactEdit.ownerList[i]);
-            }
-            console.log(host.dataContactEdit);
-            console.log(ownerList);
-            data = {
-                editCompany: (companyid === undefined),
-                firstname: host.dataContactEdit.firstname,
-                lastname: host.dataContactEdit.lastname,
-                phone: host.dataContactEdit.phone,
-                email: host.dataContactEdit.email,
-                phone2: host.dataContactEdit.phone2,
-                email2: host.dataContactEdit.email2,
-                position: host.dataContactEdit.position,
-                companyid: host.dataContactEdit.companyid,
-                department: host.dataContactEdit.department,
-                ownerList: ownerList,
-                comment: host.dataContactEdit.comment,
-                activemode: host.dataContactEdit.available,
-                listOwnerAll: listOwnerAll
-            };
-        }
-        else {
-            for (var i = 0; i < data_module.users.items.length; i++){
-                listOwnerAll.push({value: data_module.users.items[i].homeid, text: data_module.users.items[i].username + " - " + data_module.users.items[i].fullname});
-            }
-            data = {
-                editCompany: (companyid === undefined),
-                firstname: "",
-                lastname: "",
-                phone: "",
-                email: "",
-                phone2: "",
-                email2: "",
-                position: "",
-                companyid: 0,
-                department: "",
-                comment: "",
-                activemode: true,
-                ownerList: [systemconfig.userid],
-                listOwnerAll: listOwnerAll
-            };
-            if (companyid !== undefined) data.companyid = companyid;
-        }
-        data.listCompany = listCompany;
-        host.contactEdit = host.funcs.formContactEdit({
-            cmdbutton: cmdbutton,
-            data: data
-        });
-        if (companyid === undefined){
-            if (host.frameList.getLength() > 1){
-                host.frameList.removeLast();
-            }
-        }
-        else {
-            if (host.frameList.getLength() > 2){
-                host.frameList.removeLast();
-            }
-        }
-        host.frameList.addChild(host.contactEdit);
-        host.contactEdit.requestActive();
+        data = {
+            id: 0,
+            editCompany: (companyid === undefined),
+            firstname: "",
+            lastname: "",
+            phone: "",
+            email: "",
+            phone2: "",
+            email2: "",
+            position: "",
+            companyid: 0,
+            department: "",
+            comment: "",
+            activemode: true,
+            ownerList: [systemconfig.userid],
+            listOwnerAll: listOwnerAll
+        };
+        if (companyid !== undefined) data.companyid = companyid;
+    }
+    data.listCompany = listCompany;
+    host.contactEdit = host.funcs.formContactEdit({
+        cmdbutton: cmdbutton,
+        data: data
     });
+    if (companyid === undefined){
+        if (host.frameList.getLength() > 1){
+            host.frameList.removeLast();
+        }
+    }
+    else {
+        if (host.frameList.getLength() > 2){
+            host.frameList.removeLast();
+        }
+    }
+    host.frameList.addChild(host.contactEdit);
+    host.contactEdit.requestActive();
 };
 
-carddone.contact.addContact = function(host, id, companyid){
-    return new Promise(function(resolve,reject){
-        if (id == 0){
-            carddone.contact.redrawDetails(host, id, companyid);
+carddone.contact.addContact = function(host, id, companyid, resolve, resolveAdd){
+    if (id == 0){
+        carddone.contact.redrawDetails(host, id, companyid, resolve, resolveAdd);
+    }
+    else {
+        var index = host.database.contact.getIndex(id);
+        if (index < 0){
+            ModalElement.alert({message: LanguageModule.text("war_text_data_is_null")});
+            return;
         }
-        else {
-            ModalElement.show_loading();
-            FormClass.api_call({
-                url: "database_load.php",
-                params: [
-                    {name: "task", value: "contact_load_details"},
-                    {name: "id", value: id}
-                ],
-                func: function(success, message){
-                    ModalElement.close(-1);
-                    if (success){
-                        if (message.substr(0, 2) == "ok"){
-                            var st = EncodingClass.string.toVariable(message.substr(2));
-                            host.dataContactEdit = st.contact_details;
-                            carddone.contact.redrawDetails(host, id, companyid).then(function(x){
-                                resolve(x);
-                            });
-                        }
-                        else {
-                            ModalElement.alert({message: message});
-                        }
-                    }
-                    else {
-                        ModalElement.alert({message: message});
-                    }
-                }
-            });
+        host.dataContactEdit = host.database.contact.items[index];
+        carddone.contact.redrawDetails(host, id, companyid, resolve, resolveAdd);
+    }
+};
+
+carddone.contact.viewlistCardPre = function(host, id){
+    carddone.company.viewlistCard({
+        id: id,
+        type: "contact",
+        cmdbutton: {
+            close: function(){
+                host.frameList.removeLast();
+            }
         }
+    }).then(function(singlePage){
+        host.frameList.addChild(singlePage);
+        singlePage.requestActive();
     });
 };
 
 carddone.contact.getCellContact = function(host, id){
-    var index = data_module.contact.getIndex(id);
+    var index = host.contactDic[id];
     var func = {
-        edit: function(){
-            return new Promise(function(resolve,reject){
-                carddone.contact.addContact(host, id).then(function(value){
-                    resolve(value);
-                });
-            });
+        edit: function(resolve){
+            carddone.contact.addContact(host, id, undefined, resolve);
         },
         delete: function(){
             return new Promise(function(resolve,reject){
@@ -322,34 +335,40 @@ carddone.contact.getCellContact = function(host, id){
                     resolve(value);
                 });
             });
+        },
+        view_card: function(){
+            carddone.contact.viewlistCardPre(host, id);
         }
     };
     return {
-        firstname: data_module.contact.items[index].firstname,
-        lastname: data_module.contact.items[index].lastname,
-        phone: data_module.contact.items[index].phone,
-        email: data_module.contact.items[index].email,
-        phone2: data_module.contact.items[index].phone2,
-        email2: data_module.contact.items[index].email2,
-        position: data_module.contact.items[index].position,
-        company: (data_module.contact.items[index].companyid == 0)? "" : data_module.companies.items[data_module.contact.items[index].companyIndex].name,
-        department: data_module.contact.items[index].department,
-        comment: data_module.contact.items[index].comment,
-        createdby: contentModule.getUsernameByhomeidFromDataModule(data_module.contact.items[index].userid),
-        available: contentModule.availableName(data_module.contact.items[index].available),
-        createdtime: contentModule.getTimeSend(data_module.contact.items[index].createdtime),
-        lastmodifiedtime: contentModule.getTimeSend(data_module.contact.items[index].lastmodifiedtime),
-        companyid: data_module.contact.items[index].companyid,
+        firstname: host.database.contact.items[index].firstname,
+        lastname: host.database.contact.items[index].lastname,
+        phone: host.database.contact.items[index].phone,
+        email: host.database.contact.items[index].email,
+        phone2: host.database.contact.items[index].phone2,
+        email2: host.database.contact.items[index].email2,
+        position: host.database.contact.items[index].position,
+        company: (host.database.contact.items[index].companyid == 0)? "" : host.database.companies.items[host.database.contact.items[index].companyIndex].name,
+        department: host.database.contact.items[index].department,
+        comment: host.database.contact.items[index].comment,
+        createdby: contentModule.getUsernameByhomeidFromDataModule(host.database.contact.items[index].userid),
+        available: contentModule.availableName(host.database.contact.items[index].available),
+        createdtime: contentModule.getTimeSend(host.database.contact.items[index].createdtime),
+        lastmodifiedtime: contentModule.getTimeSend(host.database.contact.items[index].lastmodifiedtime),
+        companyid: host.database.contact.items[index].companyid,
         func: func
     };
 };
 
 carddone.contact.redraw = function(host){
-    console.log("redraw__" + (new Date()).getTime());
+    console.log("redrawa__" + (new Date()).getTime());
     var data = [];
-    for (var i = 0; i < data_module.contact.items.length; i++){
-        data.push(carddone.contact.getCellContact(host, data_module.contact.items[i].id));
+    host.contactDic = contentModule.makeDictionaryIndex(host.database.contact.items);
+    for (var i = 0; i < host.database.contact.items.length; i++){
+        if (!host.database.contact.items[i].permission) continue;
+        data.push(carddone.contact.getCellContact(host, host.database.contact.items[i].id));
     }
+    console.log("redrawb__" + (new Date()).getTime());
     DOMElement.removeAllChildren(host.data_container);
     host.dataViewContact = host.funcs.formContactContentData({
         data: data,
@@ -360,7 +379,6 @@ carddone.contact.redraw = function(host){
 };
 
 carddone.contact.init2 = function(host){
-    contentModule.makeContactIndex();
     ModalElement.close(-1);
     host.inputsearchbox = absol.buildDom({
         tag:'searchcrosstextinput',
@@ -382,15 +400,21 @@ carddone.contact.init2 = function(host){
             }
         },
         add: function () {
-            carddone.contact.addContact(host, 0);
+            carddone.contact.addContact(host, 0, undefined, function onSave(value){
+                host.newRecordContact = host.newRecordContact.updateCurrentRow(host.funcs.formContactGetRow(value));
+                console.log(host.newRecordContact);
+            }, function onAdd(value){
+                host.newRecordContact = host.dataViewContact.insertRow(host.funcs.formContactGetRow(value));
+                console.log(host.newRecordContact);
+            });
         }
     };
     var listCompany = [
         {value: 0, text: LanguageModule.text("txt_all")},
         {value: "...", text: LanguageModule.text("txt_null")}
     ];
-    for (var i = 0; i < data_module.companies.items.length; i++){
-        listCompany.push({value: data_module.companies.items[i].name + "_" + data_module.companies.items[i].id , text: data_module.companies.items[i].name});
+    for (var i = 0; i < host.database.companies.items.length; i++){
+        listCompany.push({value: host.database.companies.items[i].name + "_" + host.database.companies.items[i].id , text: host.database.companies.items[i].name});
     }
     var company_selectTag;
     if (carddone.isMobile){
@@ -409,11 +433,7 @@ carddone.contact.init2 = function(host){
             enableSearch: true
         }
     });
-    host.data_container = DOMElement.div({
-        attrs: {
-            className: "cardsimpletableclass row2colors cardtablehover"
-        }
-    });
+    host.data_container = DOMElement.div({attrs: {className: "card-table-init", style: {marginBottom: "200px"}}});
     host.holder.addChild(host.frameList);
     var singlePage = host.funcs.formContactInit({
         cmdbutton: cmdbutton,
@@ -430,7 +450,7 @@ carddone.contact.init2 = function(host){
 };
 
 carddone.contact.init = function(host){
-    if (!data_module.users || !data_module.contact || !data_module.companies || !data_module.owner_company_contact){
+    if (!data_module.users){
         for (var i = 0; i < ModalElement.layerstatus.length; i++){
             if ((ModalElement.layerstatus[i].index == -1) && (!ModalElement.layerstatus[i].visible)) ModalElement.show_loading();
         }
@@ -440,10 +460,189 @@ carddone.contact.init = function(host){
         return;
     }
     ModalElement.show_loading();
-    console.log("start__"+ (new Date()).getTime());
-    setTimeout(function(){
-        carddone.contact.init2(host);
-    }, 100);
+    var st = {
+        nations: [],
+        cities: [],
+        districts: [],
+        company_class: [],
+        companies: [],
+        contact: [],
+        owner_company_contact: [],
+        company_class_member: [],
+        account_groups: [],
+        privilege_groups: [],
+        privilege_group_details: []
+    }
+    host.database = {};
+    contentModule.makeDatabaseContent(host.database, st);
+    host.database.account_groups.sync = new Promise(function(resolve, reject){
+        dbcache.loadByCondition({
+            name: "account_groups",
+            cond: function (record) {
+                return true;
+            },
+            callback: function (retval) {
+                host.database.account_groups.items = EncodingClass.string.duplicate(retval);
+                resolve();
+            }
+        });
+    });
+    host.database.privilege_groups.sync = new Promise(function(resolve, reject){
+        dbcache.loadByCondition({
+            name: "privilege_groups",
+            cond: function (record) {
+                return true;
+            },
+            callback: function (retval) {
+                host.database.privilege_groups.items = EncodingClass.string.duplicate(retval);
+                resolve();
+            }
+        });
+    });
+    host.database.privilege_group_details.sync = new Promise(function(resolve, reject){
+        dbcache.loadByCondition({
+            name: "privilege_group_details",
+            cond: function (record) {
+                return true;
+            },
+            callback: function (retval) {
+                host.database.privilege_group_details.items = EncodingClass.string.duplicate(retval);
+                resolve();
+            }
+        });
+    });
+    host.database.owner_company_contact.sync = new Promise(function(resolve, reject){
+        dbcache.loadByCondition({
+            name: "owner_company_contact",
+            cond: function (record) {
+                return true;
+            },
+            callback: function (retval) {
+                host.database.owner_company_contact.items = retval;
+                resolve();
+            }
+        });
+    });
+    host.database.nations.sync = new Promise(function(resolve, reject){
+        dbcache.loadByCondition({
+            name: "nations",
+            cond: function (record) {
+                return true;
+            },
+            callback: function (retval) {
+                host.database.nations.items = retval;
+                resolve();
+            }
+        });
+    });
+    host.database.cities.sync = new Promise(function(resolve, reject){
+        dbcache.loadByCondition({
+            name: "cities",
+            cond: function (record) {
+                return true;
+            },
+            callback: function (retval) {
+                host.database.cities.items = retval;
+                resolve();
+            }
+        });
+    });
+    host.database.districts.sync = new Promise(function(resolve, reject){
+        dbcache.loadByCondition({
+            name: "districts",
+            cond: function (record) {
+                return true;
+            },
+            callback: function (retval) {
+                host.database.districts.items = retval;
+                resolve();
+            }
+        });
+    });
+    host.database.companies.sync = new Promise(function(resolve, reject){
+        dbcache.loadByCondition({
+            name: "company",
+            cond: function (record) {
+                return true;
+            },
+            callback: function (retval) {
+                host.database.companies.items = retval;
+                resolve();
+            }
+        });
+    });
+    host.database.company_class.sync = new Promise(function(resolve, reject){
+        dbcache.loadByCondition({
+            name: "company_class",
+            cond: function (record) {
+                return true;
+            },
+            callback: function (retval) {
+                host.database.company_class.items = retval;
+                resolve();
+            }
+        });
+    });
+    host.database.contact.sync = new Promise(function(resolve, reject){
+        dbcache.loadByCondition({
+            name: "contact",
+            cond: function (record) {
+                return true;
+            },
+            callback: function (retval) {
+                host.database.contact.items = retval;
+                resolve();
+            }
+        });
+    });
+    host.database.company_class_member.sync = new Promise(function(resolve, reject){
+        dbcache.loadByCondition({
+            name: "company_class_member",
+            cond: function (record) {
+                return record.userid == systemconfig.userid;
+            },
+            callback: function (retval) {
+                host.database.company_class_member.items = EncodingClass.string.duplicate(retval);
+                resolve();
+            }
+        });
+    });
+    Promise.all([
+        host.database.nations.sync,
+        host.database.cities.sync,
+        host.database.districts.sync,
+        host.database.companies.sync,
+        host.database.company_class.sync,
+        host.database.contact.sync,
+        host.database.owner_company_contact.sync,
+        host.database.company_class_member.sync,
+        host.database.privilege_groups.sync,
+        host.database.privilege_group_details.sync,
+        host.database.account_groups.sync
+    ]).then(function(){
+        delete host.database.nations.sync;
+        delete host.database.cities.sync;
+        delete host.database.districts.sync;
+        delete host.database.companies.sync;
+        delete host.database.company_class.sync;
+        delete host.database.contact.sync;
+        delete host.database.owner_company_contact.sync;
+        delete host.database.company_class_member.sync;
+        delete host.database.privilege_groups.sync;
+        delete host.database.privilege_group_details.sync;
+        delete host.database.account_groups.sync;
+        contentModule.makeAccountGroupPrivilegeSystem(host);
+        contentModule.makeCitiesIndexThanhYen(host);
+        contentModule.makeDistrictsIndexThanhYen(host);
+        contentModule.makeOwnerCompanyContactThanhYen(host);
+        contentModule.makeCompanyIndexThanhYen(host);
+        contentModule.makeContactIndexThanhYen(host);
+        ModalElement.show_loading();
+        console.log("start__"+ (new Date()).getTime());
+        setTimeout(function(){
+            carddone.contact.init2(host);
+        }, 100);
+    });
 };
 ModuleManagerClass.register({
     name: "Contact",

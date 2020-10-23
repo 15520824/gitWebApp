@@ -1,9 +1,9 @@
 carddone.datatypes.deleteType = function(host, id){
-    for (var i = 0; i < data_module.typelists.items.length; i++){
-        switch (data_module.typelists.items[i].type) {
+    for (var i = 0; i < host.database.typelists.items.length; i++){
+        switch (host.database.typelists.items[i].type) {
             case "enum":
             case "array":
-                if (data_module.typelists.items[i].content.typeof == id){
+                if (host.database.typelists.items[i].content.typeof == id){
                     ModalElement.alert({
                         message: LanguageModule.text("war_txt_can_not_delete")
                     });
@@ -11,8 +11,8 @@ carddone.datatypes.deleteType = function(host, id){
                 }
                 break;
             case "structure":
-                for (var j = 0; j < data_module.typelists.items[i].content.details.length; j++){
-                    if (data_module.typelists.items[i].content.details[j].type == id){
+                for (var j = 0; j < host.database.typelists.items[i].content.details.length; j++){
+                    if (host.database.typelists.items[i].content.details[j].type == id){
                         ModalElement.alert({
                             message: LanguageModule.text("war_txt_can_not_delete")
                         });
@@ -30,9 +30,10 @@ carddone.datatypes.deleteType = function(host, id){
             ModalElement.close(-1);
             if (success){
                 if (message.substr(0, 2) == "ok"){
-                    var index = data_module.typelists.getIndex(id);
-                    data_module.typelists.items.splice(index, 1);
+                    var index = host.database.typelists.getIndex(id);
+                    host.database.typelists.items.splice(index, 1);
                     carddone.datatypes.redraw(host);
+                    dbcache.refresh("typelists");
                 }
                 else if (message == "failed_used"){
                     ModalElement.alert({
@@ -54,9 +55,9 @@ carddone.datatypes.deleteType = function(host, id){
 };
 
 carddone.datatypes.deleteTypeConfirm = function(host, id){
-    var index = data_module.typelists.getIndex(id);
+    var index = host.database.typelists.getIndex(id);
     ModalElement.question({
-        message: LanguageModule.text2("war_txt_detele", [data_module.typelists.items[index].name]),
+        message: LanguageModule.text2("war_txt_detele", [host.database.typelists.items[index].name]),
         onclick: function(sel){
             if (sel == 0){
                 carddone.datatypes.deleteType(host, id);
@@ -147,7 +148,7 @@ carddone.datatypes.addTypeSubmit = function(host, id, typesubmit){
                 if (message.substr(0, 2) == "ok"){
                     if (id == 0){
                         id = parseInt(message.substr(2), 10);
-                        data_module.typelists.items.push({
+                        host.database.typelists.items.push({
                             id: id,
                             name: name,
                             type: type,
@@ -163,17 +164,17 @@ carddone.datatypes.addTypeSubmit = function(host, id, typesubmit){
                         });
                     }
                     else {
-                        var index = data_module.typelists.getIndex(id);
-                        data_module.typelists.items[index].name = name;
-                        data_module.typelists.items[index].type = type;
-                        data_module.typelists.items[index].decpre = host.decpre_select.value;
-                        data_module.typelists.items[index].content = contentredraw;
-                        data_module.typelists.items[index].comment = host.comment_inputtext.value.trim();
-                        data_module.typelists.items[index].available = host.available_checkbox.checked? 1 : 0;
-                        data_module.typelists.items[index].object_selection = host.object_selection_select.value;
-                        data_module.typelists.items[index].lastmodifiedtime = new Date();
-                        data_module.typelists.items[index].userid = systemconfig.userid;
-                        data_module.typelists.items[index].ver = host.dataTypeDetail.ver + 1;
+                        var index = host.database.typelists.getIndex(id);
+                        host.database.typelists.items[index].name = name;
+                        host.database.typelists.items[index].type = type;
+                        host.database.typelists.items[index].decpre = host.decpre_select.value;
+                        host.database.typelists.items[index].content = contentredraw;
+                        host.database.typelists.items[index].comment = host.comment_inputtext.value.trim();
+                        host.database.typelists.items[index].available = host.available_checkbox.checked? 1 : 0;
+                        host.database.typelists.items[index].object_selection = host.object_selection_select.value;
+                        host.database.typelists.items[index].lastmodifiedtime = new Date();
+                        host.database.typelists.items[index].userid = systemconfig.userid;
+                        host.database.typelists.items[index].ver = host.dataTypeDetail.ver + 1;
                     }
                     if (typesubmit == 0){
                         carddone.datatypes.addType(host, id);
@@ -184,6 +185,7 @@ carddone.datatypes.addTypeSubmit = function(host, id, typesubmit){
                         }
                         carddone.datatypes.redraw(host);
                     }
+                    dbcache.refresh("typelists");
                 }
                 else if (message.startsWith("failed_localid")){
                     ModalElement.alert({
@@ -216,6 +218,21 @@ carddone.datatypes.addTypeSubmit = function(host, id, typesubmit){
             }
         }
     });
+};
+
+carddone.datatypes.changeObjectSelecttion = function(host, id){
+    var object_selection = host.object_selection_select.value;
+    switch (object_selection) {
+        case "contact":
+            host.type_select.items = host.listTypeSingle;
+            host.type_select.value = host.listTypeSingle[0].value;
+            break;
+        default :
+            host.type_select.items = host.listTypeSingle.concat(host.listTypeExtra);
+            host.type_select.value = host.listTypeSingle[0].value;
+            break;
+    }
+    host.type_select.emit("change");
 };
 
 carddone.datatypes.changeType = function(host, id){
@@ -352,8 +369,8 @@ carddone.datatypes.addDetailEnumSubmit = function(host, id, container, data, typ
 };
 
 carddone.datatypes.getTypeValueEnumView = function(host, type, value, index){
-    var index = data_module.typelists.getIndex(type, 10);
-    type = data_module.typelists.items[index].type;
+    var index = host.database.typelists.getIndex(type, 10);
+    type = host.database.typelists.items[index].type;
     switch (type) {
         case "string":
         case "note":
@@ -408,10 +425,10 @@ carddone.datatypes.getTypeValueEnumView = function(host, type, value, index){
                     value: "no_select",
                     text: LanguageModule.text("txt_no_select")
                 }];
-                for (var i = 0; i < data_module.typelists.items[index].content.details.length; i++){
+                for (var i = 0; i < host.database.typelists.items[index].content.details.length; i++){
                     list.push({
-                        value: data_module.typelists.items[index].content.details[i].localid,
-                        text: data_module.typelists.items[index].content.details[i].text
+                        value: host.database.typelists.items[index].content.details[i].localid,
+                        text: host.database.typelists.items[index].content.details[i].text
                     });
                 }
                 return DOMElement.td({
@@ -437,17 +454,17 @@ carddone.datatypes.getTypeValueEnumView = function(host, type, value, index){
         case "structure":
             var data = [];
             var detailValue;
-            for (var i = 0; i < data_module.typelists.items[index].content.details.length; i++){
+            for (var i = 0; i < host.database.typelists.items[index].content.details.length; i++){
                 detailValue = undefined;
                 for (var j = 0; j < value.length; j++){
-                    if (value[j].localid == data_module.typelists.items[index].content.details[i].localid){
+                    if (value[j].localid == host.database.typelists.items[index].content.details[i].localid){
                         detailValue = value[j].value;
                         break;
                     }
                 }
                 data.push([
-                    {text: data_module.typelists.items[index].content.details[i].name},
-                    carddone.datatypes.getTypeValueEnumView(host, data_module.typelists.items[index].content.details[i].type, detailValue)
+                    {text: host.database.typelists.items[index].content.details[i].name},
+                    carddone.datatypes.getTypeValueEnumView(host, host.database.typelists.items[index].content.details[i].type, detailValue)
                 ]);
             }
             return DOMElement.div({
@@ -474,8 +491,8 @@ carddone.datatypes.getTypeValueEnumView = function(host, type, value, index){
 };
 
 carddone.datatypes.getTypeValueEnumEdit = function(host, type, value, index){
-    var index = data_module.typelists.getIndex(type);
-    type = data_module.typelists.items[index].type;
+    var index = host.database.typelists.getIndex(type);
+    type = host.database.typelists.items[index].type;
     switch (type) {
         case "string":
         case "note":
@@ -605,10 +622,10 @@ carddone.datatypes.getTypeValueEnumEdit = function(host, type, value, index){
                     value: "no_select",
                     text: LanguageModule.text("txt_no_select")
                 }];
-                for (var i = 0; i < data_module.typelists.items[index].content.details.length; i++){
+                for (var i = 0; i < host.database.typelists.items[index].content.details.length; i++){
                     list.push({
-                        value: data_module.typelists.items[index].content.details[i].localid,
-                        text: data_module.typelists.items[index].content.details[i].text
+                        value: host.database.typelists.items[index].content.details[i].localid,
+                        text: host.database.typelists.items[index].content.details[i].text
                     });
                 }
                 var elt = absol.buildDom({
@@ -634,23 +651,23 @@ carddone.datatypes.getTypeValueEnumEdit = function(host, type, value, index){
             var data = [];
             var listobj = [];
             var detailValue;
-            for (var i = 0; i < data_module.typelists.items[index].content.details.length; i++){
+            for (var i = 0; i < host.database.typelists.items[index].content.details.length; i++){
                 detailValue = undefined;
                 if (value !== undefined){
                     for (var j = 0; j < value.length; j++){
-                        if (value[j].localid == data_module.typelists.items[index].content.details[i].localid){
+                        if (value[j].localid == host.database.typelists.items[index].content.details[i].localid){
                             detailValue = value[j].value;
                             break;
                         }
                     }
                 };
-                var elt = carddone.datatypes.getTypeValueEnumEdit(host, data_module.typelists.items[index].content.details[i].type, detailValue);
+                var elt = carddone.datatypes.getTypeValueEnumEdit(host, host.database.typelists.items[index].content.details[i].type, detailValue);
                 data.push([
-                    {text: data_module.typelists.items[index].content.details[i].name},
+                    {text: host.database.typelists.items[index].content.details[i].name},
                     elt
                 ]);
                 listobj.push({
-                    localid: data_module.typelists.items[index].content.details[i].localid,
+                    localid: host.database.typelists.items[index].content.details[i].localid,
                     elt: elt
                 });
             }
@@ -808,8 +825,8 @@ carddone.datatypes.getType = function(host, type, cond){
         return true;
     }
     else if (!isNaN(type)){
-        var index = data_module.typelists.getIndex(type);
-        return carddone.datatypes.getType(host, data_module.typelists.items[index].type, cond)
+        var index = host.database.typelists.getIndex(type);
+        return carddone.datatypes.getType(host, host.database.typelists.items[index].type, cond)
     }
     return false;
 };
@@ -884,17 +901,17 @@ carddone.datatypes.drawDetailEnum = function(host, id, container, data, typeofEn
 };
 
 carddone.datatypes.getLinkData = function(host, id, type){
-    var typeIndex = data_module.typelists.getIndex(type);
-    switch (data_module.typelists.items[typeIndex].type) {
+    var typeIndex = host.database.typelists.getIndex(type);
+    switch (host.database.typelists.items[typeIndex].type) {
         case "array":
         case "enum":
-            if (data_module.typelists.items[typeIndex].content.typeof == id) return true;
-            if (carddone.datatypes.getLinkData(host, id, data_module.typelists.items[typeIndex].content.typeof)) return true;
+            if (host.database.typelists.items[typeIndex].content.typeof == id) return true;
+            if (carddone.datatypes.getLinkData(host, id, host.database.typelists.items[typeIndex].content.typeof)) return true;
             break;
         case "structure":
-            for (var i = 0; i < data_module.typelists.items[typeIndex].content.details.length; i++){
-                if (host.typeHasContent.indexOf(data_module.typelists.items[typeIndex].content.details[i].type) >= 0){
-                    if (carddone.datatypes.getLinkData(host, id, data_module.typelists.items[typeIndex].content.details[i].type)) return true;
+            for (var i = 0; i < host.database.typelists.items[typeIndex].content.details.length; i++){
+                if (host.typeHasContent.indexOf(host.database.typelists.items[typeIndex].content.details[i].type) >= 0){
+                    if (carddone.datatypes.getLinkData(host, id, host.database.typelists.items[typeIndex].content.details[i].type)) return true;
                 }
             }
             break;
@@ -926,13 +943,13 @@ carddone.datatypes.drawDetailStructureByType = function(host, data, type, index,
     var typeIndex;
     var type_pri = type;
     if (!isNaN(type)){
-        typeIndex = data_module.typelists.getIndex(type);
-        type_pri = data_module.typelists.items[typeIndex].type;
+        typeIndex = host.database.typelists.getIndex(type);
+        type_pri = host.database.typelists.items[typeIndex].type;
     }
     DOMElement.removeAllChildren(host.inputidboxes["decpre_structure_detail_"+ index]);
     if (type_pri == "number"){
         var decpre = 0;
-        if (!isNaN(type)) decpre = data_module.typelists.items[typeIndex].decpre;
+        if (!isNaN(type)) decpre = host.database.typelists.items[typeIndex].decpre;
         if (data[index].decpre !== undefined) decpre = data[index].decpre; //thanhyen
         console.log(decpre);
         var decpreObj = absol.buildDom({
@@ -1134,10 +1151,10 @@ carddone.datatypes.drawDetailStructureByType = function(host, data, type, index,
                 value: 0,
                 text: LanguageModule.text("txt_no_select")
             }];
-            for (var i = 0; i < data_module.nations.items.length; i++){
+            for (var i = 0; i < host.database.nations.items.length; i++){
                 list.push({
-                    value: data_module.nations.items[i].id,
-                    text: data_module.nations.items[i].name
+                    value: host.database.nations.items[i].id,
+                    text: host.database.nations.items[i].name
                 });
             }
             defaultObj = absol.buildDom({
@@ -1163,10 +1180,10 @@ carddone.datatypes.drawDetailStructureByType = function(host, data, type, index,
                 value: 0,
                 text: LanguageModule.text("txt_no_select")
             }];
-            for (var i = 0; i < data_module.cities.items.length; i++){
+            for (var i = 0; i < host.database.cities.items.length; i++){
                 list.push({
-                    value: data_module.cities.items[i].id,
-                    text: data_module.cities.items[i].name
+                    value: host.database.cities.items[i].id,
+                    text: host.database.cities.items[i].name
                 });
             }
             defaultObj = absol.buildDom({
@@ -1302,19 +1319,19 @@ carddone.datatypes.drawDetailStructureByType = function(host, data, type, index,
             };
             break;
         case "enum":
-            var typeIndex = data_module.typelists.getIndex(type);
-            if (data_module.typelists.items[typeIndex].content.details.length > 0){
-                defaultValue = data_module.typelists.items[typeIndex].content.details[0].localid;
+            var typeIndex = host.database.typelists.getIndex(type);
+            if (host.database.typelists.items[typeIndex].content.details.length > 0){
+                defaultValue = host.database.typelists.items[typeIndex].content.details[0].localid;
             }
             if (!ischange) if (data[index].default !== undefined) defaultValue = data[index].default;
             var list = [{
                 value: "no_select",
                 text: LanguageModule.text("txt_no_select")
             }];
-            for (var i = 0; i < data_module.typelists.items[typeIndex].content.details.length; i++){
+            for (var i = 0; i < host.database.typelists.items[typeIndex].content.details.length; i++){
                 list.push({
-                    value: data_module.typelists.items[typeIndex].content.details[i].localid,
-                    text: data_module.typelists.items[typeIndex].content.details[i].text
+                    value: host.database.typelists.items[typeIndex].content.details[i].localid,
+                    text: host.database.typelists.items[typeIndex].content.details[i].text
                 });
             }
             defaultObj = absol.buildDom({
@@ -1598,6 +1615,26 @@ carddone.datatypes.redrawAddType = function(host, id){
         style: {minWidth: "400px"},
         value: host.dataTypeDetail.name
     });
+    host.listTypeSingle = [
+        {value: "string", text: LanguageModule.text("txt_string")},
+        {value: "note", text: LanguageModule.text("txt_textarea")},
+        {value: "number", text: LanguageModule.text("txt_number")},
+        {value: "date", text: LanguageModule.text("txt_date")},
+        {value: "datetime", text: LanguageModule.text("txt_date_time")},
+        {value: "boolean", text: LanguageModule.text("txt_checkbox")},
+        {value: "email", text: LanguageModule.text("txt_email")},
+        {value: "user", text: LanguageModule.text("txt_user")},
+        {value: "userlist", text: LanguageModule.text("txt_userlist")},
+        {value: "phonenumber", text: LanguageModule.text("txt_phone_number")},
+        {value: "website", text: LanguageModule.text("txt_website")},
+        {value: "nation", text: LanguageModule.text("txt_nations")},
+        {value: "city", text: LanguageModule.text("txt_city")}
+    ];
+    host.listTypeExtra = [
+        {value: "array", text: LanguageModule.text("txt_array")},
+        {value: "enum", text: LanguageModule.text("txt_enum")},
+        {value: "structure", text: LanguageModule.text("txt_structure")}
+    ];
     host.type_select = absol.buildDom({
         tag: "selectmenu",
         style: {
@@ -1605,24 +1642,7 @@ carddone.datatypes.redrawAddType = function(host, id){
             width: "400px"
         },
         props: {
-            items: [
-                {value: "string", text: LanguageModule.text("txt_string")},
-                {value: "note", text: LanguageModule.text("txt_textarea")},
-                {value: "number", text: LanguageModule.text("txt_number")},
-                {value: "date", text: LanguageModule.text("txt_date")},
-                {value: "datetime", text: LanguageModule.text("txt_date_time")},
-                {value: "boolean", text: LanguageModule.text("txt_checkbox")},
-                {value: "email", text: LanguageModule.text("txt_email")},
-                {value: "user", text: LanguageModule.text("txt_user")},
-                {value: "userlist", text: LanguageModule.text("txt_userlist")},
-                {value: "phonenumber", text: LanguageModule.text("txt_phone_number")},
-                {value: "website", text: LanguageModule.text("txt_website")},
-                {value: "nation", text: LanguageModule.text("txt_nations")},
-                {value: "city", text: LanguageModule.text("txt_city")},
-                {value: "array", text: LanguageModule.text("txt_array")},
-                {value: "enum", text: LanguageModule.text("txt_enum")},
-                {value: "structure", text: LanguageModule.text("txt_structure")}
-            ],
+            items: host.listTypeSingle.concat(host.listTypeExtra),
             value: host.dataTypeDetail.type,
             enableSearch: true
         },
@@ -1673,11 +1693,11 @@ carddone.datatypes.redrawAddType = function(host, id){
         text: LanguageModule.text("txt_type_of_array")
     });
     host.listType = [];
-    for (var i = 0; i < data_module.typelists.items.length; i++){
-        if (data_module.typelists.items[i].available == 0) continue;
-        if (data_module.typelists.items[i].id == id) continue;
-        if (data_module.typelists.items[i].object_selection == "activity") continue;
-        host.listType.push({value: data_module.typelists.items[i].id, text: data_module.typelists.items[i].name});
+    for (var i = 0; i < host.database.typelists.items.length; i++){
+        if (host.database.typelists.items[i].available == 0) continue;
+        if (host.database.typelists.items[i].id == id) continue;
+        if (host.database.typelists.items[i].object_selection == "activity") continue;
+        host.listType.push({value: host.database.typelists.items[i].id, text: host.database.typelists.items[i].name});
     }
     host.select_type_of_array = absol.buildDom({
         tag: "selectmenu",
@@ -1693,11 +1713,11 @@ carddone.datatypes.redrawAddType = function(host, id){
     });
     if (typeOfArray !== undefined) host.select_type_of_array.value = typeOfArray;
     host.listTypeEnum = [];
-    for (var i = 0; i < data_module.typelists.items.length; i++){
-        if (data_module.typelists.items[i].available == 0) continue;
-        if (data_module.typelists.items[i].id == id) continue;
-        if (data_module.typelists.items[i].object_selection == "activity") continue;
-        host.listTypeEnum.push({value: data_module.typelists.items[i].id, text: data_module.typelists.items[i].name});
+    for (var i = 0; i < host.database.typelists.items.length; i++){
+        if (host.database.typelists.items[i].available == 0) continue;
+        if (host.database.typelists.items[i].id == id) continue;
+        if (host.database.typelists.items[i].object_selection == "activity") continue;
+        host.listTypeEnum.push({value: host.database.typelists.items[i].id, text: host.database.typelists.items[i].name});
     }
     host.name_type_of_enum = DOMElement.span({
         attrs: {
@@ -1744,15 +1764,22 @@ carddone.datatypes.redrawAddType = function(host, id){
     host.object_selection_select = absol.buildDom({
         tag: "selectmenu",
         style: {
+            width: "400px",
             verticalAlign: "middle"
         },
         props: {
             value: host.dataTypeDetail.object_selection,
             items: [
                 // {value: "object", text: LanguageModule.text("txt_object")},
-                {value: "field", text: LanguageModule.text("txt_activity")},
+                {value: "field", text: LanguageModule.text("txt_card")},
+                {value: "contact", text: LanguageModule.text("txt_contact")},
                 {value: "other", text: LanguageModule.text("txt_other")}
             ]
+        },
+        on: {
+            change: function(){
+                carddone.datatypes.changeObjectSelecttion(host, id);
+            }
         }
     });
     host.available_checkbox = absol.buildDom({
@@ -1775,7 +1802,11 @@ carddone.datatypes.redrawAddType = function(host, id){
         detail_of_enum_container: host.detail_of_enum_container,
         comment_inputtext: host.comment_inputtext,
         available_checkbox: host.available_checkbox,
-        object_selection_select: host.object_selection_select
+        object_selection_select: host.object_selection_select,
+        id: id,
+        createdby: contentModule.getUsernameByhomeidFromDataModule(host.dataTypeDetail.userid),
+        createdtime: contentModule.getTimeSend(host.dataTypeDetail.createdtime),
+        lastmodifiedtime: contentModule.getTimeSend(host.dataTypeDetail.lastmodifiedtime)
     });
     host.frameList.addChild(singlePage);
     singlePage.requestActive();
@@ -1792,39 +1823,31 @@ carddone.datatypes.addType = function(host, id){
             content: "",
             userid: 0,
             available: 1,
-            object_selection: "other"
+            object_selection: "other",
+            userid: systemconfig.userid,
+            createdtime: new Date(),
+            lastmodifiedtime: new Date()
         };
         carddone.datatypes.redrawAddType(host, id);
     }
     else {
         ModalElement.show_loading();
-        FormClass.api_call({
-            url: "database_load.php",
-            params: [
-                {name: "task", value: "datatypes_load_details"},
-                {name: "id", value: id}
-            ],
-            func: function(success, message){
+        dbcache.loadById({
+            name: "typelists",
+            id: id,
+            callback: function (retval) {
                 ModalElement.close(-1);
-                if (success){
-                    if (message.substr(0, 2) == "ok"){
-                        host.dataTypeDetail = EncodingClass.string.toVariable(message.substr(2));
-                        carddone.datatypes.redrawAddType(host, id);
-                    }
-                    else if (message == "fail id"){
-                        ModalElement.alert({
-                            message: LanguageModule.text("war_text_evaluation_reload_data"),
-                            func: function(){
-                                carddone.datatypes.init(host);
-                            }
-                        });
-                    }
-                    else {
-                        ModalElement.alert({message: message});
-                    }
+                if (retval !== undefined){
+                    host.dataTypeDetail = EncodingClass.string.duplicate(retval);
+                    carddone.datatypes.redrawAddType(host, id);
                 }
                 else {
-                    ModalElement.alert({message: message});
+                    ModalElement.alert({
+                        message: LanguageModule.text("war_text_evaluation_reload_data"),
+                        func: function(){
+                            carddone.datatypes.init(host);
+                        }
+                    });
                 }
             }
         });
@@ -1834,7 +1857,7 @@ carddone.datatypes.addType = function(host, id){
 carddone.datatypes.redraw = function(host){
     var quickMenuItems, celldata;
     var nameDebug, data = [];
-    data_module.typelists.items.sort(function(a, b){
+    host.database.typelists.items.sort(function(a, b){
         if (a.id < 0 && b.id < 0) return b.id - a.id;
         if (a.id < 0) return 1;
         if (b.id < 0) return 1;
@@ -1842,21 +1865,21 @@ carddone.datatypes.redraw = function(host){
         if (absol.string.nonAccentVietnamese(b.name.toLowerCase()) < absol.string.nonAccentVietnamese(a.name.toLowerCase())) return 1;
         return 0;
     });
-    for (var i = 0; i < data_module.typelists.items.length; i++) {
-        if (data_module.typelists.items[i].id < 0) continue;
-        if (data_module.typelists.items[i].object_selection == "activity") continue;
-        nameDebug = data_module.typelists.items[i].name;
+    for (var i = 0; i < host.database.typelists.items.length; i++) {
+        if (host.database.typelists.items[i].id < 0) continue;
+        if (host.database.typelists.items[i].object_selection == "activity") continue;
+        nameDebug = host.database.typelists.items[i].name;
         if (systemconfig.debugMode){
-            nameDebug += "\n id: " + data_module.typelists.items[i].id + " (index: " + i + ")";
+            nameDebug += "\n id: " + host.database.typelists.items[i].id + " (index: " + i + ")";
         }
         celldata = {
             name: nameDebug,
-            type: data_module.typelists.items[i].type,
-            createdby: contentModule.getUsernameByhomeidFromDataModule(data_module.typelists.items[i].userid),
-            available: contentModule.availableName(data_module.typelists.items[i].available),
-            object_selection: contentModule.object_selectionName(data_module.typelists.items[i].object_selection),
-            createdtime: contentModule.getTimeSend(data_module.typelists.items[i].createdtime),
-            lastmodifiedtime: contentModule.getTimeSend(data_module.typelists.items[i].lastmodifiedtime)
+            type: host.database.typelists.items[i].type,
+            createdby: contentModule.getUsernameByhomeidFromDataModule(host.database.typelists.items[i].userid),
+            available: contentModule.availableName(host.database.typelists.items[i].available),
+            object_selection: contentModule.object_selectionName(host.database.typelists.items[i].object_selection),
+            createdtime: contentModule.getTimeSend(host.database.typelists.items[i].createdtime),
+            lastmodifiedtime: contentModule.getTimeSend(host.database.typelists.items[i].lastmodifiedtime)
         };
         quickMenuItems = [];
         quickMenuItems.push({
@@ -1871,7 +1894,7 @@ carddone.datatypes.redraw = function(host){
                 return function(event, me) {
                     carddone.datatypes.addType(host, id);
                 }
-            } (host, data_module.typelists.items[i].id)
+            } (host, host.database.typelists.items[i].id)
         });
         quickMenuItems.push({
             text: LanguageModule.text("txt_delete"),
@@ -1885,7 +1908,7 @@ carddone.datatypes.redraw = function(host){
                 return function(event, me) {
                     carddone.datatypes.deleteTypeConfirm(host, id);
                 }
-            } (host, data_module.typelists.items[i].id)
+            } (host, host.database.typelists.items[i].id)
         });
         celldata.quickMenuItems = quickMenuItems;
         data.push(celldata);
@@ -1899,7 +1922,7 @@ carddone.datatypes.redraw = function(host){
 };
 
 carddone.datatypes.init = function(host){
-    if (!data_module.users || !data_module.typelists || !data_module.nations || !data_module.cities){
+    if (!data_module.users){
         for (var i = 0; i < ModalElement.layerstatus.length; i++){
             if ((ModalElement.layerstatus[i].index == -1) && (!ModalElement.layerstatus[i].visible)) ModalElement.show_loading();
         }
@@ -1908,49 +1931,102 @@ carddone.datatypes.init = function(host){
         }, 50);
         return;
     }
-    host.typeHasContent = ["array", "enum", "structure"];
-    host.inputsearchbox = absol.buildDom({
-        tag:'searchcrosstextinput',
-        style: {
-            width: "var(--searchbox-width)"
-        },
-        props:{
-            placeholder: LanguageModule.text("txt_search")
-        }
-    });
-    var buttonlist = [
-        host.funcs.closeButton({
-            onclick: function(host){
-                return function (event, me) {
-                    carddone.menu.tabPanel.removeTab(host.holder.id);
-                }
-            } (host)
-        }),
-        host.funcs.addButton({
-            onclick: function (host){
-                return function(event, me){
-                    carddone.datatypes.addType(host, 0);
-                }
-            }(host)
-        })
-    ];
-    host.data_container = DOMElement.div({
-        attrs: {
-            className: "cardsimpletableclass row2colors cardtablehover",
-            style: {
-                marginBottom: "100px"
+    ModalElement.show_loading();
+    var st = {
+        nations: [],
+        cities: [],
+        typelists: []
+    }
+    host.database = {};
+    contentModule.makeDatabaseContent(host.database, st);
+    host.database.nations.sync = new Promise(function(resolve, reject){
+        dbcache.loadByCondition({
+            name: "nations",
+            cond: function (record) {
+                return true;
+            },
+            callback: function (retval) {
+                host.database.nations.items = EncodingClass.string.duplicate(retval);
+                resolve();
             }
-        }
+        });
     });
-    host.holder.addChild(host.frameList);
-    var singlePage = host.funcs.formDatatypesInit({
-        buttonlist: buttonlist,
-        data_container: host.data_container,
-        inputsearchbox: host.inputsearchbox
+    host.database.cities.sync = new Promise(function(resolve, reject){
+        dbcache.loadByCondition({
+            name: "cities",
+            cond: function (record) {
+                return true;
+            },
+            callback: function (retval) {
+                host.database.cities.items = EncodingClass.string.duplicate(retval);
+                resolve();
+            }
+        });
     });
-    host.frameList.addChild(singlePage);
-    singlePage.requestActive();
-    carddone.datatypes.redraw(host);
+    host.database.typelists.sync = new Promise(function(resolve, reject){
+        dbcache.loadByCondition({
+            name: "typelists",
+            cond: function (record) {
+                return true;
+            },
+            callback: function (retval) {
+                host.database.typelists.items = EncodingClass.string.duplicate(retval);
+                contentModule.makeTypesListContentThanhYen(host);
+                resolve();
+            }
+        });
+    });
+    Promise.all([
+        host.database.nations.sync,
+        host.database.cities.sync,
+        host.database.typelists.sync
+    ]).then(function(){
+        contentModule.makeCitiesIndexThanhYen(host);
+        ModalElement.close(-1);
+        host.typeHasContent = ["array", "enum", "structure"];
+        host.inputsearchbox = absol.buildDom({
+            tag:'searchcrosstextinput',
+            style: {
+                width: "var(--searchbox-width)"
+            },
+            props:{
+                placeholder: LanguageModule.text("txt_search")
+            }
+        });
+        var buttonlist = [
+            host.funcs.closeButton({
+                onclick: function(host){
+                    return function (event, me) {
+                        carddone.menu.tabPanel.removeTab(host.holder.id);
+                    }
+                } (host)
+            }),
+            host.funcs.addButton({
+                onclick: function (host){
+                    return function(event, me){
+                        carddone.datatypes.addType(host, 0);
+                    }
+                }(host)
+            })
+        ];
+        host.data_container = DOMElement.div({
+            attrs: {
+                className: "cardsimpletableclass row2colors cardtablehover",
+                style: {
+                    marginBottom: "200px"
+                }
+            }
+        });
+        host.holder.addChild(host.frameList);
+        var singlePage = host.funcs.formDatatypesInit({
+            buttonlist: buttonlist,
+            data_container: host.data_container,
+            inputsearchbox: host.inputsearchbox
+        });
+        host.frameList.addChild(singlePage);
+        singlePage.requestActive();
+        carddone.datatypes.redraw(host);
+    });
 };
 ModuleManagerClass.register({
     name: "Datatypes",

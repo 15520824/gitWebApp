@@ -1,243 +1,122 @@
 'use strict';
 
-data_module.cardList = {};
-var condition = "";
-var time = new Date();
-var month = time.getMonth();
-var year = time.getFullYear();
-condition += "(month = " + month + " AND year = " + year + ") OR ";
-if (month == 11){
-    condition += "(month = 0 AND year = " + (year + 1) + ")";
-}
-else {
-    condition += "(month = " + (month + 1) + " AND year = " + year + ")";
-}
-// data_module.pendingData = [
-//     {
-//         type: "data_module",
-//         dbname: "formats",
-//         onLoad: [],
-//         isLoaded: false
-//     },
-//     {
-//         type: "data_module",
-//         dbname: "typelists",
-//         onLoad: [],
-//         isLoaded: false
-//     },
-//     {
-//         type: "data_module",
-//         dbname: "users",
-//         onLoad: [],
-//         isLoaded: false
-//     },
-//     {
-//         type: "data_module",
-//         dbname: "nations",
-//         onLoad: [],
-//         isLoaded: false
-//     },
-//     {
-//         type: "data_module",
-//         dbname: "cities",
-//         onLoad: [],
-//         isLoaded: false
-//     },
-//     {
-//         type: "data_module",
-//         dbname: "districts",
-//         onLoad: [],
-//         isLoaded: false
-//     },
-//     {
-//         type: "data_module",
-//         dbname: "board_groups",
-//         onLoad: [],
-//         isLoaded: false
-//     },
-//     {
-//         type: "data_module",
-//         dbname: "board_group_link",
-//         onLoad: [],
-//         isLoaded: false
-//     },
-//     {
-//         type: "data_module",
-//         dbname: "report_groups",
-//         onLoad: [],
-//         isLoaded: false
-//     },
-//     {
-//         type: "data_module",
-//         dbname: "report_group_link",
-//         onLoad: [],
-//         isLoaded: false
-//     },
-//     {
-//         type: "data_module",
-//         dbname: "company_class",
-//         onLoad: [],
-//         isLoaded: false
-//     },
-//     {
-//         type: "data_module",
-//         dbname: "companies",
-//         onLoad: [],
-//         isLoaded: false
-//     },
-//     {
-//         type: "data_module",
-//         dbname: "contact",
-//         onLoad: [],
-//         isLoaded: false
-//     },
-//     {
-//         type: "data_module",
-//         dbname: "owner_company_contact",
-//         onLoad: [],
-//         isLoaded: false
-//     },
-//     {
-//         type: "data_module",
-//         dbname: "user_calendar",
-//         condition: condition,
-//         onLoad: [],
-//         isLoaded: false
-//     }
-// ];
-data_module.pendingData = [
-    {
-        type: "data_module",
-        dbname: ["formats", "typelists", "users", "board_groups", "board_group_link", "report_groups", "report_group_link", "company_class", "user_calendar"],
-        onLoad: [],
-        condition: condition,
-        isLoaded: false
-    },
-    {
-        type: "data_module",
-        dbname: ["nations", "cities", "districts"],
-        onLoad: [],
-        isLoaded: false
-    },
-    {
-        type: "data_module",
-        dbname: ["companies"],
-        onLoad: [],
-        isLoaded: false
-    },
-    {
-        type: "data_module",
-        dbname: ["contact"],
-        onLoad: [],
-        isLoaded: false
-    },
-    {
-        type: "data_module",
-        dbname: ["owner_company_contact"],
-        onLoad: [],
-        isLoaded: false
-    }
-];
-data_module.dataManager = {};
-data_module.dataManager[-1] = {
-    startIndex: 0,
-    endIndex: data_module.pendingData.length
-};
-data_module.boardArray = [-1];
-data_module.boardActive = -1;
-data_module.cardActive = -1;
-data_module.priorityCount = 0;
-
-
-data_module.penddingHeap = function(){
-    var loadingIndex;
-    if (data_module.boardArray.length == 0) {
-        setTimeout('data_module.penddingHeap()', 10);
-    }
-    else {
-        var index = data_module.boardArray.indexOf(data_module.boardActive);
-        if (index > 0){
-            var t = data_module.boardArray[index];
-            data_module.boardArray.splice(index, 1);
-            data_module.boardArray.unshift(t);
-        }
-        if (data_module.dataManager[data_module.boardArray[0]].startIndex == data_module.dataManager[data_module.boardArray[0]].endIndex) {
-            delete(data_module.dataManager[data_module.boardArray[0]]);
-            data_module.boardArray.splice(0, 1);
-            setTimeout('data_module.penddingHeap()', 10);
-        }
-        else {
-            loadingIndex = data_module.dataManager[data_module.boardArray[0]].startIndex;
-            if (data_module.cardActive != -1){
-                if (!data_module.cardList[data_module.cardActive].content){
-                    var idx = data_module.cardList[data_module.cardActive].heapIndex + data_module.priorityCount;
-                    var temp = data_module.pendingData[idx];
-                    data_module.pendingData.splice(idx, 1);
-                    data_module.pendingData.splice(loadingIndex, 0, temp);
-                    data_module.priorityCount++;
-                }
-                data_module.cardActive = -1;
-            }
-            if (!data_module.pendingData[loadingIndex].isLoaded) {
-                switch (data_module.pendingData[loadingIndex].type) {
-                    case 'card':
-                        data_module.loadCardData(data_module.pendingData[loadingIndex]);
-                        break;
-                    case 'data_module':
-                        data_module.loadData(data_module.pendingData[loadingIndex]);
-                        break;
-                    default:
-
-                }
-            }
-            else {
-                data_module.dataManager[data_module.boardArray[0]].startIndex++;
-                setTimeout('data_module.penddingHeap()', 10);
-            }
-        }
-    }
-}
-
-data_module.loadCardData = function(content){
-    FormClass.api_call({
-        url: "database_load.php",
-        params: [
-            {name: 'task', value: "card_load_content"},
-            {name: 'cardid', value: content.id}
-        ],
-        func: function(success, message){
-            if (success){
-                if (message.substr(0, 2) == "ok"){
-                    var cardContent = EncodingClass.string.toVariable(message.substr(2));
-                    data_module.cardList[content.id].content = cardContent;
-                    content.isLoaded = true;
-                    content.onLoad.forEach(function(elt){
-                        elt();
-                    });
-                    data_module.dataManager[data_module.boardArray[0]].startIndex++;
-                    setTimeout('data_module.penddingHeap()', 10);
-                }
-                else {
-                    console.log("Failed: " + content.id);
-                    setTimeout('data_module.penddingHeap()', 10);
-                }
-            }
-            else {
-                console.log("Failed: " + content.id);
-                setTimeout('data_module.penddingHeap()', 10);
-            }
-        }
+data_module.makeCache = function(){
+    dbcache = DBCacheClass.open({
+        accesskey: systemconfig.prefix,
+        url: "dbcache_load.php"
     });
-}
+    dbcache.add("lists");
+    dbcache.add("format");
+    dbcache.add("typelists");
+    dbcache.add("board_groups");
+    dbcache.add("board_group_link");
+    dbcache.add("list_member");
+    dbcache.add("account_groups");
+    dbcache.add("privilege_groups");
+    dbcache.add("privilege_group_details");
+    dbcache.add("company_class_member");
+    dbcache.add("company_class");
+    dbcache.add("field_list");
+    dbcache.add("user_calendar");
+    dbcache.add("nations");
+    dbcache.add("cities");
+    dbcache.add("districts");
+    dbcache.add("company");
+    dbcache.add("contact");
+    dbcache.add("owner_company_contact");
+    dbcache.add("dashboard");
+    dbcache.add("company_card");
+    dbcache.add("contact_card");
+    dbcache.add("board_email_groups");
+    dbcache.add("board_email_group_link");
+    dbcache.add("card_email_groups");
+    dbcache.add("knowledge");
+    dbcache.add("attention_lists");
+    dbcache.add("archived_lists");
+    dbcache.add("objects");
+    dbcache.add("obj_list");
+    dbcache.add("chat_sessions");
+    dbcache.add("chat_session_members");
+    dbcache.add("archived_chats");
+    dbcache.add("values");
+    dbcache.add("report");
+    dbcache.add("report_groups");
+    dbcache.add("report_group_link");
+    dbcache.add("field_company_class");
+    dbcache.add("obj_company_contact");
+    dbcache.add("knowledge_group_link");
+    dbcache.add("knowledge_group");
+};
 
-data_module.loadData = function(content){
+data_module.parseValueId = function(str){
+    var list = [];
+    var startIndex = 0;
+    while(startIndex < str.length){
+        var index = str.indexOf("_", startIndex + 1);
+        if (index == -1) break;
+        var id = parseInt(str.substr(startIndex + 1, index - startIndex - 1), 10);
+        list.push(id);
+        startIndex = index;
+    }
+    return list;
+};
+
+data_module.makeDatabase = function(retval){
+    var rs = {};
+    rs.items = EncodingClass.string.duplicate(retval);
+    rs.getIndex = function(id){
+        for (var i = 0; i < rs.items.length; i++){
+            if (rs.items[i].id == id) return i;
+        }
+        return -1;
+    }
+    return rs;
+};
+
+data_module.loadByConditionAsync = function(params){
+    return new Promise(function(rs, rj){
+        var oldCallback = params.callback;
+        var newCallback = function(){
+            var res;
+            if (oldCallback) res = oldCallback.apply(this, arguments);
+            rs(res);
+        }
+        params.callback = newCallback;
+        dbcache.loadByCondition(params);
+    })
+};
+
+data_module.loadByIdAsync = function(params){
+    return new Promise(function(rs, rj){
+        var oldCallback = params.callback;
+        var newCallback = function(){
+            var res;
+            if (oldCallback) res = oldCallback.apply(this, arguments);
+            rs(res);
+        }
+        params.callback = newCallback;
+        dbcache.loadById(params);
+    })
+};
+
+data_module.loadByIdArrayAsync = function(params){
+    return new Promise(function(rs, rj){
+        var oldCallback = params.callback;
+        var newCallback = function(){
+            var res;
+            if (oldCallback) res = oldCallback.apply(this, arguments);
+            rs(res);
+        }
+        params.callback = newCallback;
+        dbcache.loadByIds(params);
+    })
+};
+data_module.loadData = function(){
+    var content = {dbname: ["users"]};
     var params = [
         {name: 'task', value: "data_module_load"},
         {name: 'dbnameList', value: EncodingClass.string.fromVariable(content.dbname)}
     ];
-    if (content.condition !== undefined){
-        params.push({name: "condition", value: content.condition});
-    }
     FormClass.api_call({
         url: "database_load.php",
         params: params,
@@ -257,14 +136,6 @@ data_module.loadData = function(content){
                                 }
                             }(content.dbname[idx])
                         }
-                        if (content.dbname[idx] == 'formats'){
-                            data_module[content.dbname[idx]].items.forEach(function(elt){
-                                elt.content = EncodingClass.string.toVariable(elt.content);
-                            });
-                        }
-                        if (content.dbname[idx] == "typelists"){
-                            contentModule.makeTypesListContent();
-                        }
                         if (content.dbname[idx] == "users"){
                             data_module[content.dbname[idx]].getByhomeid = function(dbname){
                                 return function(homeid){
@@ -274,28 +145,26 @@ data_module.loadData = function(content){
                                     return -1;
                                 };
                             }(content.dbname[idx])
-                            data_module.users.items.sort(function (a, b) {
+                            var holderForSort = data_module.users.items.map(function(item){
+                                return {
+                                    item: item,
+                                    val: absol.string.nonAccentVietnamese(item.username.toLowerCase())
+                                }
+                            });
+                            holderForSort.sort(function (a, b) {
                                 var k;
-                                if (a.privilege < b.privilege) return 1;
-                                if (a.privilege > b.privilege) return -1;
-                                if (absol.string.nonAccentVietnamese(b.username.toLowerCase()) > absol.string.nonAccentVietnamese(a.username.toLowerCase())) return -1;
-                                if (absol.string.nonAccentVietnamese(b.username.toLowerCase()) < absol.string.nonAccentVietnamese(a.username.toLowerCase())) return 1;
+                                if (a.item.privilege < b.item.privilege) return 1;
+                                if (a.item.privilege > b.item.privilege) return -1;
+                                if (b.val > a.val) return -1;
+                                if (b.val < a.val) return 1;
                                 return 0;
                             });
-                        }
-                        if (content.dbname[idx] == "owner_company_contact"){
-                            contentModule.makeOwnerCompanyContact();
-                        }
-                        if (content.dbname[idx] == "user_calendar"){
-                            contentModule.showReminder();
+                            data_module.users.items = holderForSort.map(function(holder){
+                                return holder.item;
+                            });
+                            contentModule.makeReportToUserThanhYen();
                         }
                     }
-                    content.isLoaded = true;
-                    content.onLoad.forEach(function(elt){
-                        elt();
-                    });
-                    data_module.dataManager[data_module.boardArray[0]].startIndex++;
-                    setTimeout('data_module.penddingHeap()', 10);
                 }
                 else {
                     console.log(message);
@@ -306,4 +175,4 @@ data_module.loadData = function(content){
             }
         }
     });
-}
+};

@@ -96,9 +96,6 @@ theme.formCompany_classEdit = function(params){
            available: activated_inputselect.checked
        }
     };
-    setTimeout(function(){
-        name_inputtext.focus()
-    },10);
     return singlePage;
 };
 

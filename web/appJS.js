@@ -8,10 +8,15 @@ import './jsdomelement.js';
 import './jsform.js';
 import './jsmodalelement.js';
 import './languagemodule.js';
+import './jsidb.js';
+import './jszip.js';
+import './exceljs.js';
 
 import './jsstorage.js';
 
 import './jschat_card.js';
+import './ckeditor/ckeditor.js';
+import './ckeditor/config.js';
 import './absol/absol_full.js';
 import './content_module.js';
 import './data_module.js';
@@ -24,8 +29,13 @@ import './company.js';
 import './reminder.js';
 import './activities.js';
 import './my_calendar.js';
+import './maps.js';
+import './maps_view.js';
+import './module_new.js';
+import './markerclusterer.js';
+import './jsdbcache.js';
+import './account_group.js';
 
-import './theme/mobile/absol_module_view.js';
 import './theme/mobile/button.js';
 import './theme/mobile/common_view.js';
 import './theme/mobile/objects_view.js';
@@ -36,3 +46,5 @@ import './theme/mobile/company_view.js';
 import './theme/mobile/contact_view.js';
 import './theme/mobile/reminder_view.js';
 import './theme/mobile/activities_view.js';
+import './theme/mobile/maps_list_view.js';
+import './theme/mobile/account_group_view.js';

@@ -6963,9 +6963,9 @@ function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || func
 /* eslint-disable max-classes-per-file */
 var events = require('events');
 
-var JSZip = require('jszip');
+window.JSZip = require('jszip');
 
-var StreamBuf = require('./stream-buf'); // The purpose of this module is to wrap the js-zip library into a streaming zip library
+window.StreamBuf = require('./stream-buf'); // The purpose of this module is to wrap the js-zip library into a streaming zip library
 // since most of the exceljs code uses streams.
 // One day I might find (or build) a properly streaming browser safe zip lib
 // =============================================================================
@@ -6973,7 +6973,7 @@ var StreamBuf = require('./stream-buf'); // The purpose of this module is to wra
 // Unpacks an incoming zip stream
 
 
-var ZipReader =
+window.ZipReader =
 /*#__PURE__*/
 function (_events$EventEmitter) {
   _inherits(ZipReader, _events$EventEmitter);
@@ -7154,7 +7154,7 @@ function (_events$EventEmitter) {
 // Packs streamed data into an output zip stream
 
 
-var ZipWriter =
+window.ZipWriter =
 /*#__PURE__*/
 function (_events$EventEmitter2) {
   _inherits(ZipWriter, _events$EventEmitter2);
@@ -46826,8 +46826,8 @@ exports.prepareContent = function(name, inputData, isBinary, isOptimizedBinarySt
 
     // if inputData is already a promise, this flatten it.
     var promise = external.Promise.resolve(inputData).then(function(data) {
-        
-        
+
+
         var isBlob = support.blob && (data instanceof Blob || ['[object File]', '[object Blob]'].indexOf(Object.prototype.toString.call(data)) !== -1);
 
         if (isBlob && typeof FileReader !== "undefined") {
@@ -68732,7 +68732,7 @@ function bytesToUuid(buf, offset) {
   var i = offset || 0;
   var bth = byteToHex;
   // join used to fix memory issue caused by concatenation: https://bugs.chromium.org/p/v8/issues/detail?id=3175#c4
-  return ([bth[buf[i++]], bth[buf[i++]], 
+  return ([bth[buf[i++]], bth[buf[i++]],
 	bth[buf[i++]], bth[buf[i++]], '-',
 	bth[buf[i++]], bth[buf[i++]], '-',
 	bth[buf[i++]], bth[buf[i++]], '-',
@@ -68982,13 +68982,13 @@ Script.prototype.runInContext = function (context) {
     if (!(context instanceof Context)) {
         throw new TypeError("needs a 'context' argument.");
     }
-    
+
     var iframe = document.createElement('iframe');
     if (!iframe.style) iframe.style = {};
     iframe.style.display = 'none';
-    
+
     document.body.appendChild(iframe);
-    
+
     var win = iframe.contentWindow;
     var wEval = win.eval, wExecScript = win.execScript;
 
@@ -68997,7 +68997,7 @@ Script.prototype.runInContext = function (context) {
         wExecScript.call(win, 'null');
         wEval = win.eval;
     }
-    
+
     forEach(Object_keys(context), function (key) {
         win[key] = context[key];
     });
@@ -69006,11 +69006,11 @@ Script.prototype.runInContext = function (context) {
             win[key] = context[key];
         }
     });
-    
+
     var winKeys = Object_keys(win);
 
     var res = wEval.call(win, this.code);
-    
+
     forEach(Object_keys(win), function (key) {
         // Avoid copying circular objects like `top` and `window` by only
         // updating existing context properties or new properties in the `win`
@@ -69025,9 +69025,9 @@ Script.prototype.runInContext = function (context) {
             defineProp(context, key, win[key]);
         }
     });
-    
+
     document.body.removeChild(iframe);
-    
+
     return res;
 };
 

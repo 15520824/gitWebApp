@@ -226,16 +226,6 @@ theme.formAccountEdit = function(params){
             })
         ]
     });
-    if (params.type == "add"){
-        setTimeout(function(){
-            username_inputtext.focus();
-        }, 50);
-    }
-    else {
-        setTimeout(function(){
-            fullname_inputtext.focus();
-        }, 50);
-    }
     singlePage.getValue = function(){
         var emailadd = email_inputtext.value;
         if (!contentModule.filterEmail.test(emailadd)){

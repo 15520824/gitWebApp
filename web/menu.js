@@ -8,9 +8,10 @@ if (carddone.isMobile){
         tag: "frameview",
         class: ["main-tabview", 'am-application-frameview']
     });
-    carddone.menu.staticFrameTaskIds = [4, 7, 101, 100];
+    carddone.menu.staticFrameTaskIds = [24, 4, 7, 100];
+    carddone.menu.indexMenuChat = 2;
     carddone.menu.staticFrameTaskCounter = [0, 0, 0, 0];
-    carddone.menu.staticFrameTaskIcons = ['span.mdi.mdi-file-table-outline', 'span.mdi.mdi-chat-outline', 'span.mdi.mdi-bell-outline', 'span.mdi.mdi-menu'];
+    carddone.menu.staticFrameTaskIcons = ['span.mdi.mdi-playlist-check', 'span.mdi.mdi-picture-in-picture-bottom-right.mdi-rotate-180', 'span.mdi.mdi-chat-outline', 'span.mdi.mdi-menu'];
     carddone.menu.mobileTabbar = absol.buildDom({
         tag: 'mbottomtabbar',
         class: 'am-application-tabbar',
@@ -62,10 +63,7 @@ else {
 carddone.menu.loadPagePC = function (taskid, hostid, hostid2) {
     var holder, host;
     holder = absol.buildDom({
-        tag: "tabframe",
-        style: {
-            backgroundColor: "white"
-        }
+        tag: "tabframe"
     });
     host = {
         holder: holder,
@@ -141,7 +139,8 @@ carddone.menu.loadPagePC = function (taskid, hostid, hostid2) {
                 input: theme.input,
                 boardInitForm: theme.boardInitForm,
                 boardContentDataForm: theme.boardContentDataForm,
-                boardEditForm: theme.boardEditForm
+                boardEditForm: theme.boardEditForm,
+                boardEditGroupForm: theme.boardEditGroupForm
             }
             holder.name = LanguageModule.text("txt_boards");
             carddone.menu.tabPanel.addChild(holder);
@@ -166,26 +165,34 @@ carddone.menu.loadPagePC = function (taskid, hostid, hostid2) {
             carddone.objects.init(host);
             break;
         case 7:
-            host.funcs = {
-                closeButton:  theme.closeButton,
-                formChatsInit: theme.formChatsInit,
-                sendMessage: carddone.sendMessageFunc
-            }
-            host.cardid = hostid;
-            holder.name = LanguageModule.text("txt_chat");
-            carddone.menu.tabPanel.addChild(holder);
-            carddone.chats.init(host).then(function(value){
-                if (hostid2 !== undefined) host.resolveOpenChat(hostid2);
-            });
-            carddone.listTabChat.push(host);
-            holder.on("remove", function(event){
-                for (var i = 0; i < carddone.listTabChat.length; i++){
-                    if (carddone.listTabChat[i].holder.id == this.id){
-                        carddone.listTabChat.splice(i, 1);
-                        break;
-                    }
+            if (carddone.listTabChat.length > 0){
+                carddone.menu.tabPanel.activeTab(carddone.listTabChat[0].holder.id);
+                if (hostid > 0){
+                    carddone.chats.openNewChatFromCard(carddone.listTabChat[0], hostid);
                 }
-            });
+            }
+            else {
+                host.funcs = {
+                    closeButton:  theme.closeButton,
+                    formChatsInit: theme.formChatsInit,
+                    sendMessage: carddone.sendMessageFunc
+                }
+                host.cardid = hostid;
+                holder.name = LanguageModule.text("txt_chat");
+                carddone.menu.tabPanel.addChild(holder);
+                carddone.chats.init(host).then(function(value){
+                    if (hostid2 !== undefined) host.resolveOpenChat(hostid2);
+                });
+                carddone.listTabChat.push(host);
+                holder.on("remove", function(event){
+                    for (var i = 0; i < carddone.listTabChat.length; i++){
+                        if (carddone.listTabChat[i].holder.id == this.id){
+                            carddone.listTabChat.splice(i, 1);
+                            break;
+                        }
+                    }
+                });
+            }
             break;
         case 8:
             host.funcs = {
@@ -199,7 +206,10 @@ carddone.menu.loadPagePC = function (taskid, hostid, hostid2) {
                 viewReportButton: theme.viewReportButton,
                 input: theme.input,
                 formReportListLayout: theme.formReportListLayout,
-                editReportForm: theme.editReportForm
+                editReportForm: theme.editReportForm,
+                viewMaps: theme.viewMaps,
+                reportEditGroupForm: theme.reportEditGroupForm,
+                reportInitForm: theme.reportInitForm
             }
             holder.name = LanguageModule.text("txt_my_report");
             carddone.menu.tabPanel.addChild(holder);
@@ -259,48 +269,41 @@ carddone.menu.loadPagePC = function (taskid, hostid, hostid2) {
                 cardAddFieldForm: theme.cardAddFieldForm,
                 cardAddFileForm: theme.cardAddFileForm,
                 formKnowledgeEdit: theme.formKnowledgeEdit,
-                moveCard: theme.moveCard
+                chooseActivitySendMail: theme.chooseActivitySendMail,
+                previewMailActivity: theme.previewMailActivity,
+                getContentPreviewMailActivity: theme.getContentPreviewMailActivity,
+                viewSendMailFunc: theme.viewSendMailFunc,
+                moveCard: theme.moveCard,
+                sendMessage: carddone.sendMessageFunc,
+                cardContentDataForm: theme.cardContentDataForm
             }
             holder.name = LanguageModule.text("txt_cards");
             carddone.menu.tabPanel.addChild(holder);
-            carddone.cards.init(host, hostid.boardid).then(function(){
+            carddone.cards.init(host, hostid.boardid, hostid.archivedCard).then(function(){
                 if (hostid.cardid) {
                     var editActivity = function(){
                         if (!hostid.objid) return;
                         switch (hostid.type) {
                             case 'task':
-                                if (hostid.permission == 'view') return;
+                                // if (hostid.permission == 'view') return;
                                 carddone.cards.addTaskForm(host, hostid.cardid, hostid.objid);
                                 break;
                             case 'meeting':
-                                if (hostid.permission == 'view') return;
+                                // if (hostid.permission == 'view') return;
                                 carddone.cards.addMeetingForm(host, hostid.cardid, hostid.objid);
                                 break;
                             case 'call':
-                                if (hostid.permission == 'view') return;
+                                // if (hostid.permission == 'view') return;
                                 carddone.cards.addCallForm(host, hostid.cardid, hostid.objid);
                                 break;
                             case 'checklist':
-                                if (hostid.permission == 'view') return;
+                                // if (hostid.permission == 'view') return;
                                 carddone.cards.addCheckListForm(host, hostid.cardid, hostid.objid);
                                 break;
                             default:
                         }
                     }
-                    if (data_module.cardList[hostid.cardid].content){
-                        carddone.cards.prevEditCard(host, hostid.listid, hostid.cardid).then(editActivity);
-                    }
-                    else {
-                        data_module.pendingData[data_module.cardList[hostid.cardid].heapIndex].onLoad.push(function(){
-                            carddone.cards.prevEditCard(host, hostid.listid, hostid.cardid).then(editActivity);
-                        });
-                        data_module.dataManager[-100] = {
-                            startIndex: data_module.cardList[hostid.cardid].heapIndex,
-                            endIndex: data_module.cardList[hostid.cardid].heapIndex + 1
-                        };
-                        data_module.boardArray.push(-100);
-                        data_module.boardActive = -100;
-                    }
+                    carddone.cards.prevEditCard(host, hostid.listid, hostid.cardid, hostid.permission).then(editActivity);
                 }
             });
             break;
@@ -362,6 +365,7 @@ carddone.menu.loadPagePC = function (taskid, hostid, hostid2) {
                 formCompanyInit: theme.formCompanyInit,
                 formCompanyContentData: theme.formCompanyContentData,
                 formCompanyEdit: theme.formCompanyEdit,
+                formCompanyMerge: theme.formCompanyMerge,
                 formContactEdit: theme.formContactEdit,
                 formCompanyGetRow: theme.formCompanyGetRow,
                 formContactGetRow: theme.formContactGetRow,
@@ -422,16 +426,12 @@ carddone.menu.loadPagePC = function (taskid, hostid, hostid2) {
             break;
         case 19:
             host.funcs = {
-                closeButton:  theme.closeButton,
-                saveButton: theme.saveButton,
-                saveCloseButton: theme.saveCloseButton,
-                addButton: theme.addButton,
-                okButton: theme.okButton,
-                input: theme.input,
-                accountGroupInitForm: theme.accountGroupInitForm,
-                accountGroupEditForm: theme.accountGroupEditForm
+                formAccountGroupInit: theme.formAccountGroupInit,
+                formAccountGroupEdit: theme.formAccountGroupEdit,
+                formAccountGroupContentData: theme.formAccountGroupContentData,
+                formAccountGroupGetRow: theme.formAccountGroupGetRow
             }
-            holder.name = LanguageModule.text("txt_account_group");
+            holder.name = LanguageModule.text("txt_user_groups");
             carddone.menu.tabPanel.addChild(holder);
             carddone.account_group.init(host);
             break;
@@ -545,6 +545,31 @@ carddone.menu.loadPagePC = function (taskid, hostid, hostid2) {
             carddone.menu.tabPanel.addChild(holder);
             carddone.reminder.init(host);
             break;
+        case 28:
+            host.funcs = {
+                formMapsInit: theme.formMapsInit
+            };
+            holder.name = LanguageModule.text("txt_maps");
+            carddone.menu.tabPanel.addChild(holder);
+            carddone.maps.init(host);
+            break;
+        case 29:
+            if (carddone.dashBoardTab !== undefined){
+                carddone.menu.tabPanel.activeTab(carddone.dashBoardTab.holder.id);
+            }
+            else {
+                host.funcs = {
+                    formDashboardInit: theme.formDashboardInit
+                };
+                holder.name = LanguageModule.text("txt_dashboard");
+                carddone.menu.tabPanel.addChild(holder);
+                carddone.dashboard.init(host);
+                carddone.dashBoardTab = host;
+                holder.on("remove", function(event){
+                    delete carddone.dashBoardTab;
+                });
+            }
+            break;
         default:
             holder.innerHTML = "under construction (" + taskid + ")";
             break;
@@ -585,12 +610,20 @@ carddone.menu.showNotification = function(host){
 
 carddone.menu.loadPageMobile = function (taskid, hostid) {
     return new Promise(function(resolveMes, rejectMes){
+        window.backLayoutFunc = [];
         var holder;
         if (carddone.menu.staticFrameTaskIds.indexOf(taskid) >= 0 && carddone.menu.staticFrameTasks[taskid]){
             holder = carddone.menu.staticFrameTasks[taskid].holder;
             holder.requestActive();
             carddone.menu.mobileTabbar.value = taskid;
             carddone.menu.showMobileTabbar(true);
+            if (taskid == 7){
+                if (carddone.listTabChat.length > 0){
+                    if (hostid > 0){
+                        carddone.chats.openNewChatFromCard(carddone.listTabChat[0], hostid);
+                    }
+                }
+            }
             resolveMes();
             return ;
         }
@@ -613,8 +646,10 @@ carddone.menu.loadPageMobile = function (taskid, hostid) {
             frameList: frameList
         };
         carddone.menu.staticFrameTasks[taskid] = host;
-        carddone.menu.tabPanel.addChild(holder);
-        holder.requestActive();
+        if (taskid != 11 || !hostid.isMobile){
+            carddone.menu.tabPanel.addChild(holder);
+            holder.requestActive();
+        }
         switch (taskid) {
             case 100:
                 host.funcs = {
@@ -681,7 +716,8 @@ carddone.menu.loadPageMobile = function (taskid, hostid) {
                     input: theme.input,
                     boardInitForm: theme.boardInitForm,
                     boardContentDataForm: theme.boardContentDataForm,
-                    boardEditForm: theme.boardEditForm
+                    boardEditForm: theme.boardEditForm,
+                    boardEditGroupForm: theme.boardEditGroupForm
                 }
                 carddone.boards.init(host);
                 break;
@@ -725,7 +761,10 @@ carddone.menu.loadPageMobile = function (taskid, hostid) {
                     viewReportButton: theme.viewReportButton,
                     input: theme.input,
                     formReportListLayout: theme.formReportListLayout,
-                    editReportForm: theme.editReportForm
+                    editReportForm: theme.editReportForm,
+                    viewMaps: theme.viewMaps,
+                    reportEditGroupForm: theme.reportEditGroupForm,
+                    reportInitForm: theme.reportInitForm
                 }
                 carddone.my_report.init(host);
                 break;
@@ -777,9 +816,48 @@ carddone.menu.loadPageMobile = function (taskid, hostid) {
                     cardAddWaitForm: theme.cardAddWaitForm,
                     cardAddCheckListForm: theme.cardAddCheckListForm,
                     cardAddFieldForm: theme.cardAddFieldForm,
-                    formKnowledgeEdit: theme.formKnowledgeEdit
+                    cardAddFileForm: theme.cardAddFileForm,
+                    formKnowledgeEdit: theme.formKnowledgeEdit,
+                    chooseActivitySendMail: theme.chooseActivitySendMail,
+                    previewMailActivity: theme.previewMailActivity,
+                    getContentPreviewMailActivity: theme.getContentPreviewMailActivity,
+                    viewSendMailFunc: theme.viewSendMailFunc,
+                    moveCard: theme.moveCard,
+                    sendMessage: carddone.sendMessageFunc,
+                    cardContentDataForm: theme.cardContentDataForm
                 }
-                carddone.cards.init(host, hostid.boardid);
+                if (hostid.isMobile){
+                    host.holder = hostid.holder;
+                    host.frameList = hostid.frameList;
+                    host.isMobile = hostid.isMobile;
+                }
+                carddone.cards.init(host, hostid.boardid, hostid.archivedCard).then(function(){
+                    if (hostid.cardid) {
+                        var editActivity = function(){
+                            if (!hostid.objid) return;
+                            switch (hostid.type) {
+                                case 'task':
+                                    // if (hostid.permission == 'view') return;
+                                    carddone.cards.addTaskForm(host, hostid.cardid, hostid.objid);
+                                    break;
+                                case 'meeting':
+                                    // if (hostid.permission == 'view') return;
+                                    carddone.cards.addMeetingForm(host, hostid.cardid, hostid.objid);
+                                    break;
+                                case 'call':
+                                    // if (hostid.permission == 'view') return;
+                                    carddone.cards.addCallForm(host, hostid.cardid, hostid.objid);
+                                    break;
+                                case 'checklist':
+                                    // if (hostid.permission == 'view') return;
+                                    carddone.cards.addCheckListForm(host, hostid.cardid, hostid.objid);
+                                    break;
+                                default:
+                            }
+                        }
+                        carddone.cards.prevEditCard(host, hostid.listid, hostid.cardid, hostid.permission).then(editActivity);
+                    }
+                });
                 break;
             case 13:
                 host.funcs = {
@@ -874,15 +952,11 @@ carddone.menu.loadPageMobile = function (taskid, hostid) {
                 break;
             case 19:
                 host.funcs = {
-                    closeButton:  theme.closeButton,
-                    saveButton: theme.saveButton,
-                    saveCloseButton: theme.saveCloseButton,
-                    addButton: theme.addButton,
-                    okButton: theme.okButton,
-                    input: theme.input,
-                    accountGroupInitForm: theme.accountGroupInitForm,
-                    accountGroupEditForm: theme.accountGroupEditForm
-                }
+                    formAccountGroupInit: theme.formAccountGroupInit,
+                    formAccountGroupEdit: theme.formAccountGroupEdit,
+                    formAccountGroupContentData: theme.formAccountGroupContentData,
+                    formAccountGroupGetRow: theme.formAccountGroupGetRow
+                };
                 carddone.account_group.init(host);
                 break;
             case 20:
@@ -957,6 +1031,12 @@ carddone.menu.loadPageMobile = function (taskid, hostid) {
                     formReminderInit: theme.formReminderInit
                 }
                 carddone.reminder.init(host);
+                break;
+            case 28:
+                host.funcs = {
+                    formMapsInit: theme.formMapsInit
+                }
+                carddone.maps.init(host);
                 break;
             default:
                 holder.innerHTML = "under construction (" + taskid + ")";
@@ -1156,6 +1236,16 @@ carddone.menu.showProfile = function (host) {
                             carddone.menu.userprofile_update_submit(host, 1);
                         }
                     };
+                    var signature = "", noti = {
+                        card_assign_to: false,
+                        activity_assign_to: false,
+                        activity_participant: false
+                    };
+                    if (host.dataUser.config != ""){
+                        var config = EncodingClass.string.toVariable(host.dataUser.config);
+                        if (config.signature !== undefined) signature = config.signature;
+                        if (config.noti !== undefined) noti = config.noti;
+                    }
                     host.personal_profileEdit = host.funcs.formPersonalProfile({
                         cmdbutton: cmdbutton,
                         data: {
@@ -1165,7 +1255,9 @@ carddone.menu.showProfile = function (host) {
                             email: host.dataUser.email,
                             language: LanguageModule.defaultcode,
                             languageList: contentModule.generateLanguageList(),
-                            comment: host.dataUser.comment
+                            comment: host.dataUser.comment,
+                            signature: signature,
+                            noti: noti
                         },
                     });
                     host.holder.addChild(host.personal_profileEdit);
@@ -1184,6 +1276,7 @@ carddone.menu.showProfile = function (host) {
 carddone.menu.userprofile_update_submit = function (host, typesubmit) {
     var params = [], homeid = systemconfig.userid;
     var data = host.personal_profileEdit.getValue();
+    if (!data) return;
     if (data.newpassword !== undefined){
         params.push({name: "oldpassword",value: data.oldpassword});
         params.push({name: "newpassword",value: data.newpassword});
@@ -1193,6 +1286,7 @@ carddone.menu.userprofile_update_submit = function (host, typesubmit) {
     params.push({name: "email",value: data.email});
     params.push({name: "comment", value: data.comment});
     params.push({name: "language",value: data.language});
+    params.push({name: "config",value: EncodingClass.string.fromVariable(data.config)});
     ModalElement.show_loading();
     FormClass.api_call({
         url: "user_update2.php",
@@ -1208,6 +1302,13 @@ carddone.menu.userprofile_update_submit = function (host, typesubmit) {
                     if (data.language != LanguageModule.defaultcode) {
                         location.reload(true);
                         return;
+                    }
+                    var uIndex = data_module.users.getByhomeid(systemconfig.userid);
+                    if (uIndex >= 0){
+                        data_module.users.items[uIndex].config = EncodingClass.string.fromVariable(data.config);
+                        data_module.users.items[uIndex].fullname = data.fullname;
+                        data_module.users.items[uIndex].email = data.email;
+                        data_module.users.items[uIndex].comment = data.comment;
                     }
                     if (typesubmit == 1){
                         carddone.menu.tabPanel.removeTab(host.holder.id);
@@ -1403,68 +1504,103 @@ carddone.menu.init = function(holder){
                 });
             }
         }
-        var support_online_iframe = document.createElement("iframe");
-        support_online_iframe.style.border = "none";
-        var iBridge = IFrameBridge.fromIFrame(support_online_iframe);
-        var userid = systemconfig.userid;
-        var companyid = systemconfig.companyid;
-        var serviceid = systemconfig.serviceid;
-        support_online_iframe.src = "https://" + window.location.host + "/online_support/ui_customer_chatbox.php?userid="+ userid +"&&companyid=" +companyid+ "&&serviceid=" + serviceid;
-        support_online_iframe.style.width = "100%";
-        support_online_iframe.style.height = "100%";
-        support_online_iframe.style.border = "none";
-        iBridge.on('minimize', function(){
-            var box = document.getElementById("box_support");
-            if (box) box.style.visibility = "hidden";
-        });
-        iBridge.on('seen', function(){
-            var box = document.getElementById("number_message_no_seen");
-            DOMElement.removeAllChildren(box);
-        });
-        iBridge.on('newmess', function(number){
-            var box = document.getElementById("number_message_no_seen");
-            DOMElement.removeAllChildren(box);
-            box.appendChild(DOMElement.div({
+        if (!carddone.isMobile){
+            var support_online_iframe = document.createElement("iframe");
+            support_online_iframe.style.border = "none";
+            var iBridge = IFrameBridge.fromIFrame(support_online_iframe);
+            var userid = systemconfig.userid;
+            var companyid = systemconfig.companyid;
+            var serviceid = systemconfig.serviceid;
+            support_online_iframe.src = "https://" + window.location.host + "/online_support/ui_customer_chatbox.php?userid="+ userid +"&&companyid=" +companyid+ "&&serviceid=" + serviceid;
+            support_online_iframe.style.width = "100%";
+            support_online_iframe.style.height = "100%";
+            support_online_iframe.style.border = "none";
+            var online_support_ctn = DOMElement.div({
                 attrs: {
-                    className: "button-number"
+                    style: {
+                        position: "fixed",
+                        zIndex: 10000001,
+                        right: 0,
+                        bottom: 0
+                    },
+                    className: "card-header-box-support-ctn"
                 },
-                text: number
-            }));
-        });
-        var support_online = DOMElement.div({
-            attrs: {
-                style: {
-                    height: "50px",
-                    width: "200px",
-                    backgroundColor: "#c9f1fd",
-                    cursor: "pointer",
-                    lineHeight: "50px",
-                    textAlign: "center",
-                    position: "relative"
+                children: [DOMElement.div({
+                    attrs: {
+                        id: "box_support",
+                        style: {
+                            position: "absolute",
+                            right: "20px",
+                            bottom: "10px",
+                            boxShadow: "0 6px 12px #000250",
+                            visibility: "hidden",
+                            height: "600px",
+                            width: "400px",
+                            borderRadius: "20px"
+                        }
+                    },
+                    children: [support_online_iframe]
+                })]
+            });
+            document.body.appendChild(online_support_ctn);
+            iBridge.on('minimize', function(){
+                var box = document.getElementById("box_support");
+                if (box) box.style.visibility = "hidden";
+            });
+            iBridge.on('seen', function(){
+                var box = document.getElementById("number_message_no_seen");
+                DOMElement.removeAllChildren(box);
+            });
+            iBridge.on('newmess', function(number){
+                var box = document.getElementById("number_message_no_seen");
+                DOMElement.removeAllChildren(box);
+                box.appendChild(DOMElement.div({
+                    attrs: {
+                        className: "button-number"
+                    },
+                    text: number
+                }));
+            });
+            var support_online = absol._({
+                tag: 'onscreenwidget',
+                id: 'chat-widget',
+                child: {
+                    tag: 'img',
+                    class: 'bsc-widget-support-img',
+                    props: {
+                        src: 'support_online.png'
+                    }
                 },
-                onclick: function(){
-                    carddone.menu.toggleSupportOnline(holder, iBridge);
+                props:{
+                    config:{
+                        cx: 5, cy: 95// default config, percent (%) unit in screen
+                    }
+                },
+                on: {
+                    click: function(){
+                        carddone.menu.toggleSupportOnline(holder, iBridge);
+                    }
                 }
-            }
-        });
-        iBridge.on('change_type_online', function(type_online){
-            DOMElement.removeAllChildren(support_online);
-            switch (type_online) {
-                case -1:
-                    support_online.appendChild(DOMElement.span({
-                        text: "Ngoài giờ làm việc"
-                    }));
-                    break;
-                case 0:
-                    support_online.appendChild(DOMElement.span({
-                        text: LanguageModule.text("txt_online_support")
-                    }));
-                    break;
-                default:
-
-            }
-        });
-        window.iBridge = iBridge;
+            }).addTo(document.body);
+            // iBridge.on('change_type_online', function(type_online){
+                //     DOMElement.removeAllChildren(support_online);
+                //     switch (type_online) {
+                    //         case -1:
+                    //             support_online.appendChild(DOMElement.span({
+                        //                 text: "Ngoài giờ làm việc"
+                        //             }));
+                        //             break;
+                        //         case 0:
+                        //             support_online.appendChild(DOMElement.span({
+                            //                 text: LanguageModule.text("txt_online_support")
+                            //             }));
+                            //             break;
+                            //         default:
+                            //
+                            //     }
+                            // });
+            window.iBridge = iBridge;
+        }
         DOMElement.removeAllChildren(holder);
         var checkIdIsTabChat = function(id){
             for (var i = 0; i < carddone.listTabChat.length; i++){
@@ -1475,7 +1611,7 @@ carddone.menu.init = function(holder){
             return null;
         };
         var notifyMePC = function(content){
-            console.log(content);
+            // console.log(content);
             var noticontent, title = "Carddone";
             title = contentModule.getUsernameFullnameByhomeid(data_module.users, content.userid);
             switch (content.dataDraw[content.dataDraw.length - 1].content_type) {
@@ -1492,150 +1628,175 @@ carddone.menu.init = function(holder){
             }
             if (!("Notification" in window)) {
                 alert("This browser does not support system notifications");
+                return;
             }
             else if (Notification.permission === "granted") {
                 var notification = new Notification(title, {
                     body: noticontent,
-                    image: "https://www.google.com/search?q=image&rlz=1C1CHBF_enVN819VN819&sxsrf=ALeKk008K94DLKwX8J5baWt_VbyLi6bPNQ:1594883944456&source=lnms&tbm=isch&sa=X&ved=2ahUKEwj1ld7XndHqAhWabn0KHaWfC5AQ_AUoAXoECAwQAw&biw=1920&bih=937#imgrc=saXt3gObqm30jM",
                     data: {
                         content: content
                     },
                     icon: "../images2/carddone_favicon.ico"
                 });
+                notification.onclick = function(){
+                    if (window.focus) window.focus();
+                    if (carddone.listTabChat.length == 0){
+                        carddone.menu.loadPage(7, undefined, notification.data.content.sessionid);
+                    }
+                    else {
+                        var tabChatLast;
+                        for (var i = carddone.menu.tabPanel.historyOfTab.length - 1; i >= 0; i --){
+                            tabChatLast = checkIdIsTabChat(carddone.menu.tabPanel.historyOfTab[i]);
+                            if (tabChatLast !== null){
+                                carddone.menu.tabPanel.activeTab(carddone.menu.tabPanel.historyOfTab[i]);
+                                tabChatLast.resolveOpenChat(notification.data.content.sessionid);
+                                break;
+                            }
+                        }
+                    }
+                };
             }
             else if (Notification.permission !== 'denied') {
                 Notification.requestPermission(function (permission) {
                     if (permission === "granted") {
                         var notification = new Notification(title, {
                             body: noticontent,
-                            image: "https://www.google.com/search?q=image&rlz=1C1CHBF_enVN819VN819&sxsrf=ALeKk008K94DLKwX8J5baWt_VbyLi6bPNQ:1594883944456&source=lnms&tbm=isch&sa=X&ved=2ahUKEwj1ld7XndHqAhWabn0KHaWfC5AQ_AUoAXoECAwQAw&biw=1920&bih=937#imgrc=saXt3gObqm30jM",
                             data: {
                                 content: content
                             },
                             icon: "../images2/carddone_favicon.ico"
                         });
+                        notification.onclick = function(){
+                            if (window.focus) window.focus();
+                            if (carddone.listTabChat.length == 0){
+                                carddone.menu.loadPage(7, undefined, notification.data.content.sessionid);
+                            }
+                            else {
+                                var tabChatLast;
+                                for (var i = carddone.menu.tabPanel.historyOfTab.length - 1; i >= 0; i --){
+                                    tabChatLast = checkIdIsTabChat(carddone.menu.tabPanel.historyOfTab[i]);
+                                    if (tabChatLast !== null){
+                                        carddone.menu.tabPanel.activeTab(carddone.menu.tabPanel.historyOfTab[i]);
+                                        tabChatLast.resolveOpenChat(notification.data.content.sessionid);
+                                        break;
+                                    }
+                                }
+                            }
+                        };
                     }
                 });
             }
-            notification.onclick = function(){
-                if (window.focus) window.focus();
-                if (carddone.listTabChat.length == 0){
-                    carddone.menu.loadPage(7, undefined, notification.data.content.sessionid);
-                }
-                else {
-                    var tabChatLast;
-                    for (var i = carddone.menu.tabPanel.historyOfTab.length - 1; i >= 0; i --){
-                        tabChatLast = checkIdIsTabChat(carddone.menu.tabPanel.historyOfTab[i]);
-                        if (tabChatLast !== null){
-                            carddone.menu.tabPanel.activeTab(carddone.menu.tabPanel.historyOfTab[i]);
-                            tabChatLast.resolveOpenChat(notification.data.content.sessionid);
-                            break;
-                        }
-                    }
-                }
-            };
         };
         var onMessageFunc = function(message){
-            for (var i = 0; i < carddone.listTabChat.length; i++){
-                if (message.content.tabid == carddone.listTabChat[i].holder.id) continue;
-                carddone.listTabChat[i].resolveMessage(message);
-            }
-            if (message.content.userid == systemconfig.userid) return;
-            if (message.content.listMember.indexOf(systemconfig.userid) < 0) return;
-            if (message.content.type != "addmessage") return;
-            if (!carddone.isMobile){
-                // carddone.menu.removeNotificationQueue(message.content);
-                var isActive = false;
-                if (document.hasFocus()){
-                    var activetabid = carddone.menu.tabPanel.getActiveTabId();
-                    if (activetabid !== null){
-                        for (var i = 0; i < carddone.listTabChat.length; i++){
-                            if (carddone.listTabChat[i].holder.id == activetabid){
-                                isActive = true;
-                                break;
+            switch (message.content.messageType) {
+                case "chat":
+                    if (!message.content.listMember) return;
+                    for (var i = 0; i < carddone.listTabChat.length; i++){
+                        if (message.content.tabid == carddone.listTabChat[i].holder.id) continue;
+                        carddone.listTabChat[i].resolveMessage(message);
+                    }
+                    if (message.content.userid == systemconfig.userid) return;
+                    if (!carddone.chats.checkIsMember(message.content.listMember)) return;
+                    if (message.content.type != "addmessage") return;
+                    if (!carddone.isMobile){
+                        // carddone.menu.removeNotificationQueue(message.content);
+                        var isActive = false;
+                        if (document.hasFocus()){
+                            var activetabid = carddone.menu.tabPanel.getActiveTabId();
+                            if (activetabid !== null){
+                                for (var i = 0; i < carddone.listTabChat.length; i++){
+                                    if (carddone.listTabChat[i].holder.id == activetabid){
+                                        isActive = true;
+                                        break;
+                                    }
+                                }
                             }
+                        }
+                        if (!isActive){
+                            notifyMePC(message.content);
+                            //carddone.audioChatElt.firstChild.play();
                         }
                     }
-                }
-                if (!isActive){
-                    notifyMePC(message.content);
-                    //carddone.audioChatElt.firstChild.play();
-                }
-            }
-            else {
-                var viewNotificationInMobile = function(content){
-                    carddone.menu.removeNotificationQueue(content);
-                    if (content.sessionid != carddone.sessionIdActive){
-                        //carddone.audioChatElt.firstChild.play();
-                        var noticontent = "Tin nhắn mới", title = "Carddone", image = "";
-                        title = contentModule.getUsernameFullnameByhomeid(data_module.users, content.userid);
-                        for (var i = 0; i < content.dataDraw.length; i++){
-                            switch (content.dataDraw[i].content_type) {
-                                case "text":
-                                    noticontent = content.dataDraw[i].content;
-                                    break;
-                                case "file":
-                                    noticontent = "Đã gửi tệp đính kèm";
-                                    break;
-                                case "img":
-                                    noticontent = "Đã gửi ảnh";
-                                    break;
-                            }
-                        }
-                        var ctn = DOMElement.div({
-                            children: [
-                                DOMElement.div({
+                    else {
+                        var viewNotificationInMobile = function(content){
+                            carddone.menu.removeNotificationQueue(content);
+                            if (content.sessionid != carddone.sessionIdActive){
+                                //carddone.audioChatElt.firstChild.play();
+                                var noticontent = "Tin nhắn mới", title = "Carddone", image = "";
+                                title = contentModule.getUsernameFullnameByhomeid(data_module.users, content.userid);
+                                for (var i = 0; i < content.dataDraw.length; i++){
+                                    switch (content.dataDraw[i].content_type) {
+                                        case "text":
+                                            noticontent = content.dataDraw[i].content;
+                                            break;
+                                        case "file":
+                                            noticontent = "Đã gửi tệp đính kèm";
+                                            break;
+                                        case "img":
+                                            noticontent = "Đã gửi ảnh";
+                                            break;
+                                    }
+                                }
+                                var ctn = DOMElement.div({
+                                    children: [
+                                        DOMElement.div({
+                                            attrs: {
+                                                style: {
+                                                    fontSize: "14px",
+                                                    fontWeight: "bold"
+                                                }
+                                            },
+                                            text: title
+                                        })
+                                    ]
+                                });
+                                ctn.appendChild(DOMElement.div({
                                     attrs: {
                                         style: {
-                                            fontSize: "14px",
-                                            fontWeight: "bold"
+                                            fontSize: "13px",
+                                            paddingTop: "10px"
                                         }
                                     },
-                                    text: title
-                                })
-                            ]
-                        });
-                        ctn.appendChild(DOMElement.div({
-                            attrs: {
-                                style: {
-                                    fontSize: "13px",
-                                    paddingTop: "10px"
-                                }
-                            },
-                            text: noticontent
-                        }));
-                        var myBlinkModalInstance = absol.require('mblinkmodal').newInstance({
-                            child: [ctn],
-                            on: {
-                                click: function () {
-                                    myBlinkModalInstance.close();
-                                    carddone.menu.loadPage(7).then(function(value){
-                                        console.log("loadchatend");
-                                        carddone.menu.openChatMobile(content.sessionid);
-                                    });
-                                }
-                            },
-                            duration: 10000
-                        });
-                    }
-                };
-                var content = message.content;
-                if (window.isApp){
-                    window.ReactNativeWebView.postMessage(JSON.stringify({name: "getStatusApp"}));
-                    function GetToken(message){
-                        var data = message.data;
-                        console.log(data);
-                        if (data.name == "getStatusApp"){
-                            if (data.value == "active"){
-                                viewNotificationInMobile(content);
+                                    text: noticontent
+                                }));
+                                var myBlinkModalInstance = absol.require('mblinkmodal').newInstance({
+                                    child: [ctn],
+                                    on: {
+                                        click: function () {
+                                            myBlinkModalInstance.close();
+                                            carddone.menu.loadPage(7).then(function(value){
+                                                console.log("loadchatend");
+                                                carddone.menu.openChatMobile(content.sessionid);
+                                            });
+                                        }
+                                    },
+                                    duration: 10000
+                                });
                             }
-                            window.removeEventListener("message",this);
+                        };
+                        var content = message.content;
+                        if (window.isApp){
+                            window.ReactNativeWebView.postMessage(JSON.stringify({name: "getStatusApp"}));
+                            function GetToken(message){
+                                var data = message.data;
+                                console.log(data);
+                                if (data.name == "getStatusApp"){
+                                    if (data.value == "active"){
+                                        viewNotificationInMobile(content);
+                                    }
+                                    window.removeEventListener("message",this);
+                                }
+                            };
+                            window.addEventListener("message", GetToken);
                         }
-                    };
-                    window.addEventListener("message", GetToken);
-                }
 
+                    }
+                    break;
+                case "card":
+                    carddone.cards.onReceivedMessage(message.content);
+                    break;
             }
+
         };
         var hostName = window.domain;
         var x = hostName.indexOf("://");
@@ -1649,6 +1810,7 @@ carddone.menu.init = function(holder){
            host: hostName,
            channel: channel + "/carddone",
            onMessage: function(message){
+               console.log(message);
                onMessageFunc(message);
            },
            onConnectionLost: function(message){
@@ -1658,7 +1820,12 @@ carddone.menu.init = function(holder){
                console.log("connect_" + (new Date()).getTime());
            },
            onClosed: function(message){
-               console.log("onClosed");
+               console.log("onClosed", message);
+           },
+           onReconnect: function(){
+               // for (var i = 0; i < carddone.listTabChat.length; i++){
+               //     carddone.chats.reloadChat(carddone.listTabChat[i]);
+               // }
            }
         });
         setTimeout(function(connectorChat){
@@ -1679,7 +1846,7 @@ carddone.menu.init = function(holder){
             };
         } (connectorChat);
         carddone.menu.menuHeader = theme.menuHeader({
-            serviceLogo: "../logo-card-15-11.png",
+            serviceLogo: "Logo_CardDone_30_White.png",
             serviceActiveList: serviceActiveList,
             serviceInactiveList: serviceInactiveList,
             privSystem: systemconfig.privSystem,
@@ -1744,8 +1911,18 @@ carddone.menu.init = function(holder){
                 reminder: function(){
                     carddone.menu.loadPage(27);
                 },
+                maps: function(){
+                    console.log(11111);
+                    carddone.menu.loadPage(28);
+                },
                 user: function(){
                     carddone.menu.loadPage(2);
+                },
+                dashboard: function(){
+                    carddone.menu.loadPage(29);
+                },
+                user_groups: function(){
+                    carddone.menu.loadPage(30);
                 },
                 personal_profile: function (index) {
                     carddone.menu.loadPage(1);
@@ -1771,35 +1948,153 @@ carddone.menu.init = function(holder){
         });
         holder.appendChild(carddone.menu.layoutInit);
         if (carddone.isMobile){
-            carddone.menu.loadPage(7).then(function(value){
-                window.loadEvent = true;
-            });
+            if (window.isApp){
+                carddone.menu.loadPage(7).then(function(value){
+                    window.loadEvent = true;
+                });
+            }
             // carddone.menu.loadPage(101);
             // carddone.menu.loadPage(4);
             carddone.menu.loadPage(100);
-            FormClass.api_call({
-                url: "database_load.php",
-                params: [{name: "task", value: "load_seen_chat"}],
-                func: function(success, message){
-                    if (success){
-                        if (message.substr(0, 2) == "ok"){
-                            console.log(message);
-                            var st = EncodingClass.string.toVariable(message.substr(2));
-                            carddone.menu.mobileTabbar.items[1].counter = st.count;
+            var hostTemp = {
+                database: {}
+            };
+            var promiseList = {};
+            promiseList.account_groups = new Promise(function(resolve, reject){
+                dbcache.loadByCondition({
+                    name: "account_groups",
+                    cond: function (record) {
+                        return true;
+                    },
+                    callback: function (retval) {
+                        hostTemp.database.account_groups = data_module.makeDatabase(retval);
+                        resolve();
+                    }
+                });
+            });
+            promiseList.privilege_groups = new Promise(function(resolve, reject){
+                dbcache.loadByCondition({
+                    name: "privilege_groups",
+                    cond: function (record) {
+                        return true;
+                    },
+                    callback: function (retval) {
+                        hostTemp.database.privilege_groups = data_module.makeDatabase(retval);
+                        resolve();
+                    }
+                });
+            });
+            promiseList.privilege_group_details = new Promise(function(resolve, reject){
+                dbcache.loadByCondition({
+                    name: "privilege_group_details",
+                    cond: function (record) {
+                        return true;
+                    },
+                    callback: function (retval) {
+                        hostTemp.database.privilege_group_details = data_module.makeDatabase(retval);
+                        resolve();
+                    }
+                });
+            });
+            promiseList.list_member = new Promise(function(resolve, reject){
+                dbcache.loadByCondition({
+                    name: "list_member",
+                    cond: function (record) {
+                        return record.userid == systemconfig.userid;
+                    },
+                    callback: function (retval) {
+                        hostTemp.database.list_member = data_module.makeDatabase(retval);
+                        resolve();
+                    }
+                });
+            });
+            var listAll;
+            promiseList.lists = new Promise(function(resolve, reject){
+                dbcache.loadByCondition({
+                    name: "lists",
+                    cond: function (record) {
+                        return true;
+                    },
+                    callback: function (retval) {
+                        listAll = EncodingClass.string.duplicate(retval);
+                        resolve();
+                    }
+                });
+            });
+            Promise.all([
+                promiseList.lists,
+                promiseList.privilege_groups,
+                promiseList.privilege_group_details,
+                promiseList.account_groups,
+                promiseList.list_member
+            ]).then(function(){
+                contentModule.makeAccountGroupPrivilegeSystem(hostTemp);
+                contentModule.makePriviledgeOfUserGroups(hostTemp);
+                var boardPrivsDic = {};
+                for (var i = 0; i < hostTemp.database.list_member.items.length; i++){
+                    boardPrivsDic[hostTemp.database.list_member.items[i].listid] = hostTemp.database.list_member.items[i].type;
+                }
+                var listsDic1 = {};
+                for (var i = 0; i < listAll.length; i++){
+                    if (listAll[i].type != "list") continue;
+                    if (boardPrivsDic[listAll[i].parentid] !== undefined) {
+                        listsDic1[listAll[i].id] = boardPrivsDic[listAll[i].parentid];
+                    }
+                }
+                var listsDic2 = {};
+                for (var i = 0; i < listAll.length; i++){
+                    if (listAll[i].type != "list") continue;
+                    if (listsDic1[listAll[i].parentid] !== undefined) listsDic2[listAll[i].id] = listsDic1[listAll[i].parentid];
+                }
+                var cards = [];
+                for (var i = 0; i < listAll.length; i++){
+                    if (listAll[i].type != "card") continue;
+                    if (listsDic2[listAll[i].parentid] !== undefined) {
+                        listAll[i].permissionId = listsDic2[listAll[i].parentid];
+                        cards.push(listAll[i]);
+                    }
+                }
+                var account_groupsDic = {};
+                for (var i = 0; i < hostTemp.database.account_groups.items.length; i++){
+                    account_groupsDic[hostTemp.database.account_groups.items[i].id] = hostTemp.database.account_groups.items[i].privOfBoard;
+                }
+                var card_permission_list = [];
+                for (var i = 0; i < cards.length; i++){
+                    if (cards[i].userid == systemconfig.userid || cards[i].owner == systemconfig.userid){
+                        card_permission_list.push(cards[i].id);
+                    }
+                    else if (account_groupsDic[cards[i].permissionId] !== undefined) if (account_groupsDic[cards[i].permissionId][3]){
+                        card_permission_list.push(cards[i].id);
+                    }
+                }
+                FormClass.api_call({
+                    url: "database_load.php",
+                    params: [
+                        {name: "task", value: "load_seen_chat"},
+                        {name: "card_permission_list", value: EncodingClass.string.fromVariable(card_permission_list)}
+                    ],
+                    func: function(success, message){
+                        if (success){
+                            if (message.substr(0, 2) == "ok"){
+                                console.log(message);
+                                var st = EncodingClass.string.toVariable(message.substr(2));
+                                 carddone.menu.mobileTabbar.items[carddone.menu.indexMenuChat].counter = st.count;
+                            }
+                            else {
+                                console.log("failed_load_seen_chat: " + message);
+                            }
                         }
                         else {
                             console.log("failed_load_seen_chat: " + message);
                         }
                     }
-                    else {
-                        console.log("failed_load_seen_chat: " + message);
-                    }
-                }
+                });
             });
         }
         else {
-            carddone.menu.loadPage(4);
+            carddone.menu.loadPage(29);
         }
+        contentModule.showReminder();
         carddone.audioChatElt = DOMElement.div({
             attrs: {
                 style: {
@@ -1815,13 +2110,13 @@ carddone.menu.init = function(holder){
     var prerequisites = [
         "Contact", "Company", "Boards", "Cards", "My_calendar", "Activities", "Reminder",
         "Button", "Common_view", "Chats", "Activities_view",
-        "Contact_view", "Company_view", "Boards_view", "Cards_view", "Chats_view", "Reminder_view"
+        "Contact_view", "Company_view", "Boards_view", "Cards_view", "Chats_view", "Reminder_view", "Maps"
     ];
     if (!carddone.isMobile){
         prerequisites.push(
             "Account", "Datatypes", "My_report_view", "Master_board_view", "Datatypes_view", "Nations_view", "Cities_view",
             "Company_class_view", "Account_view", "Nations", "Cities", "Districts", "Knowledge",
-            "Board_groups", "Report_groups", "Company_class", "My_report", "Knowledge_groups", "Master_board",
+            "Board_groups", "Report_groups", "Company_class", "My_report", "Knowledge_groups", "Master_board", "Dashboard_view",
             "Knowledge_groups_view", "Knowledge_view", "Board_groups_view", "Report_groups_view", "Districts_view", "My_calendar_view"
         );
     }

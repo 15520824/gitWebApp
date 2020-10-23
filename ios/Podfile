@@ -1,8 +1,8 @@
 platform :ios, '9.0'
 require_relative '../node_modules/@react-native-community/cli-platform-ios/native_modules'
 
-target 'ReactNativeWebApp' do
-  # Pods for ReactNativeWebApp
+target 'CardDone' do
+  # Pods for CardDone
   pod 'FBLazyVector', :path => "../node_modules/react-native/Libraries/FBLazyVector"
   pod 'FBReactNativeSpec', :path => "../node_modules/react-native/Libraries/FBReactNativeSpec"
   pod 'RCTRequired', :path => "../node_modules/react-native/Libraries/RCTRequired"
@@ -43,7 +43,7 @@ target 'ReactNativeWebApp' do
 
   pod 'RNCAsyncStorage', :path => '../node_modules/@react-native-community/async-storage'
 
-  target 'ReactNativeWebAppTests' do
+  target 'CardDoneTests' do
     inherit! :search_paths
     # Pods for testing
   end
@@ -51,10 +51,10 @@ target 'ReactNativeWebApp' do
   use_native_modules!
 end
 
-target 'ReactNativeWebApp-tvOS' do
-  # Pods for ReactNativeWebApp-tvOS
+target 'CardDone-tvOS' do
+  # Pods for CardDone-tvOS
 
-  target 'ReactNativeWebApp-tvOSTests' do
+  target 'CardDone-tvOSTests' do
     inherit! :search_paths
     # Pods for testing
   end

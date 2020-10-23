@@ -1,0 +1,57 @@
+/*
+Hiện giờ không dùng đến chúng nữa
+
+.cd-work-calendar-header {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.cd-work-calendar-header>label {
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 10px;
+}
+
+.cd-work-calendar-header>label:not(:first-child) {
+    margin-left: 20px;
+}
+
+.cd-work-calendar-header .absol-selectmenu {
+    vertical-align: middle;
+}
+
+.cd-work-calendar-date {
+    display: inline-block;
+    vertical-align: middle;
+    margin-left: 10px;
+}
+
+.cd-work-calendar-date>button {
+    vertical-align: middle;
+    border: none;
+    padding: 0;
+    height: 30px;
+    background-color: transparent;
+    min-width: 10px;
+    text-align: center;
+    outline: none;
+}
+
+.cd-work-calendar-date>.as-date-input {
+    margin-left: 10px;
+}
+
+.cd-work-calendar-date>button.cd-prev>span,
+.cd-work-calendar-date>button.cd-prev-2>span,
+.cd-work-calendar-date>button.cd-next>span,
+.cd-work-calendar-date>button.cd-next-2>span {
+    font-size: 16px;
+}
+
+.cd-work-calendar-date>button.cd-today {
+    padding-left: 5px;
+    padding-right: 5px;
+}
+*/
+
+/*# sourceURL=card:///src/theme/desktop/my_calendar_view.css?*/

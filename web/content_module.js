@@ -6,8 +6,7 @@ FormClass.readFileAsync = function(file){
             resolve(result[0])});//tại sao lại trả về mảng nhỉ, kì lạ thật
     });
 };
-
-
+///
 
 window.contentModule = {};
 
@@ -245,58 +244,28 @@ contentModule.makeKnowledgeContentData = function(host, content){
     }
 };
 
-contentModule.makeBoardGroupIndex = function(host){
-    for (var i = 0; i < data_module.board_groups.items.length; i++){
-        data_module.board_groups.items[i].childrenIndexList = [];
+contentModule.makeKnowledgeContentDataThanhYen = function(host){
+    for (var i = 0; i < host.database.knowledge.items.length; i++){
+        host.database.knowledge.items[i].groupIndexList = [];
     }
-    var k, t = [];
-    for (var i = 0; i < data_module.board_groups.items.length; i++){
-        if (data_module.board_groups.items[i].parentid == 0){
-            t.push(data_module.board_groups.items[i]);
-        }
-        else {
-            k = -1;
-            for (var j = 0; j < t.length; j++){
-                if (t[j].id == data_module.board_groups.items[i].parentid){
-                    k = j;
-                    break;
+    var k1, k2;
+    var knowledgeDic = contentModule.makeDictionaryIndex(host.database.knowledge.items);
+    var knowledge_groupsDic = contentModule.makeDictionaryIndex(host.database.knowledge_groups.items);
+    for (var i = 0; i < host.database.knowledge_group_link.items.length; i++){
+        host.database.knowledge_group_link.items[i].knowledgeIndex = k1 = knowledgeDic[host.database.knowledge_group_link.items[i].knowledgeid];
+        host.database.knowledge_group_link.items[i].groupIndex = k2 = knowledge_groupsDic[host.database.knowledge_group_link.items[i].knowledge_groupid];
+        if (k1 >= 0){
+            while (k2 >= 0) {
+                if (host.database.knowledge.items[k1].groupIndexList.indexOf(k2) < 0){
+                    host.database.knowledge.items[k1].groupIndexList.push(k2);
+                    k2 = host.database.knowledge_groups.items[k2].parentIndex;
+                }
+                else {
+                    k2 = -1;
                 }
             }
-            if (k >= 0){
-                data_module.board_groups.items[i].parentIndex = k;
-                data_module.board_groups.items[k].childrenIndexList.push(t.length);
-                t.push(data_module.board_groups.items[i]);
-            }
         }
     }
-    data_module.board_groups.items = t;
-};
-
-contentModule.makeReportGroupIndex = function(host){
-    for (var i = 0; i < data_module.report_groups.items.length; i++){
-        data_module.report_groups.items[i].childrenIndexList = [];
-    }
-    var k, t = [];
-    for (var i = 0; i < data_module.report_groups.items.length; i++){
-        if (data_module.report_groups.items[i].parentid == 0){
-            t.push(data_module.report_groups.items[i]);
-        }
-        else {
-            k = -1;
-            for (var j = 0; j < t.length; j++){
-                if (t[j].id == data_module.report_groups.items[i].parentid){
-                    k = j;
-                    break;
-                }
-            }
-            if (k >= 0){
-                data_module.report_groups.items[i].parentIndex = k;
-                data_module.report_groups.items[k].childrenIndexList.push(t.length);
-                t.push(data_module.report_groups.items[i]);
-            }
-        }
-    }
-    data_module.report_groups.items = t;
 };
 
 contentModule.makeChat_session_membersIndex = function(host){
@@ -304,16 +273,23 @@ contentModule.makeChat_session_membersIndex = function(host){
         host.database.chat_sessions.items[i].chat_session_membersIndexList = [];
         host.database.chat_sessions.items[i].membersIdList = [];
         host.database.chat_sessions.items[i].mess_seen_id = 0;
+        host.database.chat_sessions.items[i].start_mess_id = 0;
     }
     var k;
+    var chat_sessionsDic = contentModule.makeDictionaryIndex(host.database.chat_sessions.items);
     for (var i = 0; i < host.database.chat_session_members.items.length; i++){
-        host.database.chat_session_members.items[i].sessionIndex = k = host.database.chat_sessions.getIndex(host.database.chat_session_members.items[i].sessionid);
-        if (k >= 0){
+        host.database.chat_session_members.items[i].sessionIndex = k = chat_sessionsDic[host.database.chat_session_members.items[i].sessionid];
+        if (k !== undefined){
             if (host.database.chat_session_members.items[i].userid == systemconfig.userid){
-                host.database.chat_sessions.items[k].mess_seen_id = parseInt(host.database.chat_session_members.items[i].mess_seen_id, 10);
+                if (host.database.chat_session_members.items[i].mess_seen_id != "") host.database.chat_sessions.items[k].mess_seen_id = parseInt(host.database.chat_session_members.items[i].mess_seen_id, 10);
+                if (host.database.chat_session_members.items[i].start_mess_id != "") host.database.chat_sessions.items[k].start_mess_id = parseInt(host.database.chat_session_members.items[i].start_mess_id, 10);
+                host.database.chat_sessions.items[k].privilege = host.database.chat_session_members.items[i].privilege;
             }
             host.database.chat_sessions.items[k].chat_session_membersIndexList.push(i);
-            host.database.chat_sessions.items[k].membersIdList.push(host.database.chat_session_members.items[i].userid);
+            host.database.chat_sessions.items[k].membersIdList.push({
+                userid: host.database.chat_session_members.items[i].userid,
+                privilege: host.database.chat_session_members.items[i].privilege
+            });
         }
     }
 };
@@ -323,93 +299,123 @@ contentModule.makeChatData = function(host){
         host.database.chat_sessions.items[i].content = EncodingClass.string.toVariable(host.database.chat_sessions.items[i].content);
     }
     var k, archcontent, sesscontent;
+    var chat_sessionsDic = contentModule.makeDictionaryIndex(host.database.chat_sessions.items);
     for (var i = 0; i < host.database.archived_chats.items.length; i++){
-        host.database.archived_chats.items[i].sessionIndex = k = host.database.chat_sessions.getIndex(host.database.archived_chats.items[i].sessionid);
-        host.database.archived_chats.items[i].content = EncodingClass.string.toVariable(host.database.archived_chats.items[i].content);
-        host.database.chat_sessions.items[k].content = host.database.archived_chats.items[i].content.concat(host.database.chat_sessions.items[k].content);
+        host.database.archived_chats.items[i].sessionIndex = k = chat_sessionsDic[host.database.archived_chats.items[i].sessionid];
+        if (k !== undefined){
+            host.database.archived_chats.items[i].content = EncodingClass.string.toVariable(host.database.archived_chats.items[i].content);
+            host.database.chat_sessions.items[k].content = host.database.archived_chats.items[i].content.concat(host.database.chat_sessions.items[k].content);
+        }
     }
 };
 
 contentModule.makeChat_sessionsContent = function(host){
-    host.database.chat_sessions.getByCardid = function(cardid){
-        for (var i = 0; i < host.database.chat_sessions.items.length; i++){
-            if (host.database.chat_sessions.items[i].cardid == cardid) return i;
-        }
-        return -1;
-    };
+    var chat_sessionsCardDic = {};
+    host.database.chat_sessions.items.forEach(function(item, index){
+        chat_sessionsCardDic[item.cardid] = index;
+    });
     for (var i = 0; i < host.database.chat_sessions.items.length; i++){
         host.database.chat_sessions.items[i].content = EncodingClass.string.toVariable(host.database.chat_sessions.items[i].content);
         host.database.chat_sessions.items[i].archivedIdList = [];
         host.database.chat_sessions.items[i].company_contactName = "";
     }
     var k1, k2;
+    var companiesDic = contentModule.makeDictionaryIndex(host.database.companies.items);
     for (var i = 0; i < host.database.company_card.items.length; i++){
-        k1 = host.database.chat_sessions.getByCardid(host.database.company_card.items[i].hostid);
-        k2 = data_module.companies.getIndex(host.database.company_card.items[i].companyid);
-        if (k1 >= 0 && k2 >= 0){
-            host.database.chat_sessions.items[k1].company_contactName += " -- " + data_module.companies.items[k2].name;
+        k1 = chat_sessionsCardDic[host.database.company_card.items[i].hostid];
+        k2 = companiesDic[host.database.company_card.items[i].companyid];
+        if (k1 !== undefined && k2 !== undefined){
+            if (host.database.companies.items[k2].permission > 0){
+                host.database.chat_sessions.items[k1].company_contactName += " -- " + host.database.companies.items[k2].name;
+            }
         }
     }
+    var contactDic = contentModule.makeDictionaryIndex(host.database.contact.items);
     for (var i = 0; i < host.database.contact_card.items.length; i++){
-        k1 = host.database.chat_sessions.getByCardid(host.database.contact_card.items[i].hostid);
-        k2 = data_module.contact.getIndex(host.database.contact_card.items[i].contactid);
-        if (k1 >= 0 && k2 >= 0){
-            host.database.chat_sessions.items[k1].company_contactName += " -- " + data_module.contact.items[k2].firstname + " " + data_module.contact.items[k2].lastname;
+        k1 = chat_sessionsCardDic[host.database.contact_card.items[i].hostid];
+        k2 = contactDic[host.database.contact_card.items[i].contactid];
+        if (k1 !== undefined && k2 !== undefined){
+            if (host.database.contact.items[k2].permission > 0){
+                host.database.chat_sessions.items[k1].company_contactName += " -- " + host.database.contact.items[k2].firstname + " " + host.database.contact.items[k2].lastname;
+            }
         }
     }
     for (var i = 0; i < host.database.chat_sessions.items.length; i++){
         host.database.chat_sessions.items[i].company_contactName = host.database.chat_sessions.items[i].company_contactName.substr(4);
     }
     var k, archcontent, sesscontent;
+    var chat_sessionsDic = contentModule.makeDictionaryIndex(host.database.chat_sessions.items);
     for (var i = 0; i < host.database.archived_chats.items.length; i++){
-        host.database.archived_chats.items[i].sessionIndex = k = host.database.chat_sessions.getIndex(host.database.archived_chats.items[i].sessionid);
-        if (host.database.archived_chats.items[i].content !== undefined){
-            host.database.archived_chats.items[i].content = EncodingClass.string.toVariable(host.database.archived_chats.items[i].content);
-            host.database.chat_sessions.items[k].content = host.database.archived_chats.items[i].content.concat(host.database.chat_sessions.items[k].content);
-        }
-        else {
-            host.database.chat_sessions.items[k].archivedIdList.push(host.database.archived_chats.items[i].id);
+        host.database.archived_chats.items[i].sessionIndex = k = chat_sessionsDic[host.database.archived_chats.items[i].sessionid];
+        if (k !== undefined){
+            if (host.database.archived_chats.items[i].content !== undefined){
+                host.database.archived_chats.items[i].content = EncodingClass.string.toVariable(host.database.archived_chats.items[i].content);
+                host.database.chat_sessions.items[k].content = host.database.archived_chats.items[i].content.concat(host.database.chat_sessions.items[k].content);
+            }
+            else {
+                host.database.chat_sessions.items[k].archivedIdList.push(host.database.archived_chats.items[i].id);
+            }
         }
     }
     for (var i = 0; i < host.database.chat_sessions.items.length; i++){
         k = host.database.chat_sessions.items[i].content.length;
         if (k > 0){
-            host.database.chat_sessions.items[i].lasttime = host.database.chat_sessions.items[i].content[k - 1].m_time;
+            // host.database.chat_sessions.items[i].lasttime = host.database.chat_sessions.items[i].content[k - 1].m_time;
         }
+    }
+    var content;
+    for (var i = 0; i < host.database.chat_sessions.items.length; i++){
+        if (host.database.chat_sessions.items[i].start_mess_id == 0) continue;
+        content = [];
+        for (var j = host.database.chat_sessions.items[i].content.length - 1; j >= 0; j--){
+            if (host.database.chat_sessions.items[i].content[j].localid > host.database.chat_sessions.items[i].start_mess_id) {
+                content.unshift(host.database.chat_sessions.items[i].content[j]);
+            }
+            else if (host.database.chat_sessions.items[i].content[j].localid <= host.database.chat_sessions.items[i].start_mess_id) {
+                host.database.chat_sessions.items[i].archivedIdList = [];
+                break;
+            }
+        }
+        host.database.chat_sessions.items[i].content = content;
     }
 };
 
-contentModule.makeActivitiesCardIndex = function(host){
+contentModule.makeActivitiesCardIndexThanhYen = function(host){
+    var account_groupsDic = {};
+    for (var i = 0; i < host.database.account_groups.items.length; i++){
+        account_groupsDic[host.database.account_groups.items[i].id] = host.database.account_groups.items[i].privOfBoard;
+    }
     var k;
     for (var i = 0; i < host.database.boards.items.length; i++){
-        if (host.database.boards.items[i].userid == systemconfig.userid) host.database.boards.items[i].userPermistion = 1;
-        else host.database.boards.items[i].userPermistion = 0;
+        host.database.boards.items[i].userPermistion = 0;
     }
+    var boardsDic = contentModule.makeDictionaryIndex(host.database.boards.items);
     for (var i = 0; i < host.database.list_member.items.length; i++){
-        host.database.list_member.items[i].boardIndex = k = host.database.boards.getIndex(host.database.list_member.items[i].listid);
-        if (k >= 0) host.database.boards.items[k].userPermistion = host.database.list_member.items[i].type;
+        host.database.list_member.items[i].boardIndex = k = boardsDic[host.database.list_member.items[i].listid];
+        if (k !== undefined) host.database.boards.items[k].userPermistion = host.database.list_member.items[i].type;
     }
     for (var i = 0; i < host.database.boards.items.length; i++){
         host.database.boards.items[i].listIndexList = [];
     }
     for (var i = 0; i < host.database.lists.items.length; i++){
-        host.database.lists.items[i].cardIndexList = [];
+        host.database.lists.items[i].cardIdList = [];
         host.database.lists.items[i].childIndexList = [];
     }
-    for (var i = 0; i < host.database.cards.items.length; i++){
-        host.database.cards.items[i].listIndex = k = host.database.lists.getIndex(host.database.cards.items[i].parentid);
+    var listsDic = contentModule.makeDictionaryIndex(host.database.lists.items);
+    for (var i = host.database.cards.items.length - 1; i >= 0; i--){
+        host.database.cards.items[i].listIndex = k = listsDic[host.database.cards.items[i].parentid];
         if (k >= 0){
-            host.database.lists.items[k].cardIndexList.push(i);
+            host.database.lists.items[k].cardIdList.push(host.database.cards.items[i].id);
         }
     }
     for (var i = 0; i < host.database.lists.items.length; i++){
-        k = host.database.boards.getIndex(host.database.lists.items[i].parentid);
+        k = boardsDic[host.database.lists.items[i].parentid];
         if (k >= 0) {
             host.database.lists.items[i].boardIndex = k;
             host.database.boards.items[k].listIndexList.push(i);
         }
         else {
-            k = host.database.lists.getIndex(host.database.lists.items[i].parentid);
+            k = listsDic[host.database.lists.items[i].parentid];
             if (k >= 0) {
                 host.database.lists.items[i].parentIndex = k;
                 host.database.lists.items[k].childIndexList.push(i);
@@ -417,57 +423,74 @@ contentModule.makeActivitiesCardIndex = function(host){
         }
     }
     var ni, nj, nk;
+    var cardsDic = contentModule.makeDictionaryIndex(host.database.cards.items);
     for (var i = 0; i < host.database.boards.items.length; i++){
         for (var j = 0; j < host.database.boards.items[i].listIndexList.length; j++){
             ni = host.database.boards.items[i].listIndexList[j];
-            for (var k = 0; k < host.database.lists.items[ni].cardIndexList.length; k++){
-                nj = host.database.lists.items[ni].cardIndexList[k];
+            for (var k = 0; k < host.database.lists.items[ni].cardIdList.length; k++){
+                nj = cardsDic[host.database.lists.items[ni].cardIdList[k]];
                 if (host.database.boards.items[i].userPermistion == 0){
-                    if (host.database.cards.items[nj].userid != systemconfig.userid){
-                        switch (host.database.boards.items[i].permission) {
-                            case 0:
-                                host.database.cards.items[nj].permission = "no";
-                                break;
-                            case 1:
-                                host.database.cards.items[nj].permission = "view";
-                                break;
-                            case 2:
-                                host.database.cards.items[nj].permission = "edit";
-                                break;
+                    host.database.cards.items[nj].permission = "no";
+                }
+                else {
+                    if (host.database.cards.items[nj].userid == systemconfig.userid || host.database.cards.items[nj].owner == systemconfig.userid){
+                        if (host.database.cards.items[nj].archived){
+                            host.database.cards.items[nj].permission = "view";
+                        }
+                        else {
+                            host.database.cards.items[nj].permission = "edit";
                         }
                     }
                     else {
-                        host.database.cards.items[nj].permission = "edit";
+                        if (account_groupsDic[host.database.boards.items[i].userPermistion][3]){
+                            if (host.database.cards.items[nj].archived){
+                                host.database.cards.items[nj].permission = "view";
+                            }
+                            else {
+                                host.database.cards.items[nj].permission = "edit";
+                            }
+                        }
+                        else if (account_groupsDic[host.database.boards.items[i].userPermistion][4]){
+                            host.database.cards.items[nj].permission = "view";
+                        }
+                        else {
+                            host.database.cards.items[nj].permission = "no";
+                        }
                     }
-                }
-                else {
-                    host.database.cards.items[nj].permission = "edit";
                 }
             }
             for (var k = 0; k < host.database.lists.items[ni].childIndexList.length; k++){
                 nj = host.database.lists.items[ni].childIndexList[k];
-                for (var l = 0; l < host.database.lists.items[nj].cardIndexList.length; l++){
-                    nk = host.database.lists.items[nj].cardIndexList[l];
+                for (var l = 0; l < host.database.lists.items[nj].cardIdList.length; l++){
+                    nk = cardsDic[host.database.lists.items[nj].cardIdList[l]];
                     if (host.database.boards.items[i].userPermistion == 0){
-                        if (host.database.cards.items[nk].userid != systemconfig.userid){
-                            switch (host.database.boards.items[i].permission) {
-                                case 0:
-                                    host.database.cards.items[nk].permission = "no";
-                                    break;
-                                case 1:
-                                    host.database.cards.items[nk].permission = "view";
-                                    break;
-                                case 2:
-                                    host.database.cards.items[nk].permission = "edit";
-                                    break;
+                        host.database.cards.items[nk].permission = "no";
+                    }
+                    else {
+                        if (host.database.cards.items[nk].userid == systemconfig.userid || host.database.cards.items[nk].owner == systemconfig.userid){
+                            if (host.database.cards.items[nk].archived){
+                                host.database.cards.items[nk].permission = "view";
+                            }
+                            else {
+                                host.database.cards.items[nk].permission = "edit";
                             }
                         }
                         else {
-                            host.database.cards.items[nk].permission = "edit";
+                            if (account_groupsDic[host.database.boards.items[i].userPermistion][3]){
+                                if (host.database.cards.items[nk].archived){
+                                    host.database.cards.items[nk].permission = "view";
+                                }
+                                else {
+                                    host.database.cards.items[nk].permission = "edit";
+                                }
+                            }
+                            else if (account_groupsDic[host.database.boards.items[i].userPermistion][4]){
+                                host.database.cards.items[nk].permission = "view";
+                            }
+                            else {
+                                host.database.cards.items[nk].permission = "no";
+                            }
                         }
-                    }
-                    else {
-                        host.database.cards.items[nk].permission = "edit";
                     }
                 }
             }
@@ -477,18 +500,25 @@ contentModule.makeActivitiesCardIndex = function(host){
         host.database.cards.items[i].company_contactName = "";
     }
     var k1, k2;
+    var cardsDic = contentModule.makeDictionaryIndex(host.database.cards.items);
+    var companiesDic = contentModule.makeDictionaryIndex(host.database.companies.items);
     for (var i = 0; i < host.database.company_card.items.length; i++){
-        host.database.company_card.items[i].cardIndex = k1 = host.database.cards.getIndex(host.database.company_card.items[i].hostid);
-        host.database.company_card.items[i].companyIndex = k2 = data_module.companies.getIndex(host.database.company_card.items[i].companyid);
+        host.database.company_card.items[i].cardIndex = k1 = cardsDic[host.database.company_card.items[i].hostid];
+        host.database.company_card.items[i].companyIndex = k2 = companiesDic[host.database.company_card.items[i].companyid];
         if (k1 >= 0 && k2 >= 0){
-            host.database.cards.items[k1].company_contactName += " -- " + data_module.companies.items[k2].name;
+            if (host.database.companies.items[k2].permission > 0){
+                host.database.cards.items[k1].company_contactName += " -- " + host.database.companies.items[k2].name;
+            }
         }
     }
+    var contactDic = contentModule.makeDictionaryIndex(host.database.contact.items);
     for (var i = 0; i < host.database.contact_card.items.length; i++){
-        host.database.contact_card.items[i].cardIndex = k1 = host.database.cards.getIndex(host.database.contact_card.items[i].hostid);
-        host.database.contact_card.items[i].contactIndex = k2 = data_module.contact.getIndex(host.database.contact_card.items[i].contactid);
+        host.database.contact_card.items[i].cardIndex = k1 = cardsDic[host.database.contact_card.items[i].hostid];
+        host.database.contact_card.items[i].contactIndex = k2 = contactDic[host.database.contact_card.items[i].contactid];
         if (k1 >= 0 && k2 >= 0){
-            host.database.cards.items[k1].company_contactName += " -- " + data_module.contact.items[k2].firstname + " " + data_module.contact.items[k2].lastname;
+            if (host.database.contact.items[k2].permission > 0){
+                host.database.cards.items[k1].company_contactName += " -- " + host.database.contact.items[k2].firstname + " " + host.database.contact.items[k2].lastname;
+            }
         }
     }
     for (var i = 0; i < host.database.cards.items.length; i++){
@@ -499,10 +529,12 @@ contentModule.makeActivitiesCardIndex = function(host){
 
 contentModule.makeCardActivitiesData = function(host){
     var index1, index2;
+    var cardsDic = contentModule.makeDictionaryIndex(host.database.cards.items);
+    var objectsDic = contentModule.makeDictionaryIndex(host.database.objects.items);
     for (var i = 0; i < host.database.obj_list.items.length; i++){
-        index1 = host.database.cards.getIndex(host.database.obj_list.items[i].listid);
-        index2 = host.database.objects.getIndex(host.database.obj_list.items[i].objid);
-        if(index1 != -1 && index2 != -1){
+        index1 = cardsDic[host.database.obj_list.items[i].listid];
+        index2 = objectsDic[host.database.obj_list.items[i].objid];
+        if(index1 !== undefined && index2 !== undefined){
             host.database.cards.items[index1].activitiesList.push(host.database.obj_list.items[i].objid);
             switch (host.database.objects.items[index2].type) {
                 case 'task':
@@ -532,31 +564,12 @@ contentModule.makeCardActivitiesData = function(host){
                 case 'note':
                     host.database.cards.items[index1].noteList.push(host.database.obj_list.items[i].objid);
                     break;
+                case 'sendmail':
+                    host.database.cards.items[index1].sendmailList.push(host.database.obj_list.items[i].objid);
+                    break;
                 default:
 
             }
-        }
-    }
-};
-
-contentModule.makeContactCardData = function(host){
-    var index1, index2;
-    for (var i = 0; i < host.database.contact_card.items.length; i++){
-        index1 = host.database.cards.getIndex(host.database.contact_card.items[i].hostid);
-        index2 = host.database.contact.getIndex(host.database.contact_card.items[i].contactid);
-        if(index1 != -1 && index2 != -1){
-            host.database.cards.items[index1].contactList.push(host.database.contact_card.items[i].contactid);
-        }
-    }
-};
-
-contentModule.makeCompaniesCardData = function(host){
-    var index1, index2;
-    for (var i = 0; i < host.database.companies_card.items.length; i++){
-        index1 = host.database.cards.getIndex(host.database.companies_card.items[i].hostid);
-        index2 = host.database.companies.getIndex(host.database.companies_card.items[i].companyid);
-        if(index1 != -1 && index2 != -1){
-            host.database.cards.items[index1].companyList.push(host.database.companies_card.items[i].companyid);
         }
     }
 };
@@ -568,7 +581,9 @@ contentModule.object_selectionName = function(object_selection){
         case "object":
             return LanguageModule.text("txt_object");
         case "field":
-            return LanguageModule.text("txt_activity");
+            return LanguageModule.text("txt_card");
+        case "contact":
+            return LanguageModule.text("txt_contact");
         case "other":
             return LanguageModule.text("txt_other");
     }
@@ -706,6 +721,19 @@ contentModule.typelists = function(){
                 {name: LanguageModule.text("txt_title"), localid: 'type_file_title', type: -1, default: "", require: false, decpre: 0},
                 {name: LanguageModule.text("txt_filename"), localid: 'type_file_name', type: -1, default: [], require: false, decpre: 0}
             ]
+        }},
+        {id: -27, name: LanguageModule.text("txt_html"), type: 'html'},
+        {id: -28, name: LanguageModule.text("txt_email_list"), type: 'email_list'},
+        {id: -29, name: LanguageModule.text("txt_activity_list"), type: 'activity_list'},
+        {id: -30, name: LanguageModule.text("txt_send_mail"), type: 'structure', object_selection: "activity", content: {
+            details: [
+                {name: LanguageModule.text("txt_content"), localid: 'type_sendmail_content', type: -27, default: "", require: false, decpre: 0},
+                {name: LanguageModule.text("txt_to"), localid: 'type_sendmail_to', type: -28, default: [], require: false, decpre: 0},
+                {name: LanguageModule.text("txt_cc"), localid: 'type_sendmail_cc', type: -28, default: [], require: false, decpre: 0},
+                {name: LanguageModule.text("txt_cc"), localid: 'type_sendmail_bcc', type: -28, default: [], require: false, decpre: 0},
+                {name: LanguageModule.text("txt_subject"), localid: 'type_sendmail_subject', type: -1, default: [], require: false, decpre: 0},
+                {name: LanguageModule.text("txt_activity_list"), localid: 'type_sendmail_activity_list', type: -29, default: [], require: false, decpre: 0}
+            ]
         }}
     ];
     for (var i = 0; i < typelists.length; i++){
@@ -738,54 +766,87 @@ contentModule.getFullnameByhomeid2 = function(users, homeid){
     return "";
 };
 
-contentModule.makeCitiesIndex = function(){
-    if (data_module.cities.isMakeIndex) return;
+contentModule.makeCitiesIndexThanhYen = function(host){
+    if (host.database.cities.isMakeIndex) return;
     var k, t = [];
-    data_module.nations.items.sort(function (a, b) {
-        if (absol.string.nonAccentVietnamese(b.name.toLowerCase()) > absol.string.nonAccentVietnamese(a.name.toLowerCase())) return -1;
-        if (absol.string.nonAccentVietnamese(b.name.toLowerCase()) < absol.string.nonAccentVietnamese(a.name.toLowerCase())) return 1;
+    var holderForSort = host.database.nations.items.map(function(item){
+        return {
+            item: item,
+            val: absol.string.nonAccentVietnamese(item.name.toLowerCase())
+        }
+    });
+    holderForSort.sort(function(a, b){
+        if (a.val < b.val) return -1;
+        if (a.val > b.val) return 1;
         return 0;
     });
-    data_module.cities.items.sort(function (a, b) {
-        if (absol.string.nonAccentVietnamese(b.name.toLowerCase()) > absol.string.nonAccentVietnamese(a.name.toLowerCase())) return -1;
-        if (absol.string.nonAccentVietnamese(b.name.toLowerCase()) < absol.string.nonAccentVietnamese(a.name.toLowerCase())) return 1;
+
+    host.database.nations.items = holderForSort.map(function(holder){
+        return holder.item;
+    });
+    holderForSort = host.database.cities.items.map(function(item){
+        return {
+            item: item,
+            val: absol.string.nonAccentVietnamese(item.name.toLowerCase())
+        }
+    });
+    holderForSort.sort(function(a, b){
+        if (a.val < b.val) return -1;
+        if (a.val > b.val) return 1;
         return 0;
     });
-    for (var i = 0; i < data_module.nations.items.length; i++){
-        data_module.nations.items[i].cityIndexList = [];
+
+    host.database.cities.items = holderForSort.map(function(holder){
+        return holder.item;
+    });
+    for (var i = 0; i < host.database.nations.items.length; i++){
+        host.database.nations.items[i].cityIndexList = [];
     }
-    for (var i = 0; i < data_module.cities.items.length; i++){
-        data_module.cities.items[i].nationIndex = k = data_module.nations.getIndex(data_module.cities.items[i].nationid);
-        if (k >= 0){
-            data_module.nations.items[k].cityIndexList.push(t.length);
-            t.push(data_module.cities.items[i]);
+    var nationsDic = contentModule.makeDictionaryIndex(host.database.nations.items);
+    for (var i = 0; i < host.database.cities.items.length; i++){
+        host.database.cities.items[i].nationIndex = k = nationsDic[host.database.cities.items[i].nationid];
+        if (k !== undefined){
+            host.database.nations.items[k].cityIndexList.push(t.length);
+            t.push(host.database.cities.items[i]);
         }
     }
-    data_module.cities.items = t;
-    data_module.cities.isMakeIndex = true;
+    host.database.cities.items = t;
+    host.database.cities.isMakeIndex = true;
 };
 
-contentModule.makeDistrictsIndex = function(){
-    if (data_module.districts.isMakeIndex) return;
-    data_module.districts.items.sort(function (a, b) {
-        if (absol.string.nonAccentVietnamese(b.name.toLowerCase()) > absol.string.nonAccentVietnamese(a.name.toLowerCase())) return -1;
-        if (absol.string.nonAccentVietnamese(b.name.toLowerCase()) < absol.string.nonAccentVietnamese(a.name.toLowerCase())) return 1;
+contentModule.makeDistrictsIndexThanhYen = function(host){
+    if (host.database.districts.isMakeIndex) return;
+    var holderForSort = host.database.districts.items.map(function(item){
+        return {
+            item: item,
+            val: absol.string.nonAccentVietnamese(item.name.toLowerCase())
+        }
+    });
+    holderForSort.sort(function(a, b){
+        if (a.val < b.val) return -1;
+        if (a.val > b.val) return 1;
         return 0;
     });
-    for (var i = 0; i < data_module.cities.items.length; i++){
-        data_module.cities.items[i].districtIndexList = [];
+
+    host.database.districts.items = holderForSort.map(function(holder){
+        return holder.item;
+    });
+    for (var i = 0; i < host.database.cities.items.length; i++){
+        host.database.cities.items[i].districtIndexList = [];
     }
     var k, k2, t = [];
-    for (var i = 0; i < data_module.districts.items.length; i++){
-        data_module.districts.items[i].cityIndex = k = data_module.cities.getIndex(data_module.districts.items[i].cityid);
-        data_module.districts.items[i].nationIndex = k2 = data_module.nations.getIndex(data_module.districts.items[i].nationid);
+    var nationsDic = contentModule.makeDictionaryIndex(host.database.nations.items);
+    var citiesDic = contentModule.makeDictionaryIndex(host.database.cities.items);
+    for (var i = 0; i < host.database.districts.items.length; i++){
+        host.database.districts.items[i].cityIndex = k = citiesDic[host.database.districts.items[i].cityid];
+        host.database.districts.items[i].nationIndex = k2 = nationsDic[host.database.districts.items[i].nationid];
         if (k >= 0 && k2 >= 0){
-            data_module.cities.items[k].districtIndexList.push(t.length);
-            t.push(data_module.districts.items[i]);
+            host.database.cities.items[k].districtIndexList.push(t.length);
+            t.push(host.database.districts.items[i]);
         }
     }
-    data_module.districts.items = t;
-    data_module.districts.isMakeIndex = true;
+    host.database.districts.items = t;
+    host.database.districts.isMakeIndex = true;
 };
 
 contentModule.makeFormats_list = function(host){
@@ -799,48 +860,75 @@ contentModule.makeFormats_list = function(host){
     }
 };
 
-contentModule.makeTypesListContent = function(){
+contentModule.makeTypesListContentThanhYen = function(host){
     if (!LanguageModule || !LanguageModule.text){
         setTimeout(function(){
-            contentModule.makeTypesListContent();
+            contentModule.makeTypesListContentThanhYen();
         }, 30);
         return;
     }
     var typeHasContent = ["array", "enum", "structure"];
-    for (var i = 0; i < data_module.typelists.items.length; i++){
-        if (typeHasContent.indexOf(data_module.typelists.items[i].type) >= 0){
-            if (data_module.typelists.items[i].content instanceof Object) continue;
-            data_module.typelists.items[i].content = EncodingClass.string.toVariable(data_module.typelists.items[i].content);
+    for (var i = 0; i < host.database.typelists.items.length; i++){
+        if (typeHasContent.indexOf(host.database.typelists.items[i].type) >= 0){
+            if (host.database.typelists.items[i].content instanceof Object) continue;
+            host.database.typelists.items[i].content = EncodingClass.string.toVariable(host.database.typelists.items[i].content);
         }
     }
     var typelists = contentModule.typelists();
     for (var i = 0; i < typelists.length; i++){
-        data_module.typelists.items.unshift(typelists[i]);
+        host.database.typelists.items.unshift(typelists[i]);
     }
 };
 
-contentModule.makeCompanyIndex = function(){
-    if (data_module.companies.isMakeIndex) return;
-    data_module.companies.items.sort(function (a, b) {
-        if (absol.string.nonAccentVietnamese(b.name.toLowerCase()) > absol.string.nonAccentVietnamese(a.name.toLowerCase())) return -1;
-        if (absol.string.nonAccentVietnamese(b.name.toLowerCase()) < absol.string.nonAccentVietnamese(a.name.toLowerCase())) return 1;
+contentModule.makeDictionaryIndex = function(items){
+    var dic = {};
+    for (var i = 0; i < items.length; i++){
+        dic[items[i].id] = i;
+    }
+    return dic;
+};
+
+contentModule.makeCompanyIndexThanhYen = function(host){
+    if (host.database.companies.isMakeIndex) return;
+    var holderForSort = host.database.companies.items.map(function(item){
+        return {
+            item: item,
+            val: absol.string.nonAccentVietnamese(item.name.toLowerCase())
+        }
+    });
+    holderForSort.sort(function(a, b){
+        if (a.val < b.val) return -1;
+        if (a.val > b.val) return 1;
         return 0;
     });
+
+    host.database.companies.items = holderForSort.map(function(holder){
+        return holder.item;
+    });
     var k1, k2, t = [], k3, k4;
-    for (var i = 0; i < data_module.companies.items.length; i++){
-        data_module.companies.items[i].nationIndex = k1 = data_module.nations.getIndex(data_module.companies.items[i].nationid);
-        data_module.companies.items[i].cityIndex = k2 = data_module.cities.getIndex(data_module.companies.items[i].cityid);
-        data_module.companies.items[i].districtIndex = k4 = data_module.districts.getIndex(data_module.companies.items[i].districtid);
-        data_module.companies.items[i].company_classIndex = k3 = data_module.company_class.getIndex(data_module.companies.items[i].company_classid);
-        if ((k4 >= 0 || data_module.companies.items[i].districtid == 0) && (k1 >= 0 || data_module.companies.items[i].nationid == 0) && (k2 >= 0 || data_module.companies.items[i].cityid == 0) && (k3 >= 0 || data_module.companies.items[i].company_classid == 0)){
-            t.push(data_module.companies.items[i]);
+    var districtsDic = contentModule.makeDictionaryIndex(host.database.districts.items);
+    var nationsDic = contentModule.makeDictionaryIndex(host.database.nations.items);
+    var citiesDic = contentModule.makeDictionaryIndex(host.database.cities.items);
+    var company_classDic = contentModule.makeDictionaryIndex(host.database.company_class.items);
+    for (var i = 0; i < host.database.companies.items.length; i++){
+        host.database.companies.items[i].nationIndex = k1 = nationsDic[host.database.companies.items[i].nationid];
+        host.database.companies.items[i].cityIndex = k2 = citiesDic[host.database.companies.items[i].cityid];
+        host.database.companies.items[i].districtIndex = k4 = districtsDic[host.database.companies.items[i].districtid];
+        host.database.companies.items[i].company_classIndex = k3 = company_classDic[host.database.companies.items[i].company_classid];
+        if (
+            (k4 !== undefined || host.database.companies.items[i].districtid == 0)
+            && (k1 !== undefined || host.database.companies.items[i].nationid == 0)
+            && (k2 !== undefined || host.database.companies.items[i].cityid == 0)
+            && (k3 !== undefined || host.database.companies.items[i].company_classid == 0)
+        ){
+            t.push(host.database.companies.items[i]);
         }
     }
-    data_module.companies.items = t;
-    data_module.companies.isMakeIndex = true;
+    host.database.companies.items = t;
+    host.database.companies.isMakeIndex = true;
 };
 
-contentModule.makeReportToUser = function(){
+contentModule.makeReportToUserThanhYen = function(){
     for (var i = 0; i < data_module.users.items.length; i++){
         data_module.users.items[i].childIndexList = [];
         data_module.users.items[i].descendanIdList = [];
@@ -868,135 +956,177 @@ contentModule.makeReportToUser = function(){
     data_module.users.isMakeIndex = true;
 };
 
-contentModule.makeOwnerCompanyContact = function(){
-    if (!data_module.contact || !data_module.companies || !data_module.users || !data_module.owner_company_contact){
-        setTimeout(function(){
-            contentModule.makeOwnerCompanyContact();
-        }, 50);
-        return;
+contentModule.makeOwnerCompanyContactThanhYen = function(host){
+    for (var i = 0; i < host.database.companies.items.length; i++){
+        host.database.companies.items[i].ownerList = [];
+        host.database.companies.items[i].permission = 0;
     }
-    for (var i = 0; i < data_module.companies.items.length; i++){
-        data_module.companies.items[i].ownerList = [];
-    }
-    for (var i = 0; i < data_module.contact.items.length; i++){
-        data_module.contact.items[i].ownerList = [];
+    for (var i = 0; i < host.database.contact.items.length; i++){
+        host.database.contact.items[i].ownerList = [];
+        host.database.contact.items[i].permission = 0;
     }
     var k;
-    for (var i = 0; i < data_module.owner_company_contact.items.length; i++){
-        if (data_module.owner_company_contact.items[i].type == "contact"){
-            k = data_module.contact.getIndex(data_module.owner_company_contact.items[i].objid);
-            if (k >= 0) data_module.contact.items[k].ownerList.push(data_module.owner_company_contact.items[i].userid);
+    var listCompanyDic = [];
+    var listContactDic = [];
+    var objid;
+    for (var i = 0; i < host.database.owner_company_contact.items.length; i++){
+        objid = host.database.owner_company_contact.items[i].objid;
+        if (host.database.owner_company_contact.items[i].type == "contact"){
+            if (listContactDic[objid] === undefined) listContactDic[objid] = [];
+            listContactDic[objid].push(host.database.owner_company_contact.items[i].userid);
         }
         else {
-            k = data_module.companies.getIndex(data_module.owner_company_contact.items[i].objid);
-            if (k >= 0) data_module.companies.items[k].ownerList.push(data_module.owner_company_contact.items[i].userid);
+            if (listCompanyDic[objid] === undefined) listCompanyDic[objid] = [];
+            listCompanyDic[objid].push(host.database.owner_company_contact.items[i].userid);
         }
     }
-    contentModule.makeReportToUser();
+    for (var i = 0; i < host.database.companies.items.length; i++){
+        if (listCompanyDic[host.database.companies.items[i].id] !== undefined) host.database.companies.items[i].ownerList = listCompanyDic[host.database.companies.items[i].id];
+    }
+    for (var i = 0; i < host.database.contact.items.length; i++){
+        if (listContactDic[host.database.contact.items[i].id] !== undefined) host.database.contact.items[i].ownerList = listContactDic[host.database.contact.items[i].id];
+    }
+    var x = [];
+    for (var i = 0; i < host.database.companies.items.length; i++){
+        if (host.database.companies.items[i].ownerList.length == 0) {
+            x.push(host.database.companies.items[i]);
+        }
+    }
+    // console.log(x);
     var userIndex = data_module.users.getByhomeid(systemconfig.userid);
     if (userIndex < 0){
         ModalElement.alert({message: "faild_userid"});
         return;
     }
+    contentModule.makePriviledgeOfUserGroups(host);
+    if (systemconfig.privSystem >= 2){
+        for (var i = 0; i < host.database.companies.items.length; i++){
+            host.database.companies.items[i].permission = 2;
+        }
+        for (var i = 0; i < host.database.contact.items.length; i++){
+            host.database.contact.items[i].permission = 2;
+        }
+        return;
+    }
     var descendanIdList = data_module.users.items[userIndex].descendanIdList;
-    var isViewCompany = function(cIndex){
-        for (var i = 0; i < data_module.companies.items[cIndex].ownerList.length; i++){
-            if (data_module.companies.items[cIndex].ownerList[i] == systemconfig.userid) return true;
-            for (var j = 0; j < descendanIdList.length; j++){
-                if (data_module.companies.items[cIndex].ownerList[i] == descendanIdList[j]) return true;
-            }
-        }
-        return false;
-    };
-    var t = [];
-    for (var i = 0; i < data_module.companies.items.length; i++){
-        if (isViewCompany(i)){
-            t.push(data_module.companies.items[i]);
-        }
-    }
-    data_module.companies.items = t;
-    var isViewContact = function(cIndex){
-        for (var i = 0; i < data_module.contact.items[cIndex].ownerList.length; i++){
-            if (data_module.contact.items[cIndex].ownerList[i] == systemconfig.userid) return true;
-            for (var j = 0; j < descendanIdList.length; j++){
-                if (data_module.contact.items[cIndex].ownerList[i] == descendanIdList[j]) return true;
-            }
-        }
-        return false;
-    };
-    t = [];
-    for (var i = 0; i < data_module.contact.items.length; i++){
-        if (isViewContact(i)){
-            t.push(data_module.contact.items[i]);
-        }
-    }
-    data_module.contact.items = t;
-};
-
-contentModule.makeContactIndex = function(){
-    if (data_module.contact.isMakeIndex) return;
-    if (data_module.companies.isMakeIndex === undefined){
-        data_module.companies.items.sort(function (a, b) {
-            if (absol.string.nonAccentVietnamese(b.name.toLowerCase()) > absol.string.nonAccentVietnamese(a.name.toLowerCase())) return -1;
-            if (absol.string.nonAccentVietnamese(b.name.toLowerCase()) < absol.string.nonAccentVietnamese(a.name.toLowerCase())) return 1;
-            return 0;
-        });
-    }
-    data_module.contact.items.sort(function (a, b) {
-        if (absol.string.nonAccentVietnamese(b.firstname.toLowerCase()) > absol.string.nonAccentVietnamese(a.firstname.toLowerCase())) return -1;
-        if (absol.string.nonAccentVietnamese(b.firstname.toLowerCase()) < absol.string.nonAccentVietnamese(a.firstname.toLowerCase())) return 1;
-        return 0;
+    var company_class_memberDic = {};
+    host.database.company_class_member.items.forEach(function(elt, index){
+        company_class_memberDic[elt.company_classid] = elt.type;
     });
-    var k, t = [];
-    for (var i = 0; i < data_module.contact.items.length; i++){
-        data_module.contact.items[i].companyIndex = k = data_module.companies.getIndex(data_module.contact.items[i].companyid);
-        if (k >= 0 || data_module.contact.items[i].companyid == 0){
-            t.push(data_module.contact.items[i]);
-        }
-    }
-    data_module.contact.items = t;
-    data_module.contact.isMakeIndex = true;
-};
-
-contentModule.makeObjectIndex = function(host){
-    for (var i = 0; i < host.database.objects.items.length; i++){
-        host.database.objects.items[i].childrenIndexList = [];
-        host.database.objects.items[i].categoryIndexList = [];
-    }
-    var k, t = [];
-    for (var i = 0; i < host.database.objects.items.length; i++){
-        host.database.objects.items[i].typeIndex = k = data_module.typelists.getIndex(host.database.objects.items[i].typeid);
-        if (k < 0) continue;
-        if (host.database.objects.items[i].parentid == 0){
-            t.push(host.database.objects.items[i]);
+    var account_groupsDic = contentModule.makeDictionaryIndex(host.database.account_groups.items);
+    var isViewCompany = function(cIndex){
+        if (host.database.companies.items[cIndex].ownerList.length == 0){
+            host.database.companies.items[cIndex].permission = 2;
+            return;
         }
         else {
-            k = -1;
-            for (var j = 0; j < t.length; j++){
-                if (t[j].id == host.database.objects.items[i].parentid){
-                    k = j;
-                    break;
+            if (company_class_memberDic[host.database.companies.items[cIndex].company_classid] !== undefined){
+                var aId = company_class_memberDic[host.database.companies.items[cIndex].company_classid];
+                if (account_groupsDic[aId] !== undefined){
+                    if (host.database.account_groups.items[account_groupsDic[aId]].privOfCompany_class[2] !== undefined){
+                        host.database.companies.items[cIndex].permission = 2;
+                        return;
+                    }
                 }
             }
-            if (k >= 0){
-                host.database.objects.items[i].parentIndex = k;
-                host.database.objects.items[k].childrenIndexList.push(t.length);
-                t.push(host.database.objects.items[i]);
+            for (var j = 0; j < host.database.companies.items[cIndex].ownerList.length; j++){
+                if (host.database.companies.items[cIndex].ownerList[j] == systemconfig.userid) {
+                    host.database.companies.items[cIndex].permission = 2;
+                    return;
+                }
+                for (var k = 0; k < descendanIdList.length; k++){
+                    if (host.database.companies.items[cIndex].ownerList[j] == descendanIdList[k]) {
+                        host.database.companies.items[cIndex].permission = 2;
+                        return;
+                    }
+                }
             }
         }
+        if (company_class_memberDic[host.database.companies.items[cIndex].company_classid] !== undefined){
+            var aId = company_class_memberDic[host.database.companies.items[cIndex].company_classid];
+            if (account_groupsDic[aId] !== undefined){
+                if (host.database.account_groups.items[account_groupsDic[aId]].privOfCompany_class[1] !== undefined){
+                    host.database.companies.items[cIndex].permission = 1;
+                    return;
+                }
+            }
+        }
+        host.database.companies.items[cIndex].permission = 0;
+    };
+    for (var i = 0; i < host.database.companies.items.length; i++){
+        isViewCompany(i);
     }
-    host.database.objects.items = t;
-    var oIndex, cIndex;
-    for (var i = 0; i < host.database.category_objects.items.length; i++){
-        oIndex = host.database.objects.getIndex(host.database.category_objects.items[i].objid);
-        cIndex = host.database.category.getIndex(host.database.category_objects.items[i].categoryid);
-        if (oIndex >= 0 && cIndex >= 0){
-            host.database.objects.items[oIndex].categoryIndexList.push({
-                categoryIndex: cIndex,
-                category_objectsIndex: i
-            });
+    var isViewContact = function(cIndex){
+        if (host.database.contact.items[cIndex].ownerList.length == 0){
+            host.database.contact.items[cIndex].permission = 2;
+            return;
+        }
+        else {
+            for (var i = 0; i < host.database.contact.items[cIndex].ownerList.length; i++){
+                if (host.database.contact.items[cIndex].ownerList[i] == systemconfig.userid) {
+                    host.database.contact.items[cIndex].permission = 2;
+                    return;
+                }
+                for (var j = 0; j < descendanIdList.length; j++){
+                    if (host.database.contact.items[cIndex].ownerList[i] == descendanIdList[j]) {
+                        host.database.contact.items[cIndex].permission = 2;
+                        return;
+                    }
+                }
+            }
+        }
+        host.database.contact.items[cIndex].permission = 0;
+    };
+    for (var i = 0; i < host.database.contact.items.length; i++){
+        isViewContact(i);
+    }
+};
+
+contentModule.makeContactIndexThanhYen = function(host){
+    if (host.database.contact.isMakeIndex) return;
+    var holderForSort;
+    if (host.database.companies.isMakeIndex === undefined){
+        holderForSort = host.database.companies.items.map(function(item){
+            return {
+                item: item,
+                val: absol.string.nonAccentVietnamese(item.name.toLowerCase())
+            }
+        });
+        holderForSort.sort(function(a, b){
+            if (a.val < b.val) return -1;
+            if (a.val > b.val) return 1;
+            return 0;
+        });
+
+        host.database.companies.items = holderForSort.map(function(holder){
+            return holder.item;
+        });
+    }
+    holderForSort = host.database.contact.items.map(function(item){
+        return {
+            item: item,
+            val: absol.string.nonAccentVietnamese(item.firstname.toLowerCase())
+        }
+    });
+    holderForSort.sort(function(a, b){
+        if (a.val < b.val) return -1;
+        if (a.val > b.val) return 1;
+        return 0;
+    });
+
+    host.database.contact.items = holderForSort.map(function(holder){
+        return holder.item;
+    });
+    var k, t = [];
+    var companiesDic = contentModule.makeDictionaryIndex(host.database.companies.items);
+    for (var i = 0; i < host.database.contact.items.length; i++){
+        host.database.contact.items[i].companyIndex = k = companiesDic[host.database.contact.items[i].companyid];
+        if (k >= 0 || host.database.contact.items[i].companyid == 0){
+            t.push(host.database.contact.items[i]);
         }
     }
+    host.database.contact.items = t;
+    host.database.contact.isMakeIndex = true;
 };
 
 contentModule.makeCategoryIndex = function(host){
@@ -1102,8 +1232,6 @@ contentModule.makeListsIndex2 = function(host){
 contentModule.makeListsIndex3 = function(host){
     var index, t, index2;
     for (var i = 0; i < host.database.cards.items.length; i++){
-        host.database.cards.items[i].contactList = [];
-        host.database.cards.items[i].companyList = [];
         index = host.database.lists.getIndex(host.database.cards.items[i].parentid);
         if (index != -1){
             index2 = host.database.boards.getIndex(host.database.lists.items[index].boardid);
@@ -1120,17 +1248,16 @@ contentModule.makeChatCardIndex = function(host){
         host.database.cards.items[i].chatIndex = -1;
     }
     var k;
+    var cardsDic = contentModule.makeDictionaryIndex(host.database.cards.items);
     for (var i = 0; i < host.database.chat_sessions.items.length; i++){
-        host.database.chat_sessions.items[i].cardIndex = k = host.database.cards.getIndex(host.database.chat_sessions.items[i].cardid);
-        if (k >= 0) host.database.cards.items[k].chatIndex = i;
+        host.database.chat_sessions.items[i].cardIndex = k = cardsDic[host.database.chat_sessions.items[i].cardid];
+        if (k !== undefined) host.database.cards.items[k].chatIndex = i;
     }
 };
 
 contentModule.makeCardIndex = function(host){
     var index, t;
     for (var i = 0; i < host.database.cards.items.length; i++){
-        host.database.cards.items[i].contactList = [];
-        host.database.cards.items[i].companyList = [];
         host.database.cards.items[i].activitiesList = [];
         host.database.cards.items[i].taskList = [];
         host.database.cards.items[i].callList = [];
@@ -1141,6 +1268,7 @@ contentModule.makeCardIndex = function(host){
         host.database.cards.items[i].fieldList = [];
         host.database.cards.items[i].check_listList = [];
         host.database.cards.items[i].noteList = [];
+        host.database.cards.items[i].sendmailList = [];
         index = host.database.lists.getIndex(host.database.cards.items[i].parentid);
         if (index != -1){
             host.database.lists.items[index].childrenIdList.push(host.database.cards.items[i].id);
@@ -1450,19 +1578,26 @@ contentModule.getObjectbyType = function(host, typeid, valueid, require, default
         elt.value =  parseFloat(elt.value.split(",").join(""));
     };
 
-    var typeIndex = data_module.typelists.getIndex(typeid);
-    var type = data_module.typelists.items[typeIndex].type;
+    var typeIndex = host.database.typelists.getIndex(typeid);
+    var type = host.database.typelists.items[typeIndex].type;
     var value;
     if (valueid > 0) host.listValueId.push(valueid);
     switch (type) {
         case "string":
-            if (valueid == 0) value = defaultValue;
+            if (valueid == 0) {
+                if (defaultValue === undefined){
+                    value = "";
+                }
+                else {
+                    value = defaultValue;
+                }
+            }
             else {
                 value = host.database.values.items[host.database.values.getIndex(valueid)].content;
             }
             var elt = host.funcs.input({
                 style: {
-                    minWidth: "300px",
+                    minWidth: (carddone.isMobile == 1) ? null : "300px",
                     width: "100%"
                 },
                 value: value
@@ -1487,7 +1622,14 @@ contentModule.getObjectbyType = function(host, typeid, valueid, require, default
             };
             return elt;
         case "note":
-            if (valueid == 0) value = defaultValue;
+            if (valueid == 0) {
+                if (defaultValue === undefined){
+                    value = "";
+                }
+                else {
+                    value = defaultValue;
+                }
+            }
             else {
                 value = host.database.values.items[host.database.values.getIndex(valueid)].content;
             }
@@ -1495,7 +1637,7 @@ contentModule.getObjectbyType = function(host, typeid, valueid, require, default
                 attrs: {
                     className: "cardSimpleTextarea",
                     style: {
-                        minWidth: "300px",
+                        minWidth: (carddone.isMobile == 1) ? null : "300px",
                         width: "100%",
                         height: "70px"
                     },
@@ -1522,13 +1664,28 @@ contentModule.getObjectbyType = function(host, typeid, valueid, require, default
             };
             return elt;
         case "number":
-            if (valueid == 0) value = defaultValue;
+            if (valueid == 0) {
+                if (defaultValue === undefined){
+                    value = "";
+                }
+                else {
+                    value = defaultValue;
+                }
+            }
             else {
                 value = host.database.values.items[host.database.values.getIndex(valueid)].content;
             }
+            if (!value) value = "";
+            var k = value.toString().indexOf("E+");
+            if (k == -1) k = value.toString().indexOf("e+");
+            if (k != -1) {
+                var t = value.toString().substr(0, k);
+                var t2 = value.toString().substr(k + 2);
+                value = parseFloat(t) * Math.pow(10, parseInt(t2, 10));
+            }
             var elt = contentModule.preventNotNumberInput(host.funcs.input({
                 style: {
-                    minWidth: "300px",
+                    minWidth: (carddone.isMobile == 1) ? null : "300px",
                     width: "100%",
                     textAlign: "right"
                 },
@@ -1561,7 +1718,14 @@ contentModule.getObjectbyType = function(host, typeid, valueid, require, default
             };
             return elt;
         case "email":
-            if (valueid == 0) value = defaultValue;
+            if (valueid == 0) {
+                if (defaultValue === undefined){
+                    value = "";
+                }
+                else {
+                    value = defaultValue;
+                }
+            }
             else {
                 value = host.database.values.items[host.database.values.getIndex(valueid)].content;
             }
@@ -1592,13 +1756,20 @@ contentModule.getObjectbyType = function(host, typeid, valueid, require, default
             };
             return elt;
         case "phonenumber":
-            if (valueid == 0) value = defaultValue;
+            if (valueid == 0) {
+                if (defaultValue === undefined){
+                    value = "";
+                }
+                else {
+                    value = defaultValue;
+                }
+            }
             else {
                 value = host.database.values.items[host.database.values.getIndex(valueid)].content;
             }
             var elt = contentModule.preventNotPhoneNumberInput(host.funcs.input({
                 style: {
-                    minWidth: "300px",
+                    minWidth: (carddone.isMobile == 1) ? null : "300px",
                     width: "100%"
                 },
                 value: value
@@ -1623,13 +1794,20 @@ contentModule.getObjectbyType = function(host, typeid, valueid, require, default
             };
             return elt;
         case "website":
-            if (valueid == 0) value = defaultValue;
+            if (valueid == 0) {
+                if (defaultValue === undefined){
+                    value = "";
+                }
+                else {
+                    value = defaultValue;
+                }
+            }
             else {
                 value = host.database.values.items[host.database.values.getIndex(valueid)].content;
             }
             var elt = host.funcs.input({
                 style: {
-                    minWidth: "300px",
+                    minWidth: (carddone.isMobile == 1) ? null : "300px",
                     width: "100%"
                 },
                 value: value
@@ -1655,7 +1833,14 @@ contentModule.getObjectbyType = function(host, typeid, valueid, require, default
             };
             return elt;
         case "gps":
-            if (valueid == 0) value = defaultValue;
+            if (valueid == 0) {
+                if (defaultValue === undefined){
+                    value = "";
+                }
+                else {
+                    value = defaultValue;
+                }
+            }
             else {
                 value = host.database.values.items[host.database.values.getIndex(valueid)].content;
             }
@@ -1687,20 +1872,25 @@ contentModule.getObjectbyType = function(host, typeid, valueid, require, default
             return elt;
         case "date":
             if (valueid == 0 || !valueid){
-              switch (defaultValue[0]) {
-                case "today":
+                if (defaultValue !== undefined){
+                    switch (defaultValue[0]) {
+                        case "today":
+                            value = new Date();
+                            value = new Date(value.setHours(0, 0, 0, 0));
+                            break;
+                        case "first_day_of_month":
+                            value = new Date();
+                            value = new Date(value.setDate(1));
+                            break;
+                        case "custom":
+                            value = new Date(defaultValue[1]);
+                            break;
+                    }
+                }
+                else {
                     value = new Date();
                     value = new Date(value.setHours(0, 0, 0, 0));
-                    break;
-                case "first_day_of_month":
-                    value = new Date();
-                    value = new Date(value.setDate(1));
-                    break;
-                case "custom":
-                    value = new Date(defaultValue[1]);
-                    break;
-
-              }
+                }
             }
             else {
                 value = new Date(host.database.values.items[host.database.values.getIndex(valueid)].timecontent);
@@ -1721,26 +1911,33 @@ contentModule.getObjectbyType = function(host, typeid, valueid, require, default
         case "datetime":
             var valuetime, valuedate;
             if (valueid == 0 || !valueid){
-              switch (defaultValue[0]) {
-                case "today":
+                if (defaultValue !== undefined){
+                    switch (defaultValue[0]) {
+                        case "today":
+                            valuedate = new Date();
+                            valuedate = new Date(valuedate.setHours(0, 0, 0, 0));
+                            valuedate = new Date(valuedate.setHours(0, 0, 0, 0));
+                            valuetime = new Date();
+                            break;
+                        case "first_day_of_month":
+                            valuedate = new Date();
+                            valuedate = new Date(valuedate.setDate(1));
+                            valuedate = new Date(valuedate.setHours(0, 0, 0, 0));
+                            valuetime = new Date();
+                            break;
+                        case "custom":
+                            valuedate = new Date(defaultValue[1]);
+                            valuedate = new Date(valuedate.setHours(0, 0, 0, 0));
+                            valuetime = new Date(defaultValue[1]);
+                            break;
+                    }
+                }
+                else {
                     valuedate = new Date();
                     valuedate = new Date(valuedate.setHours(0, 0, 0, 0));
                     valuedate = new Date(valuedate.setHours(0, 0, 0, 0));
                     valuetime = new Date();
-                    break;
-                case "first_day_of_month":
-                    valuedate = new Date();
-                    valuedate = new Date(valuedate.setDate(1));
-                    valuedate = new Date(valuedate.setHours(0, 0, 0, 0));
-                    valuetime = new Date();
-                    break;
-                case "custom":
-                    valuedate = new Date(defaultValue[1]);
-                    valuedate = new Date(valuedate.setHours(0, 0, 0, 0));
-                    valuetime = new Date(defaultValue[1]);
-                    break;
-
-              }
+                }
             }
             else {
                 valuedate = new Date(host.database.values.items[host.database.values.getIndex(valueid)].timecontent);
@@ -1804,25 +2001,26 @@ contentModule.getObjectbyType = function(host, typeid, valueid, require, default
                 value = host.database.values.items[host.database.values.getIndex(valueid)].content;
             }
             var list = [{value: 0, text: LanguageModule.text("txt_no_select")}];
-            for (var i = 0; i < host.database.users.items.length; i++){
-                if (host.database.users.items[i].available == 0) continue;
+            for (var i = 0; i < data_module.users.items.length; i++){
+                if (data_module.users.items[i].available == 0) continue;
                 list.push({
-                    value: host.database.users.items[i].homeid,
-                    text: host.database.users.items[i].username + " - " + host.database.users.items[i].fullname
+                    value: data_module.users.items[i].homeid,
+                    text: data_module.users.items[i].username + " - " + data_module.users.items[i].fullname
                 });
             }
+            var props = {
+                items: list
+            };
+            if (value !== undefined) props.value = value;
             var elt = absol.buildDom({
-                tag: 'selectmenu',
+                tag: (carddone.isMobile == 1) ? 'mselectmenu' : 'selectmenu',
                 style: {
                     textAlign: "left",
                     display: "block",
                     width: "100%",
                     enableSearch: true
                 },
-                props: {
-                    items: list,
-                    value: value
-                }
+                props: props
             });
             elt.getValue = function(){
                 return {
@@ -1832,16 +2030,23 @@ contentModule.getObjectbyType = function(host, typeid, valueid, require, default
             };
             return elt;
         case "userlist":
-            if (valueid == 0) value = defaultValue;
+            if (valueid == 0) {
+                if (defaultValue === undefined){
+                    value = [];
+                }
+                else {
+                    value = defaultValue;
+                }
+            }
             else {
                 value = EncodingClass.string.toVariable(host.database.values.items[host.database.values.getIndex(valueid)].content);
             }
             var list = [];
-            for (var i = 0; i < host.database.users.items.length; i++){
-                if (host.database.users.items[i].available == 0) continue;
+            for (var i = 0; i < data_module.users.items.length; i++){
+                if (data_module.users.items[i].available == 0) continue;
                 list.push({
-                    value: host.database.users.items[i].homeid,
-                    text: host.database.users.items[i].username + " - " + host.database.users.items[i].fullname
+                    value: data_module.users.items[i].homeid,
+                    text: data_module.users.items[i].username + " - " + data_module.users.items[i].fullname
                 });
             }
             var elt = absol.buildDom({
@@ -1878,18 +2083,19 @@ contentModule.getObjectbyType = function(host, typeid, valueid, require, default
                     text: host.database.nations.items[i].name
                 });
             }
+            var props = {
+                items: list,
+                enableSearch: true
+            };
+            if (value !== undefined) props.value = value;
             var elt = absol.buildDom({
-                tag: 'selectmenu',
+                tag: (carddone.isMobile == 1) ? 'mselectmenu' : 'selectmenu',
                 style: {
                     textAlign: "left",
                     display: "block",
                     width: "100%"
                 },
-                props: {
-                    items: list,
-                    value: value,
-                    enableSearch: true
-                }
+                props: props
             });
             elt.getValue = function(){
                 return {
@@ -1911,18 +2117,20 @@ contentModule.getObjectbyType = function(host, typeid, valueid, require, default
                     text: host.database.cities.items[i].name
                 });
             }
+            var props = {
+                items: list,
+                value: value,
+                enableSearch: true
+            };
+            if (value !== undefined) props.value = value;
             var elt = absol.buildDom({
-                tag: 'selectmenu',
+                tag: (carddone.isMobile == 1) ? 'mselectmenu' : 'selectmenu',
                 style: {
                     textAlign: "left",
                     display: "block",
                     width: "100%"
                 },
-                props: {
-                    items: list,
-                    value: value,
-                    enableSearch: true
-                }
+                props: props
             });
             elt.getValue = function(){
                 return {
@@ -1936,18 +2144,18 @@ contentModule.getObjectbyType = function(host, typeid, valueid, require, default
                 value: "no_select",
                 text: LanguageModule.text("txt_no_select")
             }];
-            for (var i = 0; i < data_module.typelists.items[typeIndex].content.details.length; i++){
+            for (var i = 0; i < host.database.typelists.items[typeIndex].content.details.length; i++){
                 list.push({
-                    value: data_module.typelists.items[typeIndex].content.details[i].localid,
-                    text: data_module.typelists.items[typeIndex].content.details[i].text
+                    value: host.database.typelists.items[typeIndex].content.details[i].localid,
+                    text: host.database.typelists.items[typeIndex].content.details[i].text
                 });
             }
             var elt = absol.buildDom({
-                tag: 'selectmenu',
+                tag: (carddone.isMobile == 1) ? 'mselectmenu' : 'selectmenu',
                 style: {
                     textAlign: "left",
                     display: "block",
-                    minWidth: "300px",
+                    minWidth: (carddone.isMobile == 1) ? null : "300px",
                     width: "100%"
                 },
                 props: {
@@ -1988,11 +2196,11 @@ contentModule.getObjectbyType = function(host, typeid, valueid, require, default
             return elt;
         case "array":
             if (value === undefined) value = [];
-            var typetemp = data_module.typelists.getIndex(data_module.typelists.items[typeIndex].content.typeof);
-            if (data_module.typelists.items[typetemp].type == "structure"){
+            var typetemp = host.database.typelists.getIndex(host.database.typelists.items[typeIndex].content.typeof);
+            if (host.database.typelists.items[typetemp].type == "structure"){
                 var header = [{type: "dragzone", style: {width: "40px"}}];
-                for (var x = 0; x < data_module.typelists.items[typetemp].content.details.length; x++){
-                    header.push({value: data_module.typelists.items[typetemp].content.details[x].name});
+                for (var x = 0; x < host.database.typelists.items[typetemp].content.details.length; x++){
+                    header.push({value: host.database.typelists.items[typetemp].content.details[x].name});
                 }
                 header.push({value: ""});
                 var data = [];
@@ -2020,10 +2228,10 @@ contentModule.getObjectbyType = function(host, typeid, valueid, require, default
                                         var dataRow = [{value: ""}];
                                         var elt;
                                         var typeTemp, requireTemp, defaultTemp;
-                                        for (var x = 0; x < data_module.typelists.items[typetemp].content.details.length; x++){
-                                            typeTemp = data_module.typelists.items[typetemp].content.details[x].type;
-                                            requireTemp = data_module.typelists.items[typetemp].content.details[x].require;
-                                            defaultTemp = data_module.typelists.items[typetemp].content.details[x].default;
+                                        for (var x = 0; x < host.database.typelists.items[typetemp].content.details.length; x++){
+                                            typeTemp = host.database.typelists.items[typetemp].content.details[x].type;
+                                            requireTemp = host.database.typelists.items[typetemp].content.details[x].require;
+                                            defaultTemp = host.database.typelists.items[typetemp].content.details[x].default;
                                             elt = contentModule.getObjectbyType(host, typeTemp, undefined, requireTemp, defaultTemp);
                                             dataRow.push({
                                                 element: DOMElement.div({
@@ -2091,52 +2299,63 @@ contentModule.getObjectbyType = function(host, typeid, valueid, require, default
                 var contentvalue = EncodingClass.string.toVariable(host.database.values.items[valueIndex].content);
             };
             var objNation, objCity, valueCity;
-            for (var i = 0; i < data_module.typelists.items[typeIndex].content.details.length; i++){
+            for (var i = 0; i < host.database.typelists.items[typeIndex].content.details.length; i++){
                 detailValueId = 0;
                 if (valueid > 0){
                     for (var j = 0; j < contentvalue.length; j++){
-                        if (contentvalue[j].localid == data_module.typelists.items[typeIndex].content.details[i].localid){
+                        if (contentvalue[j].localid == host.database.typelists.items[typeIndex].content.details[i].localid){
                             detailValueId = contentvalue[j].valueid;
                         }
                     }
                 }
-                typeTemp = data_module.typelists.items[typeIndex].content.details[i].type;
-                requireTemp = data_module.typelists.items[typeIndex].content.details[i].require;
-                defaultTemp = data_module.typelists.items[typeIndex].content.details[i].default;
+                typeTemp = host.database.typelists.items[typeIndex].content.details[i].type;
+                requireTemp = host.database.typelists.items[typeIndex].content.details[i].require;
+                defaultTemp = host.database.typelists.items[typeIndex].content.details[i].default;
                 elt = contentModule.getObjectbyType(host, typeTemp, detailValueId, requireTemp, defaultTemp);
                 if (i > 0) data.push([{attrs: {style: {height: "var(--control-verticle-distance-2)"}}}]);
-                data.push([
-                    {
-                        attrs: {style: {whiteSpace: "nowrap"}},
-                        children: [
-                            DOMElement.span({
-                                text: data_module.typelists.items[typeIndex].content.details[i].name
-                            }),
-                            DOMElement.span({
-                                attrs: {
-                                    style: {
-                                        color: "red",
-                                        display: requireTemp? "" : "none"
-                                    }
-                                },
-                                text: "*"
-                            })
-                        ]
-                    },
-                    {attrs: {style: {width: "var(--control-horizontal-distance-2)"}}},
-                    elt
-                ]);
+                if (carddone.isMobile == 1){
+                    data.push(
+                        {
+                            class: "card-mobile-label-form-edit",
+                            child: {text: host.database.typelists.items[typeIndex].content.details[i].name}
+                        },
+                        elt
+                    )
+                }
+                else {
+                    data.push([
+                        {
+                            attrs: {style: {whiteSpace: "nowrap"}},
+                            children: [
+                                DOMElement.span({
+                                    text: host.database.typelists.items[typeIndex].content.details[i].name
+                                }),
+                                DOMElement.span({
+                                    attrs: {
+                                        style: {
+                                            color: "red",
+                                            display: requireTemp? "" : "none"
+                                        }
+                                    },
+                                    text: "*"
+                                })
+                            ]
+                        },
+                        {attrs: {style: {width: "var(--control-horizontal-distance-2)"}}},
+                        elt
+                    ]);
+                }
                 listobj.push({
-                    localid: data_module.typelists.items[typeIndex].content.details[i].localid,
-                    typeid: data_module.typelists.items[typeIndex].content.details[i].type,
+                    localid: host.database.typelists.items[typeIndex].content.details[i].localid,
+                    typeid: host.database.typelists.items[typeIndex].content.details[i].type,
                     valueid: detailValueId,
                     elt: elt
                 });
-                var m = data_module.typelists.getIndex(data_module.typelists.items[typeIndex].content.details[i].type);
-                if (data_module.typelists.items[m].type == "nation") {
+                var m = host.database.typelists.getIndex(host.database.typelists.items[typeIndex].content.details[i].type);
+                if (host.database.typelists.items[m].type == "nation") {
                     objNation = elt;
                 }
-                if (data_module.typelists.items[m].type == "city") {
+                if (host.database.typelists.items[m].type == "city") {
                     objCity = elt;
                     if (detailValueId == 0) valueCity = defaultTemp;
                     else {
@@ -2158,7 +2377,7 @@ contentModule.getObjectbyType = function(host, typeid, valueid, require, default
                         cIndex = host.database.nations.items[i].cityIndexList[j];
                         cityList.push({value: host.database.cities.items[cIndex].id, text: host.database.cities.items[cIndex].name})
                     }
-                    listNation.push({value: host.database.nations.items[i].id, text:host.database.nations.items[i].name, cityList: cityList});
+                    listNation.push({value: host.database.nations.items[i].id, text: host.database.nations.items[i].name, cityList: cityList});
                 }
                 for (var i = 0; i < listNation.length; i++){
                     if (listNation[i].value == objNation.value){
@@ -2176,9 +2395,16 @@ contentModule.getObjectbyType = function(host, typeid, valueid, require, default
                     }
                 });
             }
-            elt = DOMElement.table({
-                data: data
-            });
+            if (carddone.isMobile == 1){
+                elt = absol._({
+                    child: data
+                });
+            }
+            else {
+                elt = DOMElement.table({
+                    data: data
+                });
+            }
             elt.getValue = function(){
                 var value = [];
                 var isNull = false;
@@ -2188,13 +2414,13 @@ contentModule.getObjectbyType = function(host, typeid, valueid, require, default
                         break;
                     }
                     else {
-                        var m = data_module.typelists.getIndex(listobj[i].typeid);
+                        var m = host.database.typelists.getIndex(listobj[i].typeid);
                         value.push({
                             localid: listobj[i].localid,
                             typeid: listobj[i].typeid,
                             value: listobj[i].elt.getValue().value,
                             valueid: listobj[i].valueid,
-                            privtype: data_module.typelists.items[m].type
+                            privtype: host.database.typelists.items[m].type
                         });
                     }
                 }
@@ -2208,7 +2434,7 @@ contentModule.getObjectbyType = function(host, typeid, valueid, require, default
             if (value === undefined) value = defaultValue;
             var elt = host.funcs.input({
                 style: {
-                    minWidth: "300px",
+                    minWidth: (carddone.isMobile == 1) ? null : "300px",
                     width: "100%"
                 },
                 value: value
@@ -2236,8 +2462,8 @@ contentModule.getObjectbyType = function(host, typeid, valueid, require, default
 };
 
 contentModule.getObjectbyTypeView = function(host, typeid, valueid, require, defaultValue, decpre){
-    var typeIndex = data_module.typelists.getIndex(typeid);
-    var type = data_module.typelists.items[typeIndex].type;
+    var typeIndex = host.database.typelists.getIndex(typeid);
+    var type = host.database.typelists.items[typeIndex].type;
     var value;
     if (valueid > 0) host.listValueId.push(valueid);
     switch (type) {
@@ -2267,7 +2493,7 @@ contentModule.getObjectbyTypeView = function(host, typeid, valueid, require, def
                 value = host.database.values.items[host.database.values.getIndex(valueid)].content;
             }
             if (decpre) value = contentModule.fromDouble(parseFloat(value), decpre);
-            else value = contentModule.fromDouble(parseFloat(value), data_module.typelists.items[typeIndex].decpre);
+            else value = contentModule.fromDouble(parseFloat(value), host.database.typelists.items[typeIndex].decpre);
             var elt = absol._({
                 tag: "span",
                 child: {text: value}
@@ -2425,9 +2651,9 @@ contentModule.getObjectbyTypeView = function(host, typeid, valueid, require, def
                 localid = host.database.values.items[host.database.values.getIndex(valueid)].content;
             }
             else localid = defaultValue;
-            for (var i = 0; i < data_module.typelists.items[typeIndex].content.details.length; i++){
-                if (data_module.typelists.items[typeIndex].content.details[i].localid == localid){
-                    value = data_module.typelists.items[typeIndex].content.details[i].text;
+            for (var i = 0; i < host.database.typelists.items[typeIndex].content.details.length; i++){
+                if (host.database.typelists.items[typeIndex].content.details[i].localid == localid){
+                    value = host.database.typelists.items[typeIndex].content.details[i].text;
                     break;
                 }
             }
@@ -2439,11 +2665,11 @@ contentModule.getObjectbyTypeView = function(host, typeid, valueid, require, def
             return elt;
         case "array":
             if (value === undefined) value = [];
-            var typetemp = data_module.typelists.getIndex(data_module.typelists.items[typeIndex].content.typeof);
-            if (data_module.typelists.items[typetemp].type == "structure"){
+            var typetemp = host.database.typelists.getIndex(host.database.typelists.items[typeIndex].content.typeof);
+            if (host.database.typelists.items[typetemp].type == "structure"){
                 var header = [{type: "dragzone", style: {width: "40px"}}];
-                for (var x = 0; x < data_module.typelists.items[typetemp].content.details.length; x++){
-                    header.push({value: data_module.typelists.items[typetemp].content.details[x].name});
+                for (var x = 0; x < host.database.typelists.items[typetemp].content.details.length; x++){
+                    header.push({value: host.database.typelists.items[typetemp].content.details[x].name});
                 }
                 header.push({value: ""});
                 var data = [];
@@ -2471,11 +2697,11 @@ contentModule.getObjectbyTypeView = function(host, typeid, valueid, require, def
                                         var dataRow = [{value: ""}];
                                         var elt;
                                         var typeTemp, requireTemp, defaultTemp, decpre;
-                                        for (var x = 0; x < data_module.typelists.items[typetemp].content.details.length; x++){
-                                            typeTemp = data_module.typelists.items[typetemp].content.details[x].type;
-                                            requireTemp = data_module.typelists.items[typetemp].content.details[x].require;
-                                            defaultTemp = data_module.typelists.items[typetemp].content.details[x].default;
-                                            decpre = data_module.typelists.items[typetemp].content.details[x].decpre;
+                                        for (var x = 0; x < host.database.typelists.items[typetemp].content.details.length; x++){
+                                            typeTemp = host.database.typelists.items[typetemp].content.details[x].type;
+                                            requireTemp = host.database.typelists.items[typetemp].content.details[x].require;
+                                            defaultTemp = host.database.typelists.items[typetemp].content.details[x].default;
+                                            decpre = host.database.typelists.items[typetemp].content.details[x].decpre;
                                             elt = contentModule.getObjectbyTypeView(host, typeTemp, undefined, requireTemp, defaultTemp, decpre);
                                             dataRow.push({
                                                 element: DOMElement.div({
@@ -2531,53 +2757,56 @@ contentModule.getObjectbyTypeView = function(host, typeid, valueid, require, def
             }
             break;
         case "structure":
-            var data = [];
-            var listobj = [];
-            var elt, detailValueId;
+            var eltSub, listobj = [];
+            var detailValueId;
             var typeTemp, requireTemp, defaultTemp, decpre;
             if (valueid > 0){
                 var valueIndex = host.database.values.getIndex(valueid);
                 var contentvalue = EncodingClass.string.toVariable(host.database.values.items[valueIndex].content);
             };
             var objNation, objCity, valueCity;
-            for (var i = 0; i < data_module.typelists.items[typeIndex].content.details.length; i++){
+            var elt = DOMElement.div({});
+            for (var i = 0; i < host.database.typelists.items[typeIndex].content.details.length; i++){
                 detailValueId = 0;
                 if (valueid > 0){
                     for (var j = 0; j < contentvalue.length; j++){
-                        if (contentvalue[j].localid == data_module.typelists.items[typeIndex].content.details[i].localid){
+                        if (contentvalue[j].localid == host.database.typelists.items[typeIndex].content.details[i].localid){
                             detailValueId = contentvalue[j].valueid;
                         }
                     }
                 }
-                typeTemp = data_module.typelists.items[typeIndex].content.details[i].type;
-                requireTemp = data_module.typelists.items[typeIndex].content.details[i].require;
-                defaultTemp = data_module.typelists.items[typeIndex].content.details[i].default;
-                decpre = data_module.typelists.items[typeIndex].content.details[i].decpre;
-                elt = contentModule.getObjectbyTypeView(host, typeTemp, detailValueId, requireTemp, defaultTemp, decpre);
-                data.push([
-                    {
-                        attrs: {style: {whiteSpace: "nowrap"}},
-                        children: [
-                            DOMElement.span({
-                                text: data_module.typelists.items[typeIndex].content.details[i].name + ": "
-                            })
-                        ]
+                typeTemp = host.database.typelists.items[typeIndex].content.details[i].type;
+                requireTemp = host.database.typelists.items[typeIndex].content.details[i].require;
+                defaultTemp = host.database.typelists.items[typeIndex].content.details[i].default;
+                decpre = host.database.typelists.items[typeIndex].content.details[i].decpre;
+                eltSub = contentModule.getObjectbyTypeView(host, typeTemp, detailValueId, requireTemp, defaultTemp, decpre);
+                elt.appendChild(DOMElement.div({
+                    attrs: {
+                        style: {
+                            minHeight: "30px",
+                            lineHeight: "30px"
+                        }
                     },
-                    {attrs: {style: {width: "var(--control-horizontal-distance-2)"}}},
-                    elt
-                ]);
+                    children: [
+                        DOMElement.span({
+                            attrs: {style: {whiteSpace: "nowrap"}},
+                            text: host.database.typelists.items[typeIndex].content.details[i].name + ": "
+                        }),
+                        eltSub
+                    ]
+                }));
                 listobj.push({
-                    localid: data_module.typelists.items[typeIndex].content.details[i].localid,
-                    typeid: data_module.typelists.items[typeIndex].content.details[i].type,
+                    localid: host.database.typelists.items[typeIndex].content.details[i].localid,
+                    typeid: host.database.typelists.items[typeIndex].content.details[i].type,
                     valueid: detailValueId,
-                    elt: elt
+                    eltSub: eltSub
                 });
-                var m = data_module.typelists.getIndex(data_module.typelists.items[typeIndex].content.details[i].type);
-                if (data_module.typelists.items[m].type == "nation") {
-                    objNation = elt;
+                var m = host.database.typelists.getIndex(host.database.typelists.items[typeIndex].content.details[i].type);
+                if (host.database.typelists.items[m].type == "nation") {
+                    objNation = eltSub;
                 }
-                if (data_module.typelists.items[m].type == "city") {
-                    objCity = elt;
+                if (host.database.typelists.items[m].type == "city") {
+                    objCity = eltSub;
                     if (detailValueId == 0) valueCity = defaultTemp;
                     else {
                         valueCity = host.database.values.items[host.database.values.getIndex(detailValueId)].content;
@@ -2598,7 +2827,7 @@ contentModule.getObjectbyTypeView = function(host, typeid, valueid, require, def
                         cIndex = host.database.nations.items[i].cityIndexList[j];
                         cityList.push({value: host.database.cities.items[cIndex].id, text: host.database.cities.items[cIndex].name})
                     }
-                    listNation.push({value: host.database.nations.items[i].id, text:host.database.nations.items[i].name, cityList: cityList});
+                    listNation.push({value: host.database.nations.items[i].id, text: host.database.nations.items[i].name, cityList: cityList});
                 }
                 for (var i = 0; i < listNation.length; i++){
                     if (listNation[i].value == objNation.value){
@@ -2616,9 +2845,6 @@ contentModule.getObjectbyTypeView = function(host, typeid, valueid, require, def
                     }
                 });
             }
-            elt = DOMElement.table({
-                data: data
-            });
             return elt;
         default:
             if (value === undefined) value = defaultValue;
@@ -2681,7 +2907,7 @@ contentModule.makeBoardMember = function(host){
     var index1, index2;
     for (var i = 0; i < host.database.list_member.items.length; i++){
         index1 = host.database.boards.getIndex(host.database.list_member.items[i].listid);
-        index2 = host.database.users.getByhomeid(host.database.list_member.items[i].userid);
+        index2 = data_module.users.getByhomeid(host.database.list_member.items[i].userid);
         if (index1 != -1 && index2 != -1){
             host.database.boards.items[index1].memberList.push({
                 id: host.database.list_member.items[i].id,
@@ -2693,27 +2919,53 @@ contentModule.makeBoardMember = function(host){
 };
 
 contentModule.makeBoardGroupLinkIndex = function(host){
-    for (var i = 0; i < host.database.boards.items.length; i++){
-        host.database.boards.items[i].groupIdList = [];
+    for (var i = 0; i < host.database.board_groups.items.length; i++){
+        host.database.board_groups.items[i].boardIdList = [];
+        host.database.board_groups.items[i].boardIndexList = [];
     }
-    var k;
-    for (var i = 0; i < data_module.board_group_link.items.length; i++){
-        data_module.board_group_link.items[i].boardIndex = k = host.database.boards.getIndex(data_module.board_group_link.items[i].boardid);
-        if (k >= 0) {
-            host.database.boards.items[k].groupIdList.push(data_module.board_group_link.items[i].board_groupid);
+    var k1, k2;
+    for (var i = 0; i < host.database.board_group_link.items.length; i++){
+        k1 = host.database.boards.getIndex(host.database.board_group_link.items[i].boardid);
+        k2 = host.database.board_groups.getIndex(host.database.board_group_link.items[i].groupid);
+        if (k1 != -1 && k2 != -1){
+            host.database.board_groups.items[k2].boardIdList.push(host.database.board_group_link.items[i].boardid);
+            host.database.board_groups.items[k2].boardIndexList.push(k1);
+            host.database.boards.items[k1].groupid = host.database.board_group_link.items[i].groupid;
+            host.database.boards.items[k1].groupIndex = k2;
+            host.database.boards.items[k1].index = host.database.board_group_link.items[i].index;
         }
     }
 };
 
-contentModule.getFieldDataToReport = function(host, typeid, valueid, require, defaultValue, decpre){
-    var typeIndex = data_module.typelists.getIndex(typeid);
-    var type = data_module.typelists.items[typeIndex].type;
+contentModule.makeReportGroupLinkIndex = function(host){
+    for (var i = 0; i < host.database.report_groups.items.length; i++){
+        host.database.report_groups.items[i].reportIdList = [];
+        host.database.report_groups.items[i].reportIndexList = [];
+    }
+    var k1, k2;
+    for (var i = 0; i < host.database.report_group_link.items.length; i++){
+        k1 = host.database.report.getIndex(host.database.report_group_link.items[i].reportid);
+        k2 = host.database.report_groups.getIndex(host.database.report_group_link.items[i].groupid);
+        if (k1 != -1 && k2 != -1){
+            host.database.report_groups.items[k2].reportIdList.push(host.database.report_group_link.items[i].reportid);
+            host.database.report_groups.items[k2].reportIndexList.push(k1);
+            host.database.report.items[k1].groupid = host.database.report_group_link.items[i].groupid;
+            host.database.report.items[k1].groupIndex = k2;
+            host.database.report.items[k1].index = host.database.report_group_link.items[i].index;
+        }
+    }
+};
+
+
+contentModule.getFieldDataToReport = function(host, typeid, valueid, typelistsDic, valueDic, require, defaultValue, decpre){
+    var typeIndex = typelistsDic[typeid];
+    var type = host.database.typelists.items[typeIndex].type;
     var value;
     switch (type) {
         case "string":
             if (valueid == 0) value = defaultValue;
             else {
-                value = host.database.values.items[host.database.values.getIndex(valueid)].content;
+                value = host.database.values.items[valueDic[valueid]].content;
             }
             return {
                 type: type,
@@ -2722,7 +2974,7 @@ contentModule.getFieldDataToReport = function(host, typeid, valueid, require, de
         case "note":
             if (valueid == 0) value = defaultValue;
             else {
-                value = host.database.values.items[host.database.values.getIndex(valueid)].content;
+                value = host.database.values.items[valueDic[valueid]].content;
             }
             return {
                 type: type,
@@ -2731,10 +2983,10 @@ contentModule.getFieldDataToReport = function(host, typeid, valueid, require, de
         case "number":
             if (valueid == 0) value = defaultValue;
             else {
-                value = host.database.values.items[host.database.values.getIndex(valueid)].content;
+                value = host.database.values.items[valueDic[valueid]].content;
             }
             if (decpre) value = contentModule.fromDouble(parseFloat(value), decpre);
-            else value = contentModule.fromDouble(parseFloat(value), data_module.typelists.items[typeIndex].decpre);
+            else value = contentModule.fromDouble(parseFloat(value), host.database.typelists.items[typeIndex].decpre);
             return {
                 type: type,
                 value: value
@@ -2742,7 +2994,7 @@ contentModule.getFieldDataToReport = function(host, typeid, valueid, require, de
         case "email":
             if (valueid == 0) value = defaultValue;
             else {
-                value = host.database.values.items[host.database.values.getIndex(valueid)].content;
+                value = host.database.values.items[valueDic[valueid]].content;
             }
             return {
                 type: type,
@@ -2751,7 +3003,7 @@ contentModule.getFieldDataToReport = function(host, typeid, valueid, require, de
         case "phonenumber":
             if (valueid == 0) value = defaultValue;
             else {
-                value = host.database.values.items[host.database.values.getIndex(valueid)].content;
+                value = host.database.values.items[valueDic[valueid]].content;
             }
             return {
                 type: type,
@@ -2760,7 +3012,7 @@ contentModule.getFieldDataToReport = function(host, typeid, valueid, require, de
         case "website":
             if (valueid == 0) value = defaultValue;
             else {
-                value = host.database.values.items[host.database.values.getIndex(valueid)].content;
+                value = host.database.values.items[valueDic[valueid]].content;
             }
             return {
                 type: type,
@@ -2769,7 +3021,7 @@ contentModule.getFieldDataToReport = function(host, typeid, valueid, require, de
         case "gps":
             if (valueid == 0) value = defaultValue;
             else {
-                value = host.database.values.items[host.database.values.getIndex(valueid)].content;
+                value = host.database.values.items[valueDic[valueid]].content;
             }
             return {
                 type: type,
@@ -2793,7 +3045,7 @@ contentModule.getFieldDataToReport = function(host, typeid, valueid, require, de
               }
             }
             else {
-                value = new Date(host.database.values.items[host.database.values.getIndex(valueid)].timecontent);
+                value = new Date(host.database.values.items[valueDic[valueid]].timecontent);
             }
             return {
                 type: type,
@@ -2816,7 +3068,7 @@ contentModule.getFieldDataToReport = function(host, typeid, valueid, require, de
               }
             }
             else {
-                valuedate = new Date(host.database.values.items[host.database.values.getIndex(valueid)].timecontent);
+                valuedate = new Date(host.database.values.items[valueDic[valueid]].timecontent);
             }
             return {
                 type: type,
@@ -2825,7 +3077,7 @@ contentModule.getFieldDataToReport = function(host, typeid, valueid, require, de
         case "boolean":
             if (valueid == 0) value = defaultValue;
             else {
-                value = host.database.values.items[host.database.values.getIndex(valueid)].content;
+                value = host.database.values.items[valueDic[valueid]].content;
             }
             return {
                 type: type,
@@ -2834,7 +3086,7 @@ contentModule.getFieldDataToReport = function(host, typeid, valueid, require, de
         case "user":
             if (valueid == 0) value = defaultValue;
             else {
-                value = host.database.values.items[host.database.values.getIndex(valueid)].content;
+                value = host.database.values.items[valueDic[valueid]].content;
             }
             return {
                 type: type,
@@ -2843,7 +3095,7 @@ contentModule.getFieldDataToReport = function(host, typeid, valueid, require, de
         case "userlist":
             if (valueid == 0) value = defaultValue;
             else {
-                value = EncodingClass.string.toVariable(host.database.values.items[host.database.values.getIndex(valueid)].content);
+                value = EncodingClass.string.toVariable(host.database.values.items[valueDic[valueid]].content);
             }
             var list = "";
             value.forEach(function(elt){
@@ -2857,7 +3109,7 @@ contentModule.getFieldDataToReport = function(host, typeid, valueid, require, de
         case "nation":
             if (valueid == 0) value = defaultValue;
             else {
-                value = host.database.values.items[host.database.values.getIndex(valueid)].content;
+                value = host.database.values.items[valueDic[valueid]].content;
             }
             return {
                 type: type,
@@ -2866,7 +3118,7 @@ contentModule.getFieldDataToReport = function(host, typeid, valueid, require, de
         case "city":
             if (valueid == 0) value = defaultValue;
             else {
-                value = host.database.values.items[host.database.values.getIndex(valueid)].content;
+                value = host.database.values.items[valueDic[valueid]].content;
             }
             return {
                 type: type,
@@ -2875,12 +3127,12 @@ contentModule.getFieldDataToReport = function(host, typeid, valueid, require, de
         case "enum":
             var localid, value;
             if (valueid > 0) {
-                localid = host.database.values.items[host.database.values.getIndex(valueid)].content;
+                localid = host.database.values.items[valueDic[valueid]].content;
             }
             else localid = defaultValue;
-            for (var i = 0; i < data_module.typelists.items[typeIndex].content.details.length; i++){
-                if (data_module.typelists.items[typeIndex].content.details[i].localid == localid){
-                    value = data_module.typelists.items[typeIndex].content.details[i].text;
+            for (var i = 0; i < host.database.typelists.items[typeIndex].content.details.length; i++){
+                if (host.database.typelists.items[typeIndex].content.details[i].localid == localid){
+                    value = host.database.typelists.items[typeIndex].content.details[i].text;
                     break;
                 }
             }
@@ -2897,25 +3149,25 @@ contentModule.getFieldDataToReport = function(host, typeid, valueid, require, de
             var elt, detailValueId;
             var typeTemp, requireTemp, defaultTemp, decpre;
             if (valueid > 0){
-                var valueIndex = host.database.values.getIndex(valueid);
+                var valueIndex = valueDic[valueid];
                 var contentvalue = EncodingClass.string.toVariable(host.database.values.items[valueIndex].content);
             };
-            for (var i = 0; i < data_module.typelists.items[typeIndex].content.details.length; i++){
+            for (var i = 0; i < host.database.typelists.items[typeIndex].content.details.length; i++){
                 detailValueId = 0;
                 if (valueid > 0){
                     for (var j = 0; j < contentvalue.length; j++){
-                        if (contentvalue[j].localid == data_module.typelists.items[typeIndex].content.details[i].localid){
+                        if (contentvalue[j].localid == host.database.typelists.items[typeIndex].content.details[i].localid){
                             detailValueId = contentvalue[j].valueid;
                         }
                     }
                 }
-                typeTemp = data_module.typelists.items[typeIndex].content.details[i].type;
-                requireTemp = data_module.typelists.items[typeIndex].content.details[i].require;
-                defaultTemp = data_module.typelists.items[typeIndex].content.details[i].default;
-                decpre = data_module.typelists.items[typeIndex].content.details[i].decpre;
-                elt = contentModule.getFieldDataToReport(host, typeTemp, detailValueId, requireTemp, defaultTemp, decpre);
-                data[data_module.typelists.items[typeIndex].content.details[i].localid] = {
-                    name: data_module.typelists.items[typeIndex].content.details[i].name,
+                typeTemp = host.database.typelists.items[typeIndex].content.details[i].type;
+                requireTemp = host.database.typelists.items[typeIndex].content.details[i].require;
+                defaultTemp = host.database.typelists.items[typeIndex].content.details[i].default;
+                decpre = host.database.typelists.items[typeIndex].content.details[i].decpre;
+                elt = contentModule.getFieldDataToReport(host, typeTemp, detailValueId, typelistsDic, valueDic, requireTemp, defaultTemp, decpre);
+                data[host.database.typelists.items[typeIndex].content.details[i].localid] = {
+                    name: host.database.typelists.items[typeIndex].content.details[i].name,
                     value: elt
                 }
             }
@@ -2926,7 +3178,7 @@ contentModule.getFieldDataToReport = function(host, typeid, valueid, require, de
     }
 };
 
-contentModule.reminderActivity = function(listActivity){
+contentModule.reminderActivity = function(host, listActivity){
     var notifyMe = function(content){
         var noticontent = content.nameActivity + " " + content.timeView ;
         if (!("Notification" in window)) {
@@ -2960,8 +3212,8 @@ contentModule.reminderActivity = function(listActivity){
         };
     };
     setTimeout(function(){
-        var dataReminder = contentModule.makeUser_calendarReminder();
-        contentModule.reminderActivity(dataReminder.listNotification);
+        var dataReminder = contentModule.makeUser_calendarReminderThanhYen(host);
+        contentModule.reminderActivity(host, dataReminder.listNotification);
     }, 10000);
     if (listActivity.length == 0) return;
     console.log(listActivity);
@@ -2975,13 +3227,9 @@ contentModule.reminderActivity = function(listActivity){
             if (success){
                 if (message.substr(0,2) == "ok"){
                     var st = EncodingClass.string.toVariable(message.substr(2));
-                    var host = {
-                        database: {}
-                    };
                     contentModule.makeDatabaseContent(host.database, st);
-                    host.database.user_calendar = data_module.user_calendar;
                     var cIndex, lIndex, bIndex, time;
-                    contentModule.makeActivitiesCardIndex(host);
+                    contentModule.makeActivitiesCardIndexThanhYen(host);
                     for (var i = 0; i < listActivity.length; i++){
                         cIndex = host.database.cards.getIndex(listActivity[i].cardid);
                         if (cIndex < 0) continue;
@@ -3015,7 +3263,7 @@ contentModule.reminderActivity = function(listActivity){
 
 };
 
-contentModule.reminderActivityLost = function(listReminderLost){
+contentModule.reminderActivityLostThanhYen = function(host, listReminderLost){
     return new Promise(function(resolve, reject){
         FormClass.api_call({
             url: "database_load.php",
@@ -3027,20 +3275,19 @@ contentModule.reminderActivityLost = function(listReminderLost){
                 if (success){
                     if (message.substr(0, 2) == "ok"){
                         var st = EncodingClass.string.toVariable(message.substr(2));
-                        var host = {
-                            database: {}
-                        };
                         contentModule.makeDatabaseContent(host.database, st);
-                        host.database.user_calendar = data_module.user_calendar;
-                        contentModule.makeActivitiesCardIndex(host);
-                        var data = [], celldata, cIndex, lIndex, bIndex, time;
+                        contentModule.makeActivitiesCardIndexThanhYen(host);
+                        var data = [], celldata, cIndex, lIndex, bIndex, time, listIndex2;
                         for (var i = 0; i < listReminderLost.length; i++){
                             cIndex = host.database.cards.getIndex(listReminderLost[i].cardid);
                             if (cIndex < 0) continue;
                             if (host.database.cards.items[cIndex].permission == "no") continue;
                             lIndex = host.database.lists.getIndex(host.database.cards.items[cIndex].parentid);
                             if (lIndex < 0) continue;
-                            bIndex = host.database.boards.getIndex(listReminderLost[i].boardid);
+                            listIndex2 = host.database.lists.getIndex(host.database.lists.items[lIndex].parentid);
+                            if (listIndex2 < 0) continue;
+                            listReminderLost[i].boardid = host.database.lists.items[listIndex2].parentid;
+                            bIndex = host.database.boards.getIndex(host.database.lists.items[listIndex2].parentid);
                             if (bIndex < 0) continue;
                             celldata = listReminderLost[i];
                             if (listReminderLost[i].type == "meeting"){
@@ -3211,14 +3458,14 @@ contentModule.reminderActivityLost = function(listReminderLost){
     });
 };
 
-contentModule.reminderForm = function(listReminderLost){
+contentModule.reminderForm = function(host, listReminderLost){
     if (listReminderLost.length == 0) return;
-    contentModule.reminderActivityLost(listReminderLost).then(function(value){
+    contentModule.reminderActivityLostThanhYen(host, listReminderLost).then(function(value){
         ModalElement.showWindow({
             title: LanguageModule.text("txt_reminder"),
             bodycontent: DOMElement.div({
                 attrs: {
-                    className: "cardsimpletableclass absol-single-page-scroller",
+                    className: "cardsimpletableclass",
                     style: {
                         height: "calc(90vh - 160px)"
                     }
@@ -3230,22 +3477,217 @@ contentModule.reminderForm = function(listReminderLost){
 };
 
 contentModule.showReminder = function(){
-    if (!data_module.companies || !data_module.users || !data_module.contact || !data_module.owner_company_contact){
+    if (!data_module.users){
         setTimeout(function(){
             contentModule.showReminder();
         }, 50);
         return;
     }
-    var dataReminder = contentModule.makeUser_calendarReminder();
-    contentModule.reminderForm(dataReminder.listReminderLost);
-    contentModule.reminderActivity(dataReminder.listNotification);
+    var host = {
+        database: {}
+    };
+    var time = new Date();
+    var month = time.getMonth();
+    var year = time.getFullYear();
+    var st = {
+        nations: [],
+        cities: [],
+        districts: [],
+        company_class: [],
+        companies: [],
+        contact: [],
+        owner_company_contact: [],
+        user_calendar: [],
+        company_class_member: [],
+        account_groups: [],
+        privilege_groups: [],
+        privilege_group_details: []
+    }
+    host.database = {};
+    contentModule.makeDatabaseContent(host.database, st);
+    host.database.company_class_member.sync = new Promise(function(resolve, reject){
+        dbcache.loadByCondition({
+            name: "company_class_member",
+            cond: function (record) {
+                return record.userid == systemconfig.userid;
+            },
+            callback: function (retval) {
+                host.database.company_class_member.items = EncodingClass.string.duplicate(retval);
+                resolve();
+            }
+        });
+    });
+    host.database.owner_company_contact.sync = new Promise(function(resolve, reject){
+        dbcache.loadByCondition({
+            name: "owner_company_contact",
+            cond: function (record) {
+                return true;
+            },
+            callback: function (retval) {
+                host.database.owner_company_contact.items = retval;
+                resolve();
+            }
+        });
+    });
+    host.database.nations.sync = new Promise(function(resolve, reject){
+        dbcache.loadByCondition({
+            name: "nations",
+            cond: function (record) {
+                return true;
+            },
+            callback: function (retval) {
+                host.database.nations.items = retval;
+                resolve();
+            }
+        });
+    });
+    host.database.cities.sync = new Promise(function(resolve, reject){
+        dbcache.loadByCondition({
+            name: "cities",
+            cond: function (record) {
+                return true;
+            },
+            callback: function (retval) {
+                host.database.cities.items = retval;
+                resolve();
+            }
+        });
+    });
+    host.database.districts.sync = new Promise(function(resolve, reject){
+        dbcache.loadByCondition({
+            name: "districts",
+            cond: function (record) {
+                return true;
+            },
+            callback: function (retval) {
+                host.database.districts.items = retval;
+                resolve();
+            }
+        });
+    });
+    host.database.companies.sync = new Promise(function(resolve, reject){
+        dbcache.loadByCondition({
+            name: "company",
+            cond: function (record) {
+                return true;
+            },
+            callback: function (retval) {
+                host.database.companies.items = retval;
+                resolve();
+            }
+        });
+    });
+    host.database.company_class.sync = new Promise(function(resolve, reject){
+        dbcache.loadByCondition({
+            name: "company_class",
+            cond: function (record) {
+                return true;
+            },
+            callback: function (retval) {
+                host.database.company_class.items = EncodingClass.string.duplicate(retval);
+                resolve();
+            }
+        });
+    });
+    host.database.contact.sync = new Promise(function(resolve, reject){
+        dbcache.loadByCondition({
+            name: "contact",
+            cond: function (record) {
+                return true;
+            },
+            callback: function (retval) {
+                host.database.contact.items = retval;
+                resolve();
+            }
+        });
+    });
+    host.database.user_calendar.sync = new Promise(function(resolve, reject){
+        dbcache.loadByCondition({
+            name: "user_calendar",
+            cond: function (record) {
+                if (record.userid != systemconfig.userid) return false;
+                if (record.month == month && record.year == year) return true;
+                if (month == 11){
+                    if (record.month == 0 && record.year == year + 1) return true;
+                }
+                else {
+                    if (record.month == month + 1 && record.year == year) return true;
+                }
+                return false;
+            },
+            callback: function (retval) {
+                host.database.user_calendar.items = EncodingClass.string.duplicate(retval);
+                resolve();
+            }
+        });
+    });
+    host.database.account_groups.sync = new Promise(function(resolve, reject){
+        dbcache.loadByCondition({
+            name: "account_groups",
+            cond: function (record) {
+                return true;
+            },
+            callback: function (retval) {
+                host.database.account_groups.items = EncodingClass.string.duplicate(retval);
+                resolve();
+            }
+        });
+    });
+    host.database.privilege_groups.sync = new Promise(function(resolve, reject){
+        dbcache.loadByCondition({
+            name: "privilege_groups",
+            cond: function (record) {
+                return true;
+            },
+            callback: function (retval) {
+                host.database.privilege_groups.items = EncodingClass.string.duplicate(retval);
+                resolve();
+            }
+        });
+    });
+    host.database.privilege_group_details.sync = new Promise(function(resolve, reject){
+        dbcache.loadByCondition({
+            name: "privilege_group_details",
+            cond: function (record) {
+                return true;
+            },
+            callback: function (retval) {
+                host.database.privilege_group_details.items = EncodingClass.string.duplicate(retval);
+                resolve();
+            }
+        });
+    });
+    Promise.all([
+        host.database.nations.sync,
+        host.database.cities.sync,
+        host.database.districts.sync,
+        host.database.companies.sync,
+        host.database.company_class.sync,
+        host.database.contact.sync,
+        host.database.owner_company_contact.sync,
+        host.database.company_class_member.sync,
+        host.database.privilege_groups.sync,
+        host.database.privilege_group_details.sync,
+        host.database.account_groups.sync
+    ]).then(function(){
+        contentModule.makeAccountGroupPrivilegeSystem(host);
+        contentModule.makeCitiesIndexThanhYen(host);
+        contentModule.makeDistrictsIndexThanhYen(host);
+        contentModule.makeOwnerCompanyContactThanhYen(host);
+        contentModule.makeCompanyIndexThanhYen(host);
+        contentModule.makeContactIndexThanhYen(host);
+        var dataReminder = contentModule.makeUser_calendarReminderThanhYen(host);
+        // console.log(dataReminder);
+        contentModule.reminderForm(host, dataReminder.listReminderLost);
+        contentModule.reminderActivity(host, dataReminder.listNotification);
+    });
 };
 
-contentModule.makeUser_calendarReminder = function(){
+contentModule.makeUser_calendarReminderThanhYen = function(host){
     var listuserCalendarReminder = [];
-    for (var i = 0; i < data_module.user_calendar.items.length; i++){
-        if (typeof data_module.user_calendar.items[i].content == "string") data_module.user_calendar.items[i].content = EncodingClass.string.toVariable(data_module.user_calendar.items[i].content);
-        listuserCalendarReminder = listuserCalendarReminder.concat(data_module.user_calendar.items[i].content);
+    for (var i = 0; i < host.database.user_calendar.items.length; i++){
+        if (typeof host.database.user_calendar.items[i].content == "string") host.database.user_calendar.items[i].content = EncodingClass.string.toVariable(host.database.user_calendar.items[i].content);
+        listuserCalendarReminder = listuserCalendarReminder.concat(host.database.user_calendar.items[i].content);
     }
     listuserCalendarReminder.sort(function(a, b){
         if (a.type > b.type) return -1;
@@ -3316,4 +3758,312 @@ contentModule.makeUser_calendarReminder = function(){
         listReminderLost: listReminderLost,
         listNotification: listNotification
     };
+};
+
+contentModule.makeCompanyCardIndex = function(host){
+    var card_dict = {};
+    host.database.cards.items.forEach(function(elt, index){
+        card_dict[elt.id] = index;
+    });
+    var company_dict = {};
+    host.database.companies.items.forEach(function(elt, index){
+        company_dict[elt.id] = index;
+    });
+    for (var i = 0; i < host.database.cards.items.length; i++){
+        host.database.cards.items[i].companyList = [];
+    }
+    host.database.company_card.items.forEach(function(elt, index){
+        var k1, k2;
+        if ((card_dict[elt.hostid] !== undefined) && (company_dict[elt.companyid] !== undefined)){
+            host.database.cards.items[card_dict[elt.hostid]].companyList.push(elt.companyid);
+        }
+    });
+};
+
+contentModule.makeContactCardIndex = function(host){
+    for (var i = 0; i < host.database.cards.items.length; i++){
+        host.database.cards.items[i].contactList = [];
+    }
+    var card_dict = {};
+    host.database.cards.items.forEach(function(elt, index){
+        card_dict[elt.id] = index;
+    });
+    var contact_dict = {};
+    host.database.contact.items.forEach(function(elt, index){
+        contact_dict[elt.id] = index;
+    });
+    host.database.contact_card.items.forEach(function(elt, index){
+        var k1, k2;
+        if ((card_dict[elt.hostid] !== undefined) && (contact_dict[elt.contactid] !== undefined)){
+            host.database.cards.items[card_dict[elt.hostid]].contactList.push(elt.contactid);
+        }
+    });
+};
+
+contentModule.makeCompany_class_memberIndex = function(host){
+    var company_classDic = contentModule.makeDictionaryIndex(host.database.company_class.items);
+    for (var i = 0; i < host.database.company_class.items.length; i++){
+        host.database.company_class.items[i].memberList = [];
+    }
+    var k;
+    var usersDic = {};
+    data_module.users.items.forEach(function(elt, index){
+        usersDic[elt.homeid] = index;
+    });
+    for (var i = 0; i < host.database.company_class_member.items.length; i++){
+        host.database.company_class_member.items[i].company_classIndex = k = company_classDic[host.database.company_class_member.items[i].company_classid];
+        if (usersDic[host.database.company_class_member.items[i].userid] === undefined) continue;
+        if (k !== undefined){
+            host.database.company_class.items[k].memberList.push(host.database.company_class_member.items[i]);
+        }
+    }
+};
+
+contentModule.makeBoardEmailGroupLinkIndex = function(host){
+    for (var i = 0; i < host.database.board_email_groups.items.length; i++){
+        host.database.board_email_groups.items[i].userList = [];
+    }
+    var email_groupsDic = contentModule.makeDictionaryIndex(host.database.board_email_groups.items);
+    var k;
+    for (var i = 0; i < host.database.board_email_group_link.items.length; i++){
+        k = email_groupsDic[host.database.board_email_group_link.items[i].groupid];
+        if (k !== undefined) host.database.board_email_groups.items[k].userList.push(host.database.board_email_group_link.items[i].userid);
+    }
+};
+
+contentModule.makePriviledgeGroups = function(host){
+    var priviledge_of_board = {};
+    var priviledge_of_company_class = {};
+    var privilege_groupsDic = contentModule.makeDictionaryIndex(host.database.privilege_groups.items);
+    var k;
+    for (var i = 0; i < host.database.privilege_group_details.items.length; i++){
+        k = privilege_groupsDic[host.database.privilege_group_details.items[i].privid];
+        if (k !== undefined){
+            switch (host.database.privilege_groups.items[k].type) {
+                case "board":
+                    if (host.database.privilege_group_details.items[i].details == ""){
+                        priviledge_of_board[host.database.privilege_group_details.items[i].attr] = true;
+                    }
+                    else {
+                        priviledge_of_board[host.database.privilege_group_details.items[i].attr] = EncodingClass.string.toVariable(host.database.privilege_group_details.items[i].details);
+                    }
+                    break;
+                case "company_class":
+                    priviledge_of_company_class[host.database.privilege_group_details.items[i].attr] = true;
+                    break;
+            }
+        }
+    }
+    return {
+        priviledge_of_board: priviledge_of_board,
+        priviledge_of_company_class: priviledge_of_company_class
+    };
+};
+
+contentModule.getPriviledgeOfBoard = function(type){
+    switch (type) {
+        case 1:
+            return LanguageModule.text("txt_create_card");
+        case 2:
+            return LanguageModule.text("txt_view_card_of_others");
+        case 3:
+            return LanguageModule.text("txt_edit_card_of_others");
+        case 4:
+            return LanguageModule.text("txt_edit_board_general_information");
+        case 5:
+            return LanguageModule.text("txt_edit_board_member");
+        case 6:
+            return LanguageModule.text("txt_edit_board_mail_group_member");
+        case 7:
+            return LanguageModule.text("txt_edit_board_mail_group_required");
+        case 8:
+            return LanguageModule.text("txt_edit_board_optional_field");
+        case 9:
+            return LanguageModule.text("txt_edit_board_list");
+        case 10:
+            return LanguageModule.text("txt_delete_board");
+        case 11:
+            return LanguageModule.text("txt_restore_board");
+        case 12:
+            return LanguageModule.text("txt_archive_board");
+        default:
+            return "";
+    }
+};
+
+contentModule.getPriviledgeOfCompany_class = function(type){
+    switch (type) {
+        case 1:
+            return LanguageModule.text("txt_view");
+        case 2:
+            return LanguageModule.text("txt_edit");
+        default:
+            return "";
+    }
+};
+contentModule.listPriviledgeOfBoard = [1, 2, 3, 4, 6, 7, 8, 9, 10, 5, 11, 12];
+contentModule.listPriviledgeOfCompany_Class = [1, 2];
+
+contentModule.makeAccountGroupsItems = function(host){
+    var listPriviledgeOfBoard = [];
+    var listPriviledgeOfCompany_Class = [];
+    host.database.account_groups.items.sort(function(a, b){
+        return a.gindex - b.gindex;
+    });
+    for (var i = 0; i < host.database.account_groups.items.length; i++){
+        host.database.account_groups.items[i].privOfBoardList = [];
+        host.database.account_groups.items[i].privOfCompany_classList = [];
+    }
+    var account_groupsDic = contentModule.makeDictionaryIndex(host.database.account_groups.items);
+    var privilege_groupsDic = contentModule.makeDictionaryIndex(host.database.privilege_groups.items);
+    var pIndex, aIndex;
+    for (var i = 0; i < host.database.privilege_group_details.items.length; i++){
+        pIndex = privilege_groupsDic[host.database.privilege_group_details.items[i].privid];
+        if (pIndex !== undefined){
+            aIndex = account_groupsDic[host.database.privilege_groups.items[pIndex].groupid];
+            if (aIndex !== undefined){
+                switch (host.database.privilege_groups.items[pIndex].type) {
+                    case "board":
+                        host.database.account_groups.items[aIndex].privOfBoardList.push(host.database.privilege_group_details.items[i].attr);
+                        break;
+                    case "company_class":
+                        host.database.account_groups.items[aIndex].privOfCompany_classList.push(host.database.privilege_group_details.items[i].attr);
+                        break;
+                }
+            }
+        }
+    }
+    for (var i = 0; i < host.database.account_groups.items.length; i++){
+        if (!host.database.account_groups.items[i].available) continue;
+        if (host.database.account_groups.items[i].privOfBoardList.length > 0){
+            listPriviledgeOfBoard.push({value: host.database.account_groups.items[i].id, text: host.database.account_groups.items[i].name, is_system: host.database.account_groups.items[i].is_system});
+        }
+        if (host.database.account_groups.items[i].privOfCompany_classList.length > 0){
+            listPriviledgeOfCompany_Class.push({value: host.database.account_groups.items[i].id, text: host.database.account_groups.items[i].name});
+        }
+    }
+    return {
+        listPriviledgeOfBoard: listPriviledgeOfBoard,
+        listPriviledgeOfCompany_Class: listPriviledgeOfCompany_Class
+    };
+};
+
+contentModule.makePriviledgeOfUserGroups = function(host){
+    var listPriviledgeOfBoard = [];
+    var listPriviledgeOfCompany_Class = [];
+    for (var i = 0; i < host.database.account_groups.items.length; i++){
+        host.database.account_groups.items[i].privOfBoard = {};
+        host.database.account_groups.items[i].privOfCompany_class = {};
+    }
+    var account_groupsDic = contentModule.makeDictionaryIndex(host.database.account_groups.items);
+    var privilege_groupsDic = contentModule.makeDictionaryIndex(host.database.privilege_groups.items);
+    var pIndex, aIndex;
+    for (var i = 0; i < host.database.privilege_group_details.items.length; i++){
+        pIndex = privilege_groupsDic[host.database.privilege_group_details.items[i].privid];
+        if (pIndex !== undefined){
+            aIndex = account_groupsDic[host.database.privilege_groups.items[pIndex].groupid];
+            if (aIndex !== undefined){
+                switch (host.database.privilege_groups.items[pIndex].type) {
+                    case "board":
+                        if (host.database.privilege_group_details.items[i].details == ""){
+                            host.database.account_groups.items[aIndex].privOfBoard[host.database.privilege_group_details.items[i].attr] = true;
+                        }
+                        else {
+                            host.database.account_groups.items[aIndex].privOfBoard[host.database.privilege_group_details.items[i].attr] = EncodingClass.string.toVariable(host.database.privilege_group_details.items[i].details);
+                        }
+                        break;
+                    case "company_class":
+                        host.database.account_groups.items[aIndex].privOfCompany_class[host.database.privilege_group_details.items[i].attr] = true;
+                        break;
+                }
+            }
+        }
+    }
+};
+
+contentModule.makeAccountGroupSystem = function(host){
+    var ex = -1;
+    for (var i = 0; i < host.database.account_groups.items.length; i++){
+        if (host.database.account_groups.items[i].is_system){
+            ex = host.database.account_groups.items[i].id;
+        }
+    }
+    if (ex == -1){
+        host.database.account_groups.items.unshift({
+            id: -1,
+            name: LanguageModule.text("txt_super_administrator"),
+            comment: "",
+            available: 1,
+            gindex: 0,
+            is_system: 1,
+            createdtime: new Date(),
+            lastmodifiedtime: new Date(),
+            userid: 1,
+            ver: 1
+        });
+    }
+};
+
+contentModule.makeAccountGroupPrivilegeSystem = function(host){
+    var ex = 0;
+    for (var i = 0; i < host.database.account_groups.items.length; i++){
+        if (host.database.account_groups.items[i].is_system){
+            ex = host.database.account_groups.items[i].id;
+        }
+    }
+    if (ex == 0){
+        host.database.account_groups.items.unshift({
+            id: -1,
+            name: LanguageModule.text("txt_super_administrator"),
+            comment: "",
+            available: 1,
+            gindex: 0,
+            is_system: 1,
+            createdtime: new Date(),
+            lastmodifiedtime: new Date(),
+            userid: 1,
+            ver: 1
+        });
+        ex = -1;
+    }
+    host.database.privilege_groups.items = host.database.privilege_groups.items.concat([
+        {
+            id: -1,
+            type: "board",
+            groupid: ex
+        },
+        {
+            id: -2,
+            type: "company_class",
+            groupid: ex
+        }
+    ]);
+    var idSystem = -1;
+    for (var i = 0; i < contentModule.listPriviledgeOfBoard.length; i++){
+        if (contentModule.listPriviledgeOfBoard[i] == 5){
+            host.database.privilege_group_details.items.push({
+                id: idSystem,
+                privid: -1,
+                attr: contentModule.listPriviledgeOfBoard[i],
+                details: EncodingClass.string.fromVariable([0])
+            });
+        }
+        else {
+            host.database.privilege_group_details.items.push({
+                id: idSystem,
+                privid: -1,
+                attr: contentModule.listPriviledgeOfBoard[i],
+                details: ""
+            });
+        }
+        idSystem--;
+    }
+    for (var i = 0; i < contentModule.listPriviledgeOfCompany_Class.length; i++){
+        host.database.privilege_group_details.items.push({
+            id: idSystem,
+            privid: -2,
+            attr: contentModule.listPriviledgeOfCompany_Class[i]
+        });
+        idSystem--;
+    }
 };

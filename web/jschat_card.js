@@ -334,7 +334,8 @@ ChatClass.connect = function (params) {
         status: "connecting",
         onClosed: params.onClosed,
         onConnect: params.onConnect,
-        onMessage: params.onMessage
+        onMessage: params.onMessage,
+        echo: false
     };
     if (params.host === undefined) {
         host = "<?php echo addslashes($_SERVER['HTTP_HOST']); ?>";
@@ -373,7 +374,7 @@ ChatClass.connect = function (params) {
     client.onConnectionLost = function (me) {
         return function (responseObject) {
             me.status = "closed";
-            console.log(responseObject);
+            //console.log(responseObject);
             if (me.onClosed !== undefined) {
                 if (EncodingClass.type.isFunction(me.onClosed)) me.onClosed(responseObject, me);
             }
@@ -437,7 +438,8 @@ ChatClass.connect = function (params) {
                                 }
                             }
                         }
-                        else {
+                        if ((os.senderinfo.clientid != me.client_id) || (me.echo === true)) {
+                        //else {
                             if (ackList["recv_" + os.senderinfo.clientid + "_" + os.index] === undefined) ackList["recv_" + os.senderinfo.clientid + "_" + os.index] = {
                                 packets: [],
                                 received: 0,
@@ -495,6 +497,7 @@ ChatClass.connect = function (params) {
     };
     if (isSSL) connectOptions.useSSL = true;
     client.connect(connectOptions);
+
     r.send = function (client, me, channel, ackList) {
         return function (params) {
             var message, ts, userinfo, msg, content, receiver, now, psend, mindex;
@@ -567,6 +570,7 @@ ChatClass.connect = function (params) {
                     if (scontent.content.length == 0) {
                         if (scontent.ackList["ack" + mindex].onsent !== undefined) {
                             if (EncodingClass.type.isFunction(scontent.ackList["ack" + mindex].onsent(true)));
+                            //console.log(scontent);
                             delete scontent.ackList["ack" + mindex].onsent;
                         }
                         delete(scontent.userinfo);

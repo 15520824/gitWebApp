@@ -1,10 +1,14 @@
 body {
     --body-height: 100%;
     --font-size-right-mouse-menu: 16px;
-    --font-size-text-input: 16px;
-    --font-size-label: 14px;
-    --font: 14px "Helvetica Neue",Helvetica,Arial,sans-serif;
-    --control-height: 40px;
+    --font-size-text-input: 14px;
+    --font-size-label: 12px;
+    --font: 13px "Helvetica Neue",Helvetica,Arial,sans-serif;
+    --font-size-title: 14px;
+    --font-weight-title: bold;
+    --font-size-table-header: 12px;
+    --font-weight-table-header: bold;
+    --control-height: 30px;
     --control-verticle-distance-1: 10px;
     --control-horizontal-distance-1: 10px;
     --control-verticle-distance-2: 20px;
@@ -13,7 +17,14 @@ body {
     --control-border-alert: 1px solid red;
     --switch-fontsize: 18px;
 
+    --modal-margin-top: 80px;
+    --modal-boder-radius: 8px;
+    --header-bar-background: #efefef;
+    --header-bar-color: black;
+
     --a-color: #1464f6;
+
+    --disabled-backgroudcolor: #ebebe4;
 
     --tab-padding: 20px;
     --tab-padding-top: 20px;

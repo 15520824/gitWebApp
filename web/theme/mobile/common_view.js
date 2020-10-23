@@ -1,3 +1,148 @@
+theme.HeaderBarWithSearh = (function(){
+    var _ = absol._;
+    var $ = absol.$;
+    function HeaderBarWithSearch(){
+        this.$disableSearchBtn = _({
+            tag: 'button',
+            class: ['am-header-bar-left-btn', 'am-header-bar-disable-search-btn'],
+            child:{ tag:'i', class: 'material-icons', child:{text:'keyboard_backspace'}},
+            on:{
+                click: this.eventHandler.clickDisableSearchBtn
+            }
+        });
+        this.addChildBefore(this.$disableSearchBtn, this.firstChild);
+    }
+
+    HeaderBarWithSearch.tag = 'headerbarwithsearch';
+
+    HeaderBarWithSearch.render = function(data){
+        var searchInput = data.searchInput;
+        var res =  _('mheaderbar');
+        searchInput.attr('style', undefined);
+        res.$searchInput = searchInput;
+        res.addChildBefore(searchInput, res.$right);
+        return res;
+    };
+
+    HeaderBarWithSearch.prototype.searchMode = function(flag){
+        if (this.containsClass('am-search-mode') == flag) return;
+        if (flag){
+            this.addClass('am-search-mode');
+            this.$searchInput.focus();
+            this._prevActionIcon = this.actionIcon;
+        }
+        else {
+            this.removeClass('am-search-mode');
+            this.$searchInput.blur();
+            this.$searchInput.value = "";
+        }
+    };
+
+    HeaderBarWithSearch.eventHandler = {};
+
+    HeaderBarWithSearch.eventHandler.clickDisableSearchBtn = function(event){
+        this.searchMode(false);
+    };
+
+    absol.coreDom.install(HeaderBarWithSearch);
+    return HeaderBarWithSearch;
+})();
+
+theme.modalFormMobile = function(params){
+    if (params.title === undefined) params.title = "";
+    var formcontent;
+    var h = DOMElement.div({
+        attrs: {
+            className: "card-modal-mobile-body-content-ctn"
+        }
+    });
+    if (params.bodycontent !== undefined) h.appendChild(params.bodycontent);
+    var buttonElt = DOMElement.div({
+        attrs: {
+            align: "right",
+            style: {
+                paddingTop: "20px"
+            }
+        }
+    });
+    if (params.buttonList === undefined) params.buttonList = [];
+    var color;
+    for (var i = 0; i < params.buttonList.length; i++){
+        switch (params.buttonList[i].typeColor) {
+            case "light":
+                color = "var(--a-color)";
+                break;
+            case "dark":
+            default:
+                color = "#aaaaaa";
+        }
+        buttonElt.appendChild(DOMElement.span({
+            attrs: {
+                style: {
+                    color: color,
+                    fontWeight: "bold",
+                    marginLeft: "20px"
+                },
+                onclick: function(i) {
+                    return function (event, me) {
+                        formcontent.remove();
+                        params.func(i);
+                    }
+                } (i)
+            },
+            text: params.buttonList[i].text.toUpperCase()
+        }));
+    }
+    if (params.buttonList.length > 0) h.appendChild(buttonElt);
+    formcontent = DOMElement.div({
+        attrs: {
+            style: {
+                width: "100vw",
+                height: "100vh",
+                top: 0,
+                position: "fixed",
+                background: "#0000001a",
+                zIndex: 88888
+            }
+        },
+        children: [DOMElement.div({
+            attrs: {
+                className: "card-modal-mobile-ctn"
+            },
+            children: [
+                DOMElement.div({
+                    attrs: {
+                        className: "card-modal-mobile-header-ctn"
+                    },
+                    children: [
+                        DOMElement.div({
+                            attrs: {
+                                className: "card-modal-mobile-header-title"
+                            },
+                            text: params.title
+                        }),
+                        DOMElement.div({
+                            attrs: {
+                                className: "card-modal-mobile-close-btn",
+                                onclick: function(){
+                                    formcontent.remove();
+                                }
+                            },
+                            children: [DOMElement.i({
+                                attrs: {
+                                    className: "material-icons card-modal-mobile-close-icon"
+                                },
+                                text: "clear"
+                            })]
+                        })
+                    ]
+                }),
+                h
+            ]
+        })]
+    });
+    document.body.appendChild(formcontent);
+};
 
 theme.showForm = function(params){
     var bodycontent;
@@ -204,7 +349,7 @@ theme.menuHeader = function(params){
             items: [
                 {
                     text: LanguageModule.text("txt_boards"),
-                    icon: 'span.mdi.mdi-file-table-outline',
+                    icon: 'span.mdi.mdi-picture-in-picture-bottom-right.mdi-rotate-180',
                     cmd: params.cmd.boards
                 },
                 {
@@ -212,20 +357,25 @@ theme.menuHeader = function(params){
                     icon: 'span.mdi.mdi-chat-outline',
                     cmd: params.cmd.chat
                 },
-                {
-                    text: LanguageModule.text("txt_calendar"),
-                    icon: 'span.mdi.mdi-calendar',
-                    cmd: params.cmd.my_calendar
-                },
+                // {
+                //     text: LanguageModule.text("txt_calendar"),
+                //     icon: 'span.mdi.mdi-calendar',
+                //     cmd: params.cmd.my_calendar
+                // },
                 {
                     text: LanguageModule.text("txt_activity"),
-                    icon: 'span.mdi.mdi-clock',
+                    icon: 'span.mdi.mdi-playlist-check',
                     cmd: params.cmd.activities
                 },
                 {
                     text: LanguageModule.text("txt_reminder"),
                     icon: 'span.mdi.mdi-clock-alert',
                     cmd: params.cmd.reminder
+                },
+                {
+                    text: LanguageModule.text("txt_maps"),
+                    icon: 'span.mdi.mdi-google-maps',
+                    cmd: params.cmd.maps
                 }
             ]
         },
@@ -248,7 +398,7 @@ theme.menuHeader = function(params){
                 },
                 {
                     text: LanguageModule.text("txt_contact"),
-                    icon: 'span.mdi.mdi-contact-mail',
+                    icon: 'span.mdi.mdi-card-account-mail',
                     cmd: params.cmd.contact
                 }
             ]
@@ -261,10 +411,15 @@ theme.menuHeader = function(params){
                     backgroundColor: 'rgb(136, 136, 136)'
                 },
                 props: {
-                    iconName: 'settings-outline'
+                    iconName: 'cog-outline'
                 }
             },
             items: [
+                {
+                    text: LanguageModule.text("txt_user_groups"),
+                    icon: 'span.mdi.mdi-account-group',
+                    cmd: params.cmd.account_group
+                },
                 {
                     text: LanguageModule.text("txt_personal_profile"),
                     icon: 'span.mdi.mdi-file-account',
@@ -414,8 +569,8 @@ theme.formPersonalProfile = function(params){
     var logo_img = DOMElement.img({
         attrs: {
             style: {
-                maxHeight: "110px",
-                maxWidth: "110px",
+                maxHeight: "130px",
+                maxWidth: "130px",
                 cursor: "pointer",
                 display: "inline-block"
             },
@@ -442,6 +597,66 @@ theme.formPersonalProfile = function(params){
             }
         },
         children: [logo_img]
+    });
+    var textId = ("text_" + Math.random() + Math.random()).replace(/\./g, '');
+    var signature_inputtext = absol.buildDom({
+        tag: 'div',
+        class: "container-bot",
+        props: {
+            id: textId
+        }
+    });
+
+    var editorSignature;
+    var ckedit = absol.buildDom({
+        tag: 'attachhook',
+        on: {
+            error: function () {
+                this.selfRemove();
+                editorSignature = CKEDITOR.replace(textId, {
+                    toolbar: [
+                       ['Bold', 'Italic','Underline', 'Strike', 'NumberedList', 'BulletedList', 'Image','Font','FontSize','TextColor','BGColor'],
+                   ]
+                });
+                editorSignature.setData(params.data.signature);
+            }
+        }
+    });
+    var card_assign_to_checkbox = absol.buildDom({
+        tag: "switch",
+        style: {
+            'font-size': 'var(--switch-fontsize)',
+            position: "absolute",
+            right: 0,
+            top: 0
+        },
+        props: {
+            checked: params.data.noti.card_assign_to
+        }
+    });
+    var activity_assign_to_checkbox = absol.buildDom({
+        tag: "switch",
+        style: {
+            'font-size': 'var(--switch-fontsize)',
+            position: "absolute",
+            right: 0,
+            top: 0
+        },
+        props: {
+            checked: params.data.noti.activity_assign_to
+        }
+    });
+    var activity_participant_checkbox = absol.buildDom({
+        tag: "switch",
+        style: {
+            'font-size': 'var(--switch-fontsize)',
+            position: "absolute",
+            right: 0,
+            top: 0
+        },
+        props: {
+            checked: params.data.noti.activity_participant
+        }
     });
     var change = 0;
     var singlePage = DOMElement.div({
@@ -563,7 +778,61 @@ theme.formPersonalProfile = function(params){
                         },
                         text: LanguageModule.text("txt_comment")
                     }),
-                    comment
+                    comment,
+                    DOMElement.div({
+                        attrs: {
+                            className: "card-mobile-label-form-edit"
+                        },
+                        text: LanguageModule.text("txt_signature")
+                    }),
+                    DOMElement.div({
+                        attrs: {
+                            className: "card-signature-ctn"
+                        },
+                        children: [signature_inputtext]
+                    }),
+                    DOMElement.div({
+                        attrs: {
+                            className: "card-mobile-label-form-edit"
+                        },
+                        text: LanguageModule.text("txt_send_noti")
+                    }),
+                    DOMElement.div({
+                        attrs: {
+                            className: "card-mobile-label-form-edit",
+                            style: {
+                                position: "relative"
+                            }
+                        },
+                        children: [
+                            DOMElement.div({text: LanguageModule.text("txt_noti_card_assign_to")}),
+                            card_assign_to_checkbox
+                        ]
+                    }),
+                    DOMElement.div({
+                        attrs: {
+                            className: "card-mobile-label-form-edit",
+                            style: {
+                                position: "relative"
+                            }
+                        },
+                        children: [
+                            DOMElement.div({text: LanguageModule.text("txt_noti_activity_assign_to")}),
+                            activity_assign_to_checkbox
+                        ]
+                    }),
+                    DOMElement.div({
+                        attrs: {
+                            className: "card-mobile-label-form-edit",
+                            style: {
+                                position: "relative"
+                            }
+                        },
+                        children: [
+                            DOMElement.div({text: LanguageModule.text("txt_activity_participant")}),
+                            activity_participant_checkbox
+                        ]
+                    })
                 ]
             })
         ]
@@ -593,7 +862,15 @@ theme.formPersonalProfile = function(params){
             email: emailadd,
             comment: comment.value.trim(),
             language: language.value,
-            user_avatars: params.user_avatars
+            user_avatars: params.user_avatars,
+            config: {
+                signature: editorSignature.getData(),
+                noti: {
+                    card_assign_to: card_assign_to_checkbox.checked,
+                    activity_assign_to: activity_assign_to_checkbox.checked,
+                    activity_participant: activity_participant_checkbox.checked
+                }
+            }
         };
         if (change == 1) {
             if (oldpassword.value.trim() == ""){
@@ -707,6 +984,7 @@ theme.input = function(params){
     if (params.disabled !== undefined) res.attrs.disabled = params.disabled;
     if (params.onkeyup !== undefined) res.attrs.onkeyup = params.onkeyup;
     if (params.onkeydown !== undefined) res.attrs.onkeydown = params.onkeydown;
+    if (params.onchange !== undefined) res.attrs.onchange = params.onchange;
     if (params.align !== undefined) res.attrs.align = params.align;
     if (params.placeholder !== undefined) res.attrs.placeholder = params.placeholder;
     if (params.type !== undefined) res.attrs.type = params.type;

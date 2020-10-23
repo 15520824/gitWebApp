@@ -54,31 +54,31 @@ theme.MesssageItem = function MesssageItem(){
 };
 
 theme.MesssageItem.render = function(){
-return absol._({
-    extendEvent: ['pressopen'],
-    class: 'chat-message-item',
-    child:[
-        {
-            class: 'chat-message-item-avatar'
-        },
-        {
-            class:'chat-message-item-content-ctn',
-            child:[
-                {
-                    class:'chat-message-item-title',
-                    child:[
-                        {
-                            class:'chat-message-item-name'
-                        },
-                        {
-                            class:'chat-message-item-time'
-                        }
-                    ]
-                },
-                {
-                    class:'chat-message-item-company-contact'
-                },
-                {
+    return absol._({
+        extendEvent: ['pressopen'],
+        class: 'chat-message-item',
+        child:[
+            {
+                class: 'chat-message-item-avatar'
+            },
+            {
+                class:'chat-message-item-content-ctn',
+                child:[
+                    {
+                        class:'chat-message-item-title',
+                        child:[
+                            {
+                                class:'chat-message-item-name'
+                            },
+                            {
+                                class:'chat-message-item-time'
+                            }
+                        ]
+                    },
+                    {
+                        class:'chat-message-item-company-contact'
+                    },
+                    {
                     class:'chat-message-item-message',
                     child:[
                         {
@@ -96,11 +96,11 @@ return absol._({
                             ]
                         }
                     ]
-                 }
-             ]
-         }
-     ]
- });
+                    }
+                ]
+            }
+        ]
+    });
 };
 
 theme.MesssageItem.property = {};
@@ -235,7 +235,6 @@ theme.ChatBox = function (params) {
     this.editMessageFunc = params.data.editMessageFunc;
     this.deleteMessageFunc = params.data.deleteMessageFunc;
     this.frameList = params.frameList;
-    this.listMessLocalid
 };
 
 theme.ChatBox.prototype.toggleGallery = function () {
@@ -519,6 +518,41 @@ theme.ChatBox.prototype.createMessage = function (data) {
                 })]
             });
             break;
+        case "remove_member":
+            var userIndex = self.chatBar.usersList.getIndex(data.content);
+            res = absol.buildDom({
+                class: "card-chatbox-line-seen",
+                child: [absol.buildDom({
+                    tag: "unreadmessageline",
+                    props: {
+                        text: contentModule.getTimeMessage(data.m_time) + ", " + data.fullname + " đã xóa " + self.chatBar.usersList[userIndex].fullname + " khỏi cuộc trò chuyện."
+                    }
+                })]
+            });
+            break;
+        case "leave_group":
+            var userIndex = self.chatBar.usersList.getIndex(data.content.leave);
+            if (userIndex < 0) {
+                res = DOMElement.div({});
+                break;
+            }
+            var messText = contentModule.getTimeMessage(data.m_time) + ", " + self.chatBar.usersList[userIndex].fullname + " đã rời khỏi cuộc trò chuyện";
+            if (data.content.admin > 0){
+                userIndex = self.chatBar.usersList.getIndex(data.content.admin);
+                if (userIndex >= 0) {
+                    messText += ", và " + self.chatBar.usersList[userIndex].fullname + " đã được chọn làm trưởng nhóm."
+                }
+            }
+            res = absol.buildDom({
+                class: "card-chatbox-line-seen",
+                child: [absol.buildDom({
+                    tag: "unreadmessageline",
+                    props: {
+                        text: messText
+                    }
+                })]
+            });
+            break;
         default:
             res = DOMElement.div({});
             break;
@@ -703,24 +737,7 @@ theme.ChatBox.prototype.deleteMessage = function (localid) {
                 if (self.chatBar.listChatView[i].lastLocalid == localid) {
                     if (values == "")  self.chatBar.listChatView[i].elt.messagetext = "";
                     else {
-                        switch (values.content_type) {
-                            case "file":
-                            case "text":
-                                self.chatBar.listChatView[i].elt.messagetext = values.content;
-                                break;
-                            case "img":
-                                self.chatBar.listChatView[i].elt.messagetext = "[photo]";
-                                break;
-                            case "join":
-                                self.chatBar.listChatView[i].elt.messagetext = values.fullname + " đã tham gia nhóm."
-                                break;
-                            case "create":
-                                self.chatBar.listChatView[i].elt.messagetext = values.fullname + " đã tạo nhóm."
-                                break;
-                            case "add_member":
-                                self.chatBar.listChatView[i].elt.messagetext = values.fullname + " đã thêm ..."
-                                break;
-                        }
+                        self.chatBar.listChatView[i].elt.messagetext = self.getMessageText(values);
                         self.chatBar.listChatView[i].lastLocalid = values.localid;
                     }
                 }
@@ -833,25 +850,7 @@ theme.ChatBox.prototype.sendAddMessage = function (text, files, images) {
                 self.chatBar.listChatContent.insertBefore(self.messageitem, self.chatBar.listChatContent.firstChild);
             }
             var lastMess = messList[messList.length - 1];
-            switch (lastMess.content_type) {
-                case "file":
-                case "text":
-                    self.messageitem.messagetext = lastMess.content;
-                    break;
-                case "img":
-                    self.messageitem.messagetext = "[photo]";
-                    break;
-                case "join":
-                    self.messageitem.messagetext = lastMess.fullname + " đã tham gia nhóm."
-                    break;
-                case "create":
-                    self.messageitem.messagetext = lastMess.fullname + " đã tạo nhóm."
-                    break;
-                case "add_member":
-                    self.messageitem.messagetext = lastMess.fullname + " đã thêm ..."
-                    break;
-
-            }
+            self.messageitem.messagetext = self.chatBar.getMessageText(lastMess);
             self.messageitem.time = contentModule.getTimeMessageList(new Date());
             self.messageitem.parentNode.insertBefore(self.messageitem, self.messageitem.parentNode.firstChild);
             self.sendFunc(text, files, images, listIdLocal).then(function(values){
@@ -901,10 +900,19 @@ theme.ChatBox.prototype.editMessageRedraw = function (localid, text) {
 
 theme.ChatBox.prototype.seenMessage = function () {
     var self = this;
-    if (this.content.length == 0) return;
-    self.seenFunc(this.content[this.content.length - 1].localid).then(function (values) {
-        carddone.menu.mobileTabbar.items[1].counter--;
+    if (self.messageitem === undefined){
+        if (self._messageitemhidden === undefined) return;
+        if (self._messageitemhidden.new_noseen == 0) return;
+        self._messageitemhidden.new_noseen = 0;
+    }
+    else {
+        if (self.messageitem.new_noseen == 0) return;
         self.messageitem.new_noseen = 0;
+    }
+    console.log(this.content);
+    if (this.content.length == 0) return;
+    self.seenFunc(self.content[self.content.length - 1].localid).then(function(values){
+        carddone.menu.mobileTabbar.items[carddone.menu.indexMenuChat].counter--;
     });
 };
 
@@ -1044,9 +1052,8 @@ theme.ChatBox.prototype.addMessage = function(content){
                         ]
                     }));
                 }
-                this.lastUserid = content.userid;
-                this.lastMessTime = content.m_time;
             }
+            this.lastUserid = content.userid;
             for (var i = 0; i < self.chatBar.listChatView.length; i++){
                 if (self.chatBar.listChatView[i].name == self.id){
                     self.chatBar.listChatView[i].lastLocalid = content.localid;
@@ -1063,6 +1070,7 @@ theme.ChatBox.prototype.addMessage = function(content){
             });
             this._lastVMessageGroup.appendChild(singleMessage);
     }
+    this.lastMessTime = content.m_time;
     var self = this;
     if (content.localid <= this.mess_seen_id){
         absol._('attachhook').addTo(singleMessage).on('error', function(){
@@ -1372,22 +1380,179 @@ theme.ChatBox.prototype.getView = function () {
     return this.view;
 };
 
+theme.ChatBar.prototype.getMessageText = function(data){
+    var self = this;
+    switch (data.content_type) {
+        case "file":
+        case "text":
+            return data.content;
+        case "img":
+            return "[photo]";
+        case "join":
+            return data.fullname + " đã tham gia nhóm."
+            break;
+        case "create":
+            return data.fullname + " đã tạo nhóm."
+        case "add_member":
+            var listMemberName = "", uIndex;
+            for (var i = 0; i < data.content.length; i++){
+                if (listMemberName.length > 0) listMemberName += ", ";
+                uIndex = self.usersList.getIndex(data.content[i]);
+                if (uIndex >= 0) listMemberName += self.usersList[uIndex].fullname;
+            }
+            return data.fullname + " đã thêm " + listMemberName;
+        case "remove_member":
+            var fullname = "";
+            var uIndex = self.usersList.getIndex(data.content);
+            if (uIndex >= 0) fullname += self.usersList[uIndex].fullname;
+            else fullname = "...";
+            return data.fullname + " đã xóa " + fullname + " khỏi cuộc trò chuyện."
+        case "leave_group":
+            var messText = "";
+            var uIndex = self.usersList.getIndex(data.content.leave);
+            if (uIndex >= 0) messText += self.usersList[uIndex].fullname + " đã rời khỏi cuộc trò chuyện, và ";
+            else messText = "...";
+            return messText;
+
+    }
+    return "";
+};
+
+theme.ChatBar.prototype.dropGroup = function(id){
+    var self = this;
+    for (var i = 0; i < self.listChatView.length; i++){
+        if (self.listChatView[i].name == id){
+            self.listChatView[i].elt.remove();
+            self.listChatView.splice(i, 1);
+            break;
+        }
+    }
+    for (var i = 0; i < self.listChatBoxOpen.length; i++){
+        if (self.listChatBoxOpen[i].name == id){
+            if (self.listChatBoxOpen[i].elt.parentElement.containsClass('absol-active')) {
+                self.frameList.getAllChild()[0].requestActive();
+                window.backLayoutFunc.splice(window.backLayoutFunc.length - 1, 1);
+            }
+            break;
+        }
+    }
+};
+
+theme.ChatBar.prototype.deleteGroup = function(item){
+    var self = this;
+    item.deleteFunc(item.id).then(function(value){
+        if (self.manageModal !== undefined) self.manageModal.selfRemove();
+        self.frameList.getAllChild()[0].requestActive();
+        self.dropGroup(item.id);
+    });
+};
+
+theme.ChatBar.prototype.deleteGroupConfirm = function(item){
+    var self = this;
+    ModalElement.question2({
+        title: LanguageModule.text("txt_delete_conversation"),
+        message: LanguageModule.text2("war_txt_delete_conversation", item.name),
+        onclick: function(sel){
+            if (sel == 0){
+                self.deleteGroup(item);
+            }
+        }
+    });
+};
+
+theme.ChatBar.prototype.leaveGroup = function(item){
+    var self = this;
+    item.leaveFunc(item.id).then(function(value){
+        if (self.manageModal !== undefined) self.manageModal.selfRemove();
+        self.frameList.getAllChild()[0].requestActive();
+        self.dropGroup(item.id);
+    });
+};
+
+theme.ChatBar.prototype.leaveGroupConfirm = function(item){
+    var self = this;
+    ModalElement.question2({
+        title: LanguageModule.text("txt_leave_group"),
+        message: LanguageModule.text2("war_txt_leave_group", item.name),
+        onclick: function(sel){
+            if (sel == 0){
+                self.leaveGroup(item);
+            }
+        }
+    });
+};
+
+theme.ChatBar.prototype.dissolveGroup = function(item){
+    var self = this;
+    item.dissolveFunc(item.id).then(function(value){
+        if (self.manageModal !== undefined) self.manageModal.selfRemove();
+        self.frameList.getAllChild()[0].requestActive();
+        self.dropGroup(item.id);
+    });
+};
+
+theme.ChatBar.prototype.dissolveGroupConfirm = function(item){
+    var self = this;
+    ModalElement.question2({
+        title: LanguageModule.text("txt_dissolve_group"),
+        message: LanguageModule.text2("war_txt_dissolve_group", item.name),
+        onclick: function(sel){
+            if (sel == 0){
+                self.dissolveGroup(item);
+            }
+        }
+    });
+};
+
+
 theme.ChatBar.prototype.drawListMessage = function (data, openChat, sessionActive) {
-    //console.log(openChat, sessionActive);
+    // console.log(openChat, sessionActive);
     var self = this;
     if (openChat === undefined) openChat = false;
     var mItemsNew;
     var exOpenChat = false;
-    var quickMenuItems;
+    var quickMenuItems, isGroup;
     for (var i = 0; i < data.length; i++) {
+    if (data[i].isdelete) continue;
         quickMenuItems = [];
-        if (data[i].memberList.length > 2 || data[i].cardid > 0){
+        if (data[i].memberList.length > 2) isGroup = true;
+        else {
+            for (var x = 0; x < data[i].memberList.length; x++){
+                if (data[i].memberList[x].privilege >= 2){
+                    isGroup = true;
+                    break;
+                }
+            }
+        }
+        if (isGroup || data[i].cardid > 0){
             quickMenuItems.push({
                 text: LanguageModule.text("txt_manage_group"),
                 extendClasses: "bsc-quickmenu",
                 cmd: function(item){
                     return function(){
                         self.manageGroup(item);
+                    }
+                }(data[i])
+            });
+        }
+        if (data[i].cardid == 0){
+            quickMenuItems.push({
+                text: LanguageModule.text("txt_delete_conversation"),
+                extendClasses: "bsc-quickmenu",
+                cmd: function(item){
+                    return function(){
+                        self.deleteGroupConfirm(item);
+                    }
+                }(data[i])
+            });
+        }
+        if (data[i].cardid == 0 && isGroup){
+            quickMenuItems.push({
+                text: LanguageModule.text("txt_leave_group"),
+                extendClasses: "bsc-quickmenu",
+                cmd: function(item){
+                    return function(){
+                        self.leaveGroupConfirm(item);
                     }
                 }(data[i])
             });
@@ -1441,11 +1606,7 @@ theme.ChatBar.prototype.drawListMessage = function (data, openChat, sessionActiv
                         });
                         newChat.requestActive();
                         carddone.sessionIdActive = item.id;
-                        if (chatBox.messageitem.new_noseen > 0){
-                            setTimeout(function(){
-                                chatBox.seenMessage();
-                            }, 500);
-                        }
+                        chatBox.seenMessage();
                         carddone.menu.showMobileTabbar(false);
                         self.listChatBoxOpen.push({
                             name: item.id,
@@ -1466,25 +1627,7 @@ theme.ChatBar.prototype.drawListMessage = function (data, openChat, sessionActiv
         var lastLocalid = 0;
         if (data[i].content.length > 0) {
             var lastMess = data[i].content[data[i].content.length - 1];
-             switch (lastMess.content_type) {
-                 case "file":
-                 case "text":
-                     mItemsNew.messagetext = lastMess.content;
-                     break;
-                 case "img":
-                     mItemsNew.messagetext = "[photo]";
-                     break;
-                 case "join":
-                     mItemsNew.messagetext = lastMess.fullname + " đã tham gia nhóm."
-                     break;
-                 case "create":
-                     mItemsNew.messagetext = lastMess.fullname + " đã tạo nhóm."
-                     break;
-                 case "add_member":
-                     mItemsNew.messagetext = lastMess.fullname + " đã thêm ..."
-                     break;
-
-             }
+            mItemsNew.messagetext = self.getMessageText(lastMess);
             lastLocalid = data[i].content[data[i].content.length - 1].localid;
         }
         self.listChatContent.appendChild(mItemsNew);
@@ -1493,175 +1636,203 @@ theme.ChatBar.prototype.drawListMessage = function (data, openChat, sessionActiv
             elt: mItemsNew,
             lastLocalid: lastLocalid
         });
-        if (openChat) {
-            if (data[i].id == sessionActive.id) {
-                for (var j = 0; j < self.listChatBoxOpen.length; j++) {
-                    if (self.listChatBoxOpen[j].name == data[i].id) {
-                        self.listChatBoxOpen[j].elt.requestActive();
-                        carddone.sessionIdActive = data[i].id;
-                        carddone.menu.showMobileTabbar(false);
-                        if (self.listChatBoxOpen[j].chatBox.messageitem.new_noseen > 0){
-                            setTimeout(function(){
-                                self.listChatBoxOpen[j].chatBox.seenMessage();
-                            }, 500);
-                        }
-                        return;
-                    }
-                }
-                var chatBox = new theme.ChatBox({
-                    messageitem: mItemsNew,
-                    chatBar: self,
-                    data: data[i],
-                    frameList: self.frameList
-                });
-                var newChat = absol.buildDom({
-                    tag: 'tabframe',
-                    attr: {
-                        name: data[i].id
-                    },
-                    class: 'chats-theme-mobile-message-frame-content',
-                    child: [
-                        chatBox.getView()
-                    ]
-                });
-                self.frameList.addChild(newChat);
-                window.backLayoutFunc.push(function(){
-                    self.frameList.getAllChild()[0].requestActive();
-                    window.backLayoutFunc.splice(window.backLayoutFunc.length - 1, 1);
-                });
-                newChat.requestActive();
-                carddone.sessionIdActive = data[i].id;
-                if (chatBox.messageitem.new_noseen > 0){
-                    setTimeout(function(){
-                        chatBox.seenMessage();
-                    }, 500);
-                }
-                carddone.menu.showMobileTabbar(false);
-                self.listChatBoxOpen.push({
-                    name: data[i].id,
-                    elt: newChat,
-                    chatBox: chatBox
-                });
-                chatBox.seenMessage();
-                exOpenChat = true;
-                //console.log(data[i]);
-            }
-        }
+        // if (openChat) {
+        //     if (data[i].id == sessionActive.id) {
+        //         for (var j = 0; j < self.listChatBoxOpen.length; j++) {
+        //             if (self.listChatBoxOpen[j].name == data[i].id) {
+        //                 self.listChatBoxOpen[j].elt.requestActive();
+        //                 carddone.sessionIdActive = data[i].id;
+        //                 carddone.menu.showMobileTabbar(false);
+        //                 if (self.listChatBoxOpen[j].chatBox.messageitem.new_noseen > 0){
+        //                     setTimeout(function(){
+        //                         self.listChatBoxOpen[j].chatBox.seenMessage();
+        //                     }, 500);
+        //                 }
+        //                 return;
+        //             }
+        //         }
+        //         var chatBox = new theme.ChatBox({
+        //             messageitem: mItemsNew,
+        //             chatBar: self,
+        //             data: data[i],
+        //             frameList: self.frameList
+        //         });
+        //         var newChat = absol.buildDom({
+        //             tag: 'tabframe',
+        //             attr: {
+        //                 name: data[i].id
+        //             },
+        //             class: 'chats-theme-mobile-message-frame-content',
+        //             child: [
+        //                 chatBox.getView()
+        //             ]
+        //         });
+        //         self.frameList.addChild(newChat);
+        //         window.backLayoutFunc.push(function(){
+        //             self.frameList.getAllChild()[0].requestActive();
+        //             window.backLayoutFunc.splice(window.backLayoutFunc.length - 1, 1);
+        //         });
+        //         newChat.requestActive();
+        //         carddone.sessionIdActive = data[i].id;
+        //         if (chatBox.messageitem.new_noseen > 0){
+        //             setTimeout(function(){
+        //                 chatBox.seenMessage();
+        //             }, 500);
+        //         }
+        //         carddone.menu.showMobileTabbar(false);
+        //         self.listChatBoxOpen.push({
+        //             name: data[i].id,
+        //             elt: newChat,
+        //             chatBox: chatBox
+        //         });
+        //         chatBox.seenMessage();
+        //         exOpenChat = true;
+        //         // console.log(data[i]);
+        //     }
+        // }
     }
-    //console.log(openChat, exOpenChat);
-    if (openChat) {
-        if (!exOpenChat) {
-            var quickMenuItems = [];
-            if (sessionActive.memberList.length > 2 || sessionActive.cardid > 0){
-                quickMenuItems.push({
-                    text: LanguageModule.text("txt_manage_group"),
-                    extendClasses: "bsc-quickmenu",
-                    cmd: function(){
-                        self.manageGroup(sessionActive);
-                    }
-                });
-            }
-            mItemsNew = absol.buildDom({
-                tag: "messageitem",
-                props: {
-                    avatarSrc: sessionActive.avatarSrc,
-                    name: sessionActive.name,
-                    quickMenuItems: quickMenuItems,
-                    company_contactName: sessionActive.company_contactName,
-                    time: contentModule.getTimeMessageList(sessionActive.lasttime),
-                    new_noseen: 0
-                },
-                on: {
-                    pressopen: function (event) {
-                        for (var j = 0; j < self.listChatBoxOpen.length; j++) {
-                            if (self.listChatBoxOpen[j].name == sessionActive.id) {
-                                self.listChatBoxOpen[j].elt.requestActive();
-                                carddone.sessionIdActive = sessionActive.id;
-                                if (self.listChatBoxOpen[j].chatBox.messageitem.new_noseen > 0){
-                                    setTimeout(function(){
-                                        self.listChatBoxOpen[j].chatBox.seenMessage();
-                                    }, 500);
-                                }
-                                carddone.menu.showMobileTabbar(false);
-                                return;
-                            }
-                        }
-                        var chatBox = new theme.ChatBox({
-                            messageitem: this,
-                            chatBar: self,
-                            data: sessionActive,
-                            frameList: self.frameList
-                        });
-                        var newChat = absol.buildDom({
-                            tag: 'tabframe',
-                            attr: {
-                                name: sessionActive.id
-                            },
-                            class: 'chats-theme-mobile-message-frame-content',
-                            child: [
-                                chatBox.getView()
-                            ]
-                        });
-                        self.frameList.addChild(newChat);
-                        window.backLayoutFunc.push(function(){
-                            self.frameList.getAllChild()[0].requestActive();
-                            window.backLayoutFunc.splice(window.backLayoutFunc.length - 1, 1);
-                        });
-                        newChat.requestActive();
-                        carddone.sessionIdActive = sessionActive.id;
-                        if (chatBox.messageitem.new_noseen > 0){
-                            setTimeout(function(){
-                                chatBox.seenMessage();
-                            }, 500);
-                        }
-                        carddone.menu.showMobileTabbar(false);
-                        self.listChatBoxOpen.push({
-                            name: sessionActive.id,
-                            elt: newChat,
-                            chatBox: chatBox
-                        });
-                    }
-                }
-            });
-
-            //tao chatbox
-            var chatBox = new theme.ChatBox({
-                _messageitemhidden: mItemsNew,
-                chatBar: self,
-                data: sessionActive,
-                frameList: self.frameList
-            });
-            var newChat = absol.buildDom({
-                tag: 'tabframe',
-                attr: {
-                    name: sessionActive.id
-                },
-                class: 'chats-theme-mobile-message-frame-content',
-                child: [
-                    chatBox.getView()
-                ]
-            });
-            self.frameList.addChild(newChat);
-            window.backLayoutFunc.push(function(){
-                self.frameList.getAllChild()[0].requestActive();
-                window.backLayoutFunc.splice(window.backLayoutFunc.length - 1, 1);
-            });
-            newChat.requestActive();
-            carddone.sessionIdActive = sessionActive.id;
-            if (chatBox.messageitem.new_noseen > 0){
-                setTimeout(function(){
-                    chatBox.seenMessage();
-                }, 500);
-            }
-            carddone.menu.showMobileTabbar(false);
-            self.listChatBoxOpen.push({
-                name: sessionActive.id,
-                elt: newChat,
-                chatBox: chatBox
-            });
-            //console.log(self);
-        }
-    }
+    // console.log(openChat, exOpenChat);
+    // if (openChat) {
+    //     if (!exOpenChat) {
+    //         var quickMenuItems = [];
+    //         var isGroup = false;
+    //         if (sessionActive.memberList.length > 2) isGroup = true;
+    //         else {
+    //             for (var x = 0; x < sessionActive.memberList.length; x++){
+    //                 if (sessionActive.memberList[x].privilege >= 2){
+    //                     isGroup = true;
+    //                     break;
+    //                 }
+    //             }
+    //         }
+    //         if (isGroup || sessionActive.cardid > 0){
+    //             quickMenuItems.push({
+    //                 text: LanguageModule.text("txt_manage_group"),
+    //                 extendClasses: "bsc-quickmenu",
+    //                 cmd: function(){
+    //                     self.manageGroup(sessionActive);
+    //                 }
+    //             });
+    //         }
+    //         if (values.item.cardid == 0){
+    //             quickMenuItems.push({
+    //                 text: LanguageModule.text("txt_delete_conversation"),
+    //                 extendClasses: "bsc-quickmenu",
+    //                 cmd: function(){
+    //                     self.deleteGroupConfirm(sessionActive);
+    //                 }
+    //             });
+    //         }
+    //         if (values.item.cardid == 0 && isGroup){
+    //             quickMenuItems.push({
+    //                 text: LanguageModule.text("txt_leave_group"),
+    //                 extendClasses: "bsc-quickmenu",
+    //                 cmd: function(){
+    //                     self.leaveGroupConfirm(sessionActive);
+    //                 }
+    //             });
+    //         }
+    //         mItemsNew = absol.buildDom({
+    //             tag: "messageitem",
+    //             props: {
+    //                 avatarSrc: sessionActive.avatarSrc,
+    //                 name: sessionActive.name,
+    //                 quickMenuItems: quickMenuItems,
+    //                 company_contactName: sessionActive.company_contactName,
+    //                 time: contentModule.getTimeMessageList(sessionActive.lasttime),
+    //                 new_noseen: 0
+    //             },
+    //             on: {
+    //                 pressopen: function (event) {
+    //                     for (var j = 0; j < self.listChatBoxOpen.length; j++) {
+    //                         if (self.listChatBoxOpen[j].name == sessionActive.id) {
+    //                             self.listChatBoxOpen[j].elt.requestActive();
+    //                             carddone.sessionIdActive = sessionActive.id;
+    //                             if (self.listChatBoxOpen[j].chatBox.messageitem.new_noseen > 0){
+    //                                 setTimeout(function(){
+    //                                     self.listChatBoxOpen[j].chatBox.seenMessage();
+    //                                 }, 500);
+    //                             }
+    //                             carddone.menu.showMobileTabbar(false);
+    //                             return;
+    //                         }
+    //                     }
+    //                     var chatBox = new theme.ChatBox({
+    //                         messageitem: this,
+    //                         chatBar: self,
+    //                         data: sessionActive,
+    //                         frameList: self.frameList
+    //                     });
+    //                     var newChat = absol.buildDom({
+    //                         tag: 'tabframe',
+    //                         attr: {
+    //                             name: sessionActive.id
+    //                         },
+    //                         class: 'chats-theme-mobile-message-frame-content',
+    //                         child: [
+    //                             chatBox.getView()
+    //                         ]
+    //                     });
+    //                     self.frameList.addChild(newChat);
+    //                     window.backLayoutFunc.push(function(){
+    //                         self.frameList.getAllChild()[0].requestActive();
+    //                         window.backLayoutFunc.splice(window.backLayoutFunc.length - 1, 1);
+    //                     });
+    //                     newChat.requestActive();
+    //                     carddone.sessionIdActive = sessionActive.id;
+    //                     if (chatBox.messageitem.new_noseen > 0){
+    //                         setTimeout(function(){
+    //                             chatBox.seenMessage();
+    //                         }, 500);
+    //                     }
+    //                     carddone.menu.showMobileTabbar(false);
+    //                     self.listChatBoxOpen.push({
+    //                         name: sessionActive.id,
+    //                         elt: newChat,
+    //                         chatBox: chatBox
+    //                     });
+    //                 }
+    //             }
+    //         });
+    //
+    //         //tao chatbox
+    //         var chatBox = new theme.ChatBox({
+    //             _messageitemhidden: mItemsNew,
+    //             chatBar: self,
+    //             data: sessionActive,
+    //             frameList: self.frameList
+    //         });
+    //         var newChat = absol.buildDom({
+    //             tag: 'tabframe',
+    //             attr: {
+    //                 name: sessionActive.id
+    //             },
+    //             class: 'chats-theme-mobile-message-frame-content',
+    //             child: [
+    //                 chatBox.getView()
+    //             ]
+    //         });
+    //         self.frameList.addChild(newChat);
+    //         window.backLayoutFunc.push(function(){
+    //             self.frameList.getAllChild()[0].requestActive();
+    //             window.backLayoutFunc.splice(window.backLayoutFunc.length - 1, 1);
+    //         });
+    //         newChat.requestActive();
+    //         carddone.sessionIdActive = sessionActive.id;
+    //         if (chatBox.messageitem.new_noseen > 0){
+    //             setTimeout(function(){
+    //                 chatBox.seenMessage();
+    //             }, 500);
+    //         }
+    //         carddone.menu.showMobileTabbar(false);
+    //         self.listChatBoxOpen.push({
+    //             name: sessionActive.id,
+    //             elt: newChat,
+    //             chatBox: chatBox
+    //         });
+    //         //console.log(self);
+    //     }
+    // }
 };
 
 theme.ChatBar.prototype.getMessOpenChat = function(){
@@ -1683,6 +1854,7 @@ theme.ChatBar.prototype.getMessView = function () {
     var self = this;
     return new Promise(function (resolve, reject) {
         self.data.functionMessage().then(function (values) {
+            console.log(values);
             switch (values.type) {
                 case "addmessage":
                     //console.log(values);
@@ -1699,35 +1871,15 @@ theme.ChatBar.prototype.getMessView = function () {
                             var new_noseen = self.listChatView[i].elt.new_noseen;
                             if (new_noseen === undefined) new_noseen = 0;
                             if (values.content.dataDraw[0].type == "other"){
-                                if (new_noseen == 0) carddone.menu.mobileTabbar.items[1].counter++;
+                                if (new_noseen == 0) carddone.menu.mobileTabbar.items[carddone.menu.indexMenuChat].counter++;
                                 self.listChatView[i].elt.new_noseen = values.content.dataDraw.length + new_noseen;
                             }
                             else {
-                                if (new_noseen > 0 && carddone.menu.mobileTabbar.items[1].counter > 0) carddone.menu.mobileTabbar.items[1].counter--;
+                                if (new_noseen > 0 && carddone.menu.mobileTabbar.items[carddone.menu.indexMenuChat].counter > 0) carddone.menu.mobileTabbar.items[carddone.menu.indexMenuChat].counter--;
                                 self.listChatView[i].elt.new_noseen = 0;
                             }
-                            //console.log(values.content.dataDraw);
-                           lastMess = values.content.dataDraw[values.content.dataDraw.length - 1];
-                         switch (lastMess.content_type) {
-                             case "file":
-                             case "text":
-                                 self.listChatView[i].elt.messagetext = lastMess.content;
-                                 break;
-                             case "img":
-                                 self.listChatView[i].elt.messagetext = "[photo]";
-                                 break;
-                             case "join":
-                                 self.listChatView[i].elt.messagetext = lastMess.fullname + " đã tham gia nhóm."
-                                 break;
-                             case "create":
-                                 self.listChatView[i].elt.messagetext = lastMess.fullname + " đã tạo nhóm."
-                                 break;
-                             case "add_member":
-                                 self.listChatView[i].elt.messagetext = lastMess.fullname + " đã thêm ..."
-                                 break;
-
-                         }
-                            self.listChatView[i].lastLocalid = values.content.dataDraw[values.content.dataDraw.length - 1].localid;
+                            lastMess = values.content.dataDraw[values.content.dataDraw.length - 1];
+                            self.listChatView[i].elt.messagetext = self.getMessageText(lastMess);
                             self.listChatView[i].elt.time = contentModule.getTimeMessageList(new Date());
                             self.listChatView[i].elt.parentNode.insertBefore(self.listChatView[i].elt, self.listChatView[i].elt.parentNode.firstChild);
                             break;
@@ -1751,12 +1903,40 @@ theme.ChatBar.prototype.getMessView = function () {
                 case "add_session":
                     // console.log(values);
                     var quickMenuItems = [];
-                    if (values.item.memberList.length > 2 || values.item.cardid > 0){
+                    var isGroup = false;
+                    if (values.item.memberList.length > 2) isGroup = true;
+                    else {
+                        for (var x = 0; x < values.item.memberList.length; x++){
+                            if (values.item.memberList[x].privilege >= 2){
+                                isGroup = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (isGroup || values.item.cardid > 0){
                         quickMenuItems.push({
                             text: LanguageModule.text("txt_manage_group"),
                             extendClasses: "bsc-quickmenu",
                             cmd: function(){
                                 self.manageGroup(values.item);
+                            }
+                        });
+                    }
+                    if (values.item.cardid == 0){
+                        quickMenuItems.push({
+                            text: LanguageModule.text("txt_delete_conversation"),
+                            extendClasses: "bsc-quickmenu",
+                            cmd: function(){
+                                self.deleteGroupConfirm(values.item);
+                            }
+                        });
+                    }
+                    if (values.item.cardid == 0 && isGroup){
+                        quickMenuItems.push({
+                            text: LanguageModule.text("txt_leave_group"),
+                            extendClasses: "bsc-quickmenu",
+                            cmd: function(){
+                                self.leaveGroupConfirm(values.item);
                             }
                         });
                     }
@@ -1808,11 +1988,7 @@ theme.ChatBar.prototype.getMessView = function () {
                                     window.backLayoutFunc.splice(window.backLayoutFunc.length - 1, 1);
                                 });
                                 carddone.sessionIdActive = values.item.id;
-                                if (chatBox.messageitem.new_noseen > 0){
-                                    setTimeout(function(){
-                                        chatBox.seenMessage();
-                                    }, 500);
-                                }
+                                chatBox.seenMessage();
                                 carddone.menu.showMobileTabbar(false);
                                 self.listChatBoxOpen.push({
                                     name: values.item.id,
@@ -1829,29 +2005,12 @@ theme.ChatBar.prototype.getMessView = function () {
                         }
                     }
                     mItemsNew.new_noseen = new_noseen;
-                    if (new_noseen > 0) carddone.menu.mobileTabbar.items[1].counter++;
+                    if (new_noseen > 0) carddone.menu.mobileTabbar.items[carddone.menu.indexMenuChat].counter++;
                     var lastLocalid = 0;
                     if (values.item.content.length > 0) {
                         var lastMess = values.item.content[values.item.content.length - 1];
-                        switch (lastMess.content_type) {
-                            case "file":
-                            case "text":
-                                mItemsNew.messagetext = lastMess.content;
-                                break;
-                            case "img":
-                                mItemsNew.messagetext = "[photo]";
-                                break;
-                            case "join":
-                                mItemsNew.messagetext = lastMess.fullname + " đã tham gia nhóm."
-                                break;
-                            case "create":
-                                mItemsNew.messagetext = lastMess.fullname + " đã tạo nhóm."
-                                break;
-                            case "add_member":
-                                mItemsNew.messagetext = lastMess.fullname + " đã thêm ..."
-                                break;
-
-                        }
+                        mItemsNew.messagetext = self.getMessageText(lastMess);
+                        lastLocalid = values.item.content[values.item.content.length - 1].lastLocalid;
                     }
                     self.listChatContent.insertBefore(mItemsNew, self.listChatContent.firstChild);
                     self.listChatView.push({
@@ -1859,6 +2018,7 @@ theme.ChatBar.prototype.getMessView = function () {
                         elt: mItemsNew,
                         lastLocalid: lastLocalid
                     });
+                    if (values.active !== undefined) mItemsNew.emit("pressopen");
                     break;
                 case "editmessage":
                     // console.log(values);
@@ -1881,26 +2041,7 @@ theme.ChatBar.prototype.getMessView = function () {
                     for (var i = 0; i < self.listChatView.length; i++) {
                         if (self.listChatView[i].name == values.content.sessionid) {
                             if (self.listChatView[i].lastLocalid == values.content.localid) {
-                                var lastMess = values.content;
-                                switch (lastMess.content_type) {
-                                    case "file":
-                                    case "text":
-                                        self.listChatView[i].elt.messagetext = lastMess.content;
-                                        break;
-                                    case "img":
-                                        self.listChatView[i].elt.messagetext = "[photo]";
-                                        break;
-                                    case "join":
-                                        self.listChatView[i].elt.messagetext = lastMess.fullname + " đã tham gia nhóm."
-                                        break;
-                                    case "create":
-                                        self.listChatView[i].elt.messagetext = lastMess.fullname + " đã tạo nhóm."
-                                        break;
-                                    case "add_member":
-                                        self.listChatView[i].elt.messagetext = lastMess.fullname + " đã thêm ..."
-                                        break;
-
-                                }
+                                self.listChatView[i].elt.messagetext = self.getMessageText(values.content);
                             }
                             break;
                         }
@@ -1929,24 +2070,7 @@ theme.ChatBar.prototype.getMessView = function () {
                                     self.listChatView[i].elt.messagetext = "";
                                 }
                                 else {
-                                    switch (values.content.lastMess.content_type) {
-                                        case "file":
-                                        case "text":
-                                            self.listChatView[i].elt.messagetext = values.content.lastMess.content;
-                                            break;
-                                        case "img":
-                                            self.listChatView[i].elt.messagetext = "[photo]";
-                                            break;
-                                        case "join":
-                                            self.listChatView[i].elt.messagetext = values.content.lastMess.fullname + " đã tham gia nhóm."
-                                            break;
-                                        case "create":
-                                            self.listChatView[i].elt.messagetext = values.content.lastMess.fullname + " đã tạo nhóm."
-                                            break;
-                                        case "add_member":
-                                            self.listChatView[i].elt.messagetext = values.content.lastMess.fullname + " đã thêm ..."
-                                            break;
-                                    }
+                                    self.listChatView[i].elt.messagetext = self.getMessageText(values.content.lastMess);
                                     self.listChatView[i].lastLocalid = values.content.lastMess.localid;
                                 }
                             }
@@ -1978,6 +2102,149 @@ theme.ChatBar.prototype.getMessView = function () {
                         }
                     }
                     break;
+                case "remove_group":
+                    self.dropGroup(values.content);
+                    break;
+                case "activechatbox":
+                    var ex = 0;
+                    for (var i = 0; i < self.listChatView.length; i++){
+                        if (self.listChatView[i].name == values.dataSession.id){
+                            self.listChatView[i].elt.emit("pressopen");
+                            ex = 1;
+                            break;
+                        }
+                    }
+                    if (ex == 0){
+                        var quickMenuItems = [];
+                        var isGroup = false;
+                        if (values.dataSession.memberList.length > 2) isGroup = true;
+                        else {
+                            for (var x = 0; x < values.dataSession.memberList.length; x++){
+                                if (values.dataSession.memberList[x].privilege >= 2){
+                                    isGroup = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if (isGroup || values.dataSession.cardid > 0){
+                            quickMenuItems.push({
+                                text: LanguageModule.text("txt_manage_group"),
+                                extendClasses: "bsc-quickmenu",
+                                cmd: function(){
+                                    self.manageGroup(values.dataSession);
+                                }
+                            });
+                        }
+                        if (values.dataSession.cardid == 0){
+                            quickMenuItems.push({
+                                text: LanguageModule.text("txt_delete_conversation"),
+                                extendClasses: "bsc-quickmenu",
+                                cmd: function(){
+                                    self.deleteGroupConfirm(values.dataSession);
+                                }
+                            });
+                        }
+                        if (values.dataSession.cardid == 0 && isGroup){
+                            quickMenuItems.push({
+                                text: LanguageModule.text("txt_leave_group"),
+                                extendClasses: "bsc-quickmenu",
+                                cmd: function(){
+                                    self.leaveGroupConfirm(values.dataSession);
+                                }
+                            });
+                        }
+                        var mItemsNew = absol.buildDom({
+                            tag: "messageitem",
+                            props: {
+                                avatarSrc: values.dataSession.avatarSrc,
+                                name: values.dataSession.name,
+                                quickMenuItems: quickMenuItems,
+                                company_contactName: values.dataSession.company_contactName,
+                                time: contentModule.getTimeMessageList(values.dataSession.lasttime),
+                                new_noseen: 0
+                            },
+                            on: {
+                                pressopen: function (event) {
+                                    for (var j = 0; j < self.listChatBoxOpen.length; j++) {
+                                        if (self.listChatBoxOpen[j].name == values.dataSession.id) {
+                                            self.listChatBoxOpen[j].elt.requestActive();
+                                            carddone.sessionIdActive = values.dataSession.id;
+                                            if (self.listChatBoxOpen[j].chatBox.messageitem.new_noseen > 0){
+                                                setTimeout(function(){
+                                                    self.listChatBoxOpen[j].chatBox.seenMessage();
+                                                }, 500);
+                                            }
+                                            carddone.menu.showMobileTabbar(false);
+                                            return;
+                                        }
+                                    }
+                                    var chatBox = new theme.ChatBox({
+                                        messageitem: this,
+                                        chatBar: self,
+                                        data: values.dataSession,
+                                        frameList: self.frameList
+                                    });
+                                    var newChat = absol.buildDom({
+                                        tag: 'tabframe',
+                                        attr: {
+                                            name: values.dataSession.id
+                                        },
+                                        class: 'chats-theme-mobile-message-frame-content',
+                                        child: [
+                                            chatBox.getView()
+                                        ]
+                                    });
+                                    self.frameList.addChild(newChat);
+                                    window.backLayoutFunc.push(function(){
+                                        self.frameList.getAllChild()[0].requestActive();
+                                        window.backLayoutFunc.splice(window.backLayoutFunc.length - 1, 1);
+                                    });
+                                    newChat.requestActive();
+                                    carddone.sessionIdActive = values.dataSession.id;
+                                    chatBox.seenMessage();
+                                    carddone.menu.showMobileTabbar(false);
+                                    self.listChatBoxOpen.push({
+                                        name: values.dataSession.id,
+                                        elt: newChat,
+                                        chatBox: chatBox
+                                    });
+                                }
+                            }
+                        });
+
+                        //tao chatbox
+                        var chatBox = new theme.ChatBox({
+                            _messageitemhidden: mItemsNew,
+                            chatBar: self,
+                            data: values.dataSession,
+                            frameList: self.frameList
+                        });
+                        var newChat = absol.buildDom({
+                            tag: 'tabframe',
+                            attr: {
+                                name: values.dataSession.id
+                            },
+                            class: 'chats-theme-mobile-message-frame-content',
+                            child: [
+                                chatBox.getView()
+                            ]
+                        });
+                        self.frameList.addChild(newChat);
+                        window.backLayoutFunc.push(function(){
+                            self.frameList.getAllChild()[0].requestActive();
+                            window.backLayoutFunc.splice(window.backLayoutFunc.length - 1, 1);
+                        });
+                        newChat.requestActive();
+                        carddone.sessionIdActive = values.dataSession.id;
+                        chatBox.seenMessage();
+                        carddone.menu.showMobileTabbar(false);
+                        self.listChatBoxOpen.push({
+                            name: values.dataSession.id,
+                            elt: newChat,
+                            chatBox: chatBox
+                        });
+                    }
+                    break;
 
             }
             resolve(self.getMessView());
@@ -2004,12 +2271,40 @@ theme.ChatBar.prototype.addgroupFuncSubmit = function () {
         self.frameList.getAllChild()[0].requestActive();
         window.backLayoutFunc.splice(window.backLayoutFunc.length - 1, 1);
         var quickMenuItems = [];
-        if (values.item.memberList.length > 2 || values.item.cardid > 0){
+        var isGroup = false;
+        if (values.item.memberList.length > 2) isGroup = true;
+        else {
+            for (var x = 0; x < values.item.memberList.length; x++){
+                if (values.item.memberList[x].privilege >= 2){
+                    isGroup = true;
+                    break;
+                }
+            }
+        }
+        if (isGroup || values.item.cardid > 0){
             quickMenuItems.push({
                 text: LanguageModule.text("txt_manage_group"),
                 extendClasses: "bsc-quickmenu",
                 cmd: function(){
                     self.manageGroup(values.item);
+                }
+            });
+        }
+        if (values.item.cardid == 0){
+            quickMenuItems.push({
+                text: LanguageModule.text("txt_delete_conversation"),
+                extendClasses: "bsc-quickmenu",
+                cmd: function(){
+                    self.deleteGroupConfirm(item);
+                }
+            });
+        }
+        if (values.item.cardid == 0 && isGroup){
+            quickMenuItems.push({
+                text: LanguageModule.text("txt_leave_group"),
+                extendClasses: "bsc-quickmenu",
+                cmd: function(){
+                    self.leaveGroupConfirm(item);
                 }
             });
         }
@@ -2061,11 +2356,7 @@ theme.ChatBar.prototype.addgroupFuncSubmit = function () {
                         window.backLayoutFunc.splice(window.backLayoutFunc.length - 1, 1);
                     });
                     carddone.sessionIdActive = values.item.id;
-                    if (chatBox.messageitem.new_noseen > 0){
-                        setTimeout(function(){
-                            chatBox.seenMessage();
-                        }, 500);
-                    }
+                    chatBox.seenMessage();
                     carddone.menu.showMobileTabbar(false);
                     self.listChatBoxOpen.push({
                         name: values.item.id,
@@ -2079,25 +2370,7 @@ theme.ChatBar.prototype.addgroupFuncSubmit = function () {
             var lastLocalid = 0;
             if (values.item.content.length > 0) {
                 var lastMess = values.item.content[values.item.content.length - 1];
-                switch (lastMess.content_type) {
-                    case "file":
-                    case "text":
-                        mItemsNew.messagetext = lastMess.content;
-                        break;
-                    case "img":
-                        mItemsNew.messagetext = "[photo]";
-                        break;
-                    case "join":
-                        mItemsNew.messagetext = lastMess.fullname + " đã tham gia nhóm."
-                        break;
-                    case "create":
-                        mItemsNew.messagetext = lastMess.fullname + " đã tạo nhóm."
-                        break;
-                    case "add_member":
-                        mItemsNew.messagetext = lastMess.fullname + " đã thêm ..."
-                        break;
-
-                }
+                mItemsNew.messagetext = self.getMessageText(lastMess);
                 lastLocalid = values.item.content[values.item.content.length - 1].localid;
             }
             self.listChatContent.insertBefore(mItemsNew, self.listChatContent.firstChild);
@@ -2156,11 +2429,7 @@ theme.ChatBar.prototype.addgroupFuncSubmit = function () {
         });
         newChat.requestActive();
         carddone.sessionIdActive = values.item.id;
-        if (chatBox.messageitem.new_noseen > 0){
-            setTimeout(function(){
-                chatBox.seenMessage();
-            }, 500);
-        }
+        chatBox.seenMessage();
         carddone.menu.showMobileTabbar(false);
         self.listChatBoxOpen.push({
             name: values.item.id,
@@ -2241,10 +2510,7 @@ theme.ChatBar.prototype.addgroupFunc = function () {
              })
          ]
    });
-   self.manageModal = absol.buildDom({
-       tag: 'tabframe',
-       child: [manageGroupDiv]
-   });
+   self.manageModal = manageGroupDiv;
    self.frameList.addChild(self.manageModal);
    self.manageModal.requestActive();
    window.backLayoutFunc.push(function(){
@@ -2347,20 +2613,25 @@ theme.ChatBar.prototype.manageGroup = function(item){
         self.frameList.removeLast();
         window.backLayoutFunc.splice(window.backLayoutFunc.length - 1, 1);
         item.addMemberGroupFunc(listMemberAdd).then(function(value){
-            var userIndex;
+            var userIndex, fullname = "";
             for (var i = 0; i < listMemberAdd.length; i++){
                 userIndex = self.usersList.getIndex(listMemberAdd[i]);
+                if (i > 0) fullname += ", ";
+                fullname += self.usersList[userIndex].fullname;
                 item.memberList.push({
                     id: listMemberAdd[i],
                     username: self.usersList[userIndex].username,
                     fullname: self.usersList[userIndex].fullname,
-                    avatarSrc: self.usersList[userIndex].avatarSrc
+                    avatarSrc: self.usersList[userIndex].avatarSrc,
+                    privilege: (systemconfig.userid == listMemberAdd[i])? 2 : 0
                 });
             }
             drawListMember();
             for (var i = 0; i < self.listChatView.length; i++){
                 if (self.listChatView[i].name == item.id){
-                    self.listChatView[i].elt.text = "Bạn vừa thêm...";
+                    self.listChatView[i].elt.messagetext = "Bạn vừa thêm "+ fullname + " vào cuộc trò chuyện.";
+                    self.listChatContent.insertBefore(self.listChatView[i].elt, self.listChatContent.firstChild);
+                    self.listChatView[i].elt.new_noseen = 0;
                 }
             }
             for (var i = 0; i < self.listChatBoxOpen.length; i++){
@@ -2433,6 +2704,43 @@ theme.ChatBar.prototype.manageGroup = function(item){
         addMemberElt.requestActive();
         carddone.sessionIdActive = 0;
     };
+
+
+    var removeMember = function(userid){
+        item.removeMemberFunc(userid).then(function(value){
+            var uIndex = item.memberList.getIndex(userid);
+            var fullname = item.memberList[uIndex].fullname;
+            item.memberList.splice(uIndex, 1);
+            drawListMember();
+            for (var i = 0; i < self.listChatView.length; i++){
+                if (self.listChatView[i].name == item.id){
+                    self.listChatView[i].elt.messagetext = "Bạn vừa xoá "+ fullname + " khỏi cuộc trò chuyện.";
+                    self.listChatContent.insertBefore(self.listChatView[i].elt, self.listChatContent.firstChild);
+                    self.listChatView[i].elt.new_noseen = 0;
+                    break;
+                }
+            }
+            for (var i = 0; i < self.listChatBoxOpen.length; i++){
+                if (self.listChatBoxOpen[i].name == item.id){
+                    self.listChatBoxOpen[i].chatBox.addMessage(value);
+                    break;
+                }
+            }
+        });
+    };
+
+    var removeMemberConfirm = function(userid){
+        var uIndex = item.memberList.getIndex(userid);
+        ModalElement.question2({
+            title: LanguageModule.text('txt_remove_member'),
+            message: LanguageModule.text2("war_txt_remove_member", [item.memberList[uIndex].fullname]),
+            onclick: function(sel){
+                if (sel == 0){
+                    removeMember(userid);
+                }
+            }
+        });
+    };
     var listMemberElt = absol.buildDom({
         class: 'card-manage-group-participants-ctn',
         child: [
@@ -2450,6 +2758,12 @@ theme.ChatBar.prototype.manageGroup = function(item){
         ]
     });
     var drawListMember = function(){
+        item.memberList.sort(function(a, b){
+            if (a.id == systemconfig.userid) return 1;
+            if (absol.string.nonAccentVietnamese(a.fullname.toLowerCase()) > absol.string.nonAccentVietnamese(b.fullname.toLowerCase())) return 1;
+            if (absol.string.nonAccentVietnamese(a.fullname.toLowerCase()) < absol.string.nonAccentVietnamese(b.fullname.toLowerCase())) return -1;
+            return 0;
+        });
         DOMElement.removeAllChildren(listMemberElt);
         var listMemberEltTemp = DOMElement.div({
             attrs: {
@@ -2487,7 +2801,42 @@ theme.ChatBar.prototype.manageGroup = function(item){
                 ]
             }));
         }
+        var manageMemberElt, quickMenuItems;
         for (var i = 0; i < item.memberList.length; i++){
+            manageMemberElt = DOMElement.div({});
+            quickMenuItems = [];
+            if (item.cardid == 0 && item.privilege >= 2 && systemconfig.userid != item.memberList[i].id){
+                quickMenuItems.push({
+                    text: LanguageModule.text("txt_remove_member"),
+                    extendClasses: "bsc-quickmenu",
+                    icon: {
+                        tag: "i",
+                        class: "material-icons",
+                        child: { text: "delete" }
+                    },
+                    cmd: function(userid){
+                        return function(){
+                            removeMemberConfirm(userid);
+                        }
+                    }(item.memberList[i].id)
+                });
+            }
+            if (quickMenuItems.length > 0){
+                manageMemberElt = DOMElement.div({
+                    attrs: {
+                        className: "card-manage-group-participants-member-remove"
+                    },
+                    children: [DOMElement.i({
+                        attrs: {
+                            className: "material-icons card-icon-manage-member-chat"
+                        },
+                        text: "more_horiz"
+                    })]
+                });
+                absol.QuickMenu.showWhenClick(manageMemberElt, {items: quickMenuItems}, [3, 4], function (menuItem) {
+                    if (menuItem.cmd) menuItem.cmd();
+                });
+            }
             listMemberEltTemp.appendChild(DOMElement.div({
                 attrs: {
                     className: "card-manage-group-participants-member"
@@ -2511,7 +2860,8 @@ theme.ChatBar.prototype.manageGroup = function(item){
                             className: "card-manage-group-participants-member-name"
                         },
                         text: item.memberList[i].fullname
-                    })
+                    }),
+                    manageMemberElt
                 ]
             }));
         }
@@ -2524,86 +2874,135 @@ theme.ChatBar.prototype.manageGroup = function(item){
         listMemberElt.appendChild(listMemberEltTemp);
     };
     drawListMember();
+    var bodyManager = absol.buildDom({
+        class: 'card-manage-group-body',
+        child:[
+            {
+                class: 'card-manage-group-name-ctn',
+                child:[
+                {
+                    class: 'card-manage-group-name',
+                    child: {text: item.name}
+                },
+                {
+                    class: 'card-manage-group-desc',
+                    // child: {text: 'Active now'}
+                },
+                {
+                    class: 'card-manage-group-edit-btn-ctn',
+                    child:{
+                    tag: 'button',
+                    class:['card-transparent-btn', 'card-manage-group-edit-btn'],
+                    child: 'span.mdi.mdi-pencil-outline'
+                    }
+                }
+                ]
+            },
+            {
+                class: 'card-manage-group-demarcation-line'
+            },
+                listMemberElt
+        ]
+    });
+    if (item.cardid == 0){
+        bodyManager.appendChild(absol.buildDom({
+            class: 'card-manage-group-demarcation-line'
+        }));
+        bodyManager.appendChild(absol.buildDom({
+            class: 'card-manage-group-body-delete-leave',
+            on: {
+                click: function(){
+                    self.deleteGroupConfirm(item);
+                }
+            },
+            child: DOMElement.span({
+                text: LanguageModule.text("txt_delete_conversation")
+            })
+        }));
+        bodyManager.appendChild(absol.buildDom({
+            class: 'card-manage-group-demarcation-line'
+        }));
+        bodyManager.appendChild(absol.buildDom({
+            class: 'card-manage-group-body-delete-leave',
+            style: {
+                color: "red"
+            },
+            on: {
+                click: function(){
+                    self.leaveGroupConfirm(item);
+                }
+            },
+            child: DOMElement.span({
+                text: LanguageModule.text("txt_leave_group")
+            })
+        }));
+        if (item.privilege >= 2){
+            bodyManager.appendChild(absol.buildDom({
+                class: 'card-manage-group-demarcation-line'
+            }));
+            bodyManager.appendChild(absol.buildDom({
+                class: 'card-manage-group-body-delete-leave',
+                style: {
+                    color: "red"
+                },
+                on: {
+                    click: function(){
+                        self.dissolveGroupConfirm(item);
+                    }
+                },
+                child: DOMElement.span({
+                    text: LanguageModule.text("txt_dissolve_group")
+                })
+            }));
+        }
+    }
     var manageGroupDiv = absol.buildDom({
-         tag: "tabframe",
-         class: "card-manage-group",
-         child: [
-           {
-             class: "card-manage-group-header",
-             child: [
-               {
-                 class: 'card-manage-group-avatar-block',
-                 child: [
-                   {
-                     class: 'card-manage-group-avatar-image',
-                     style:{
-                       'background-image': 'url(' + item.avatarSrc + ')'
-                     }
-                   },
-                   {
-                     class: ['card-manage-group-avatar-status-dot']
-                   }
-                 ]
-               },
-               {
-                 class:'card-manage-group-close-btn-ctn',
-                 child: {
-                   tag: 'button',
-                   class:['card-transparent-btn', 'card-manage-group-close-btn'],
-                   child: 'span.mdi.mdi-close',
-                   on: {
-                       click: function(){
-                           self.frameList.getAllChild()[0].requestActive();
-                           window.backLayoutFunc.splice(window.backLayoutFunc.length - 1, 1);
-                       }
-                   }
-                 }
-               }
-             ]
-           },
-           {
-             class: 'card-manage-group-body',
-             child:[
-               {
-                 class: 'card-manage-group-name-ctn',
-                 child:[
-                   {
-                     class: 'card-manage-group-name',
-                     child: {text: item.name}
-                   },
-                   {
-                     class: 'card-manage-group-desc',
-                     // child: {text: 'Active now'}
-                   },
-                   {
-                     class: 'card-manage-group-edit-btn-ctn',
-                     child:{
-                       tag: 'button',
-                       class:['card-transparent-btn', 'card-manage-group-edit-btn'],
-                       child: 'span.mdi.mdi-pencil-outline'
-                     }
-                   }
-                 ]
-             },
-             {
-                 class: 'card-manage-group-demarcation-line'
-             },
-             listMemberElt
-             ]
-           }
-         ]
-   });
-   self.manageModal = absol.buildDom({
-       tag: 'tabframe',
-       child: [manageGroupDiv]
-   });
-   window.backLayoutFunc.push(function(){
-       self.frameList.getAllChild()[0].requestActive();
-       window.backLayoutFunc.splice(window.backLayoutFunc.length - 1, 1);
-   });
-   self.frameList.addChild(self.manageModal);
-   self.manageModal.requestActive();
-   carddone.sessionIdActive = 0;
+        tag: "tabframe",
+        class: "card-manage-group",
+        child: [
+            {
+                class: "card-manage-group-header",
+                child: [
+                {
+                    class: 'card-manage-group-avatar-block',
+                    child: [
+                    {
+                        class: 'card-manage-group-avatar-image',
+                        style:{
+                        'background-image': 'url(' + item.avatarSrc + ')'
+                        }
+                    },
+                    {
+                        class: ['card-manage-group-avatar-status-dot']
+                    }
+                    ]
+                },
+                {
+                    class:'card-manage-group-close-btn-ctn',
+                    child: {
+                    tag: 'button',
+                    class:['card-transparent-btn', 'card-manage-group-close-btn'],
+                    child: 'span.mdi.mdi-close',
+                    on: {
+                        click: function(){
+                            self.frameList.getAllChild()[0].requestActive();
+                            window.backLayoutFunc.splice(window.backLayoutFunc.length - 1, 1);
+                        }
+                    }
+                    }
+                }
+                ]
+            },
+            bodyManager
+        ]
+    });
+    self.manageModal = manageGroupDiv;
+    window.backLayoutFunc.push(function(){
+        self.frameList.getAllChild()[0].requestActive();
+        window.backLayoutFunc.splice(window.backLayoutFunc.length - 1, 1);
+    });
+    self.frameList.addChild(self.manageModal);
+    self.manageModal.requestActive();
     var editNameBtn = absol.$('.card-manage-group-edit-btn', self.manageModal);
     editNameBtn.on('click', function(){
         self.editNameGroup(item);
@@ -2642,12 +3041,18 @@ theme.ChatBar.prototype.getView = function () {
     };
     this.getMessView();
     this.getMessOpenChat();
+    this.inputsearchbox = absol.buildDom({
+        tag: 'searchcrosstextinput',
+        props: {
+            placeholder: LanguageModule.text("txt_search")
+        }
+    });
     var header = absol.buildDom({
         tag: 'mheaderbar',
         class: "am-small-title",
         props: {
             // actionIcon: "span.mdi.mdi-magnify",
-            title: "",//LanguageModule.text("txt_search_card"),
+            title: "", //LanguageModule.text("txt_search_card"),
             commands: [
                 {
                     icon: DOMElement.i({
@@ -2659,27 +3064,18 @@ theme.ChatBar.prototype.getView = function () {
                 }
             ]
         },
+        data: {
+            searchInput: self.inputsearchbox
+        },
         on: {
-            click: function (event) {
-                if (!absol.EventEmitter.hitElement(this.$right, event)) {
-                    self.searchFunc();
-                }
-            },
+            // click: {callback: function (event) {
+            //     if (!absol.EventEmitter.hitElement(this.$right, event) && !this.containsClass("am-search-mode")) {
+            //         header.searchMode(true);
+            //     }
+            // }, cap:true},
             command: function () {
                 self.addgroupFunc();
             }
-        }
-    });
-    this.inputsearchbox = absol.buildDom({
-        tag: 'searchcrosstextinput',
-        style: {
-            width: "calc(100% - 60px)",
-            display: "inline-block",
-            verticalAlign: "middle",
-            marginLeft: "10px"
-        },
-        props: {
-            placeholder: LanguageModule.text("txt_search")
         }
     });
 

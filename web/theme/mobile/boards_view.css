@@ -1,0 +1,15 @@
+.cd-page-board .card-mobile-content{
+    padding-left: 0;
+    padding-right: 0;
+    padding-bottom: 0;
+}
+
+.cd-page-board .card-mobile-content .board-view-container{
+    width: 100%;
+    height: 100%;
+}
+
+.cd-page-board .cd-board-manager {
+    width: 100%;
+    height: 100%;
+}

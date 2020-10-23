@@ -89,6 +89,7 @@ window.DOMElement = {
     body : function () {
         var x = document.getElementsByTagName("BODY");
         if (x == null) return null;
+        if (x.length == 0) return null;
         return x[0];
         //return document.body;
     },
@@ -5067,7 +5068,7 @@ window.DOMElement = {
         });
         DOMElement.startTimeStamp = (new Date()).getTime();
         setTimeout("DOMElement.resizeThread(null);", 200);
-        if (ModuleManagerClass !== undefined) {
+        if (window.ModuleManagerClass !== undefined) {
             ModuleManagerClass.register({
                 name: "DOMElement",
                 prerequisites: ["EncodingClass"],

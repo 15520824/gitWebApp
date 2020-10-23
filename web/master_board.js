@@ -3,26 +3,26 @@
 
 carddone.master_board.template = function(){
     return {
-        boardid: 0,
+        boardid: [],
         template: {
             name: "",
             board_type: "general",
             list: [
                 {
-                    id: [],
+                    id: 'group',
                     name: "additional_status",
                     color: "aedd94",
                     type: "group",
                     child: []
                 },
                 {
-                    id: [],
+                    id: 'group',
                     name: "finish_status",
                     color: "aedd94",
                     type: "group",
                     child: [
                         {
-                            id: [],
+                            id: "finish_1",
                             name: LanguageModule.text("txt_finish"),
                             color: "dacafb",
                             type: "system"
@@ -35,24 +35,31 @@ carddone.master_board.template = function(){
     };
 }
 
+carddone.master_board.generateFormatContent = function(formatContent){
+    for (var i = 0; i < formatContent.length; i++){
+        if (formatContent[i].id.substr(0, 4) == "new_") formatContent[i].id = formatContent[i].id.substr(4);
+        if (formatContent[i].child && formatContent[i].child.length > 0) carddone.master_board.generateFormatContent(formatContent[i].child);
+    }
+}
+
 carddone.master_board.editBoardSave = function(host, id, boardid, value, mode){
+    var formatContent = EncodingClass.string.duplicate(value.list);
+    carddone.master_board.generateFormatContent(formatContent);
     var content = {
         board_type: value.board_type,
-        list: value.list,
+        list: formatContent,
         fields: value.fields
     };
-    console.log(value.list);
-    console.log(value.fields);
-    // return;
     ModalElement.show_loading();
     FormClass.api_call({
         url: "master_board_edit_save.php",
         params: [
             {name: "id", value: id},
-            {name: "boardid", value: boardid},
-            {name: "pindex", value: id == 0 ? host.database.master_board.items.length : host.database.master_board.items[host.database.master_board.getIndex(id)].pindex},
+            {name: "listUpdate", value: EncodingClass.string.fromVariable(boardid)},
+            {name: "pindex", value: id == 0 ? host.database.formats.items.length : host.database.formats.items[host.database.formats.getIndex(id)].pindex},
             {name: "name", value: value.name},
-            {name: "content", value: EncodingClass.string.fromVariable(content)}
+            {name: "content", value: EncodingClass.string.fromVariable(content)},
+            {name: "content2", value: EncodingClass.string.fromVariable(value.list)},
         ],
         func: function(success, message){
             ModalElement.close(-1);
@@ -61,18 +68,21 @@ carddone.master_board.editBoardSave = function(host, id, boardid, value, mode){
                     var content = EncodingClass.string.toVariable(message.substr(2));
                     content.content = EncodingClass.string.toVariable(content.content);
                     if (id == 0){
-                        host.database.master_board.items.push(content);
+                        host.database.formats.items.push(content);
                         id = content.id;
                     }
                     else {
-                        var index = host.database.master_board.getIndex(id);
-                        host.database.master_board.items[index] = content;
+                        var index = host.database.formats.getIndex(id);
+                        host.database.formats.items[index] = content;
                     }
                     carddone.master_board.redraw(host);
                     if (mode == 0) carddone.master_board.editBoard(host, id);
                     else while(host.frameList.getLength() > 1){
                         host.frameList.removeLast();
                     }
+                    dbcache.refresh("format");
+                    dbcache.refresh("lists");
+                    dbcache.refresh("field_list");
                 }
                 else {
                     ModalElement.alert({message: message});
@@ -93,19 +103,19 @@ carddone.master_board.editBoard = function(host, id, params){
     var buttons, content;
     if (id == 0){
         bIndex = -1;
-        boardid = params.boardid;
+        boardid = params.listUpdate;
         name = params.template.name;
         board_type = params.template.board_type;
         list = params.template.list;
         fields = params.template.fields;
     }
     else {
-        bIndex = host.database.master_board.getIndex(id);
-        boardid = 0;
-        name = host.database.master_board.items[bIndex].name;
-        board_type = host.database.master_board.items[bIndex].content.board_type;
-        list = host.database.master_board.items[bIndex].content.list;
-        fields = host.database.master_board.items[bIndex].content.fields.map(function(elt) {
+        bIndex = host.database.formats.getIndex(id);
+        boardid = [];
+        name = host.database.formats.items[bIndex].name;
+        board_type = host.database.formats.items[bIndex].content.board_type;
+        list = host.database.formats.items[bIndex].content.list;
+        fields = host.database.formats.items[bIndex].content.fields.map(function(elt) {
             return {
                 id: elt,
                 name: host.database.typelists.items[host.database.typelists.getIndex(elt)].name
@@ -175,17 +185,17 @@ carddone.master_board.editBoard = function(host, id, params){
 
 carddone.master_board.redraw = function(host){
     var data = [];
-    for (var i = 0; i < host.database.master_board.items.length; i++){
+    for (var i = 0; i < host.database.formats.items.length; i++){
         data.push({
-            id: host.database.master_board.items[i].id,
-            name: host.database.master_board.items[i].name,
-            lindex: host.database.master_board.items[i].lindex,
+            id: host.database.formats.items[i].id,
+            name: host.database.formats.items[i].name,
+            lindex: host.database.formats.items[i].lindex,
             description: "",
             editFunc: function(id){
                 return function(){
                     carddone.master_board.editBoard(host, id);
                 }
-            }(host.database.master_board.items[i].id)
+            }(host.database.formats.items[i].id)
         });
     }
     var singlePage = host.funcs.masterBoardInitForm({
@@ -206,42 +216,42 @@ carddone.master_board.redraw = function(host){
 };
 
 carddone.master_board.init = function(host, template){
+    ModalElement.show_loading();
     host.database = {};
-    host.holder.addChild(host.frameList);
-    FormClass.api_call({
-        url: "database_load.php",
-        params: [
-            {name: "task", value: "master_board_load_list"}
-        ],
-        func: function(success, message){
-            if (success){
-                if (message.substr(0, 2) == "ok"){
-                    var content = EncodingClass.string.toVariable(message.substr(2));
-                    contentModule.makeDatabaseContent(host.database, content);
-                    host.database.master_board.items.forEach(function(elt){
-                        elt.content = EncodingClass.string.toVariable(elt.content);
-                    });
-                    host.board_container = absol._({});
-                    var singlePage = absol.buildDom({
-                        tag: "singlepagenfooter",
-                        child: host.board_container
-                    });
-                    host.frameList.addChild(singlePage);
-                    singlePage.requestActive();
-                    carddone.master_board.redraw(host);
-                    if (template) {
-                        carddone.master_board.editBoard(host, 0, template);
-                    }
-                }
-                else {
-                    ModalElement.alert({message: message});
-                    return;
-                }
-            }
-            else {
-                ModalElement.alert({message: message});
-                return;
-            }
+    var loadTypelists = data_module.loadByConditionAsync({
+        name: "typelists",
+        cond: function(record){
+            return true;
+        },
+        callback: function(retval){
+            host.database.typelists = data_module.makeDatabase(retval);
+        }
+    });
+    var loadFormats = data_module.loadByConditionAsync({
+        name: "format",
+        cond: function(record){
+            return true;
+        },
+        callback: function(retval){
+            host.database.formats = data_module.makeDatabase(retval);
+            host.database.formats.items.forEach(function(elt){
+                elt.content = EncodingClass.string.toVariable(elt.content);
+            });
+        }
+    });
+    Promise.all([loadTypelists, loadFormats]).then(function(){
+        ModalElement.close(-1);
+        host.holder.addChild(host.frameList);
+        host.board_container = absol._({});
+        var singlePage = absol.buildDom({
+            tag: "singlepagenfooter",
+            child: host.board_container
+        });
+        host.frameList.addChild(singlePage);
+        singlePage.requestActive();
+        carddone.master_board.redraw(host);
+        if (template) {
+            carddone.master_board.editBoard(host, 0, template);
         }
     });
 };

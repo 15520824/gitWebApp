@@ -1,5 +1,5 @@
 'use strict'
-console.log(1);
+
 window.EncodingClass = {
     func: {
         tempFunc : null,
@@ -1126,7 +1126,7 @@ window.EncodingClass = {
     }
 };
 
-if (ModuleManagerClass !== undefined) {
-    ModuleManagerClass.register("EncodingClass");
+if (window.ModuleManagerClass !== undefined) {
+    window.ModuleManagerClass.register("EncodingClass");
 }
 //# sourceURL=module:///src/jsencoding.php.js?

@@ -29,9 +29,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "2D02E47A1E0B4A5D006451C7"
-               BuildableName = "ReactNativeWebApp-tvOS.app"
-               BlueprintName = "ReactNativeWebApp-tvOS"
-               ReferencedContainer = "container:ReactNativeWebApp.xcodeproj">
+               BuildableName = "CardDone-tvOS.app"
+               BlueprintName = "CardDone-tvOS"
+               ReferencedContainer = "container:CardDone.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
          <BuildActionEntry
@@ -43,9 +43,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "2D02E48F1E0B4A5D006451C7"
-               BuildableName = "ReactNativeWebApp-tvOSTests.xctest"
-               BlueprintName = "ReactNativeWebApp-tvOSTests"
-               ReferencedContainer = "container:ReactNativeWebApp.xcodeproj">
+               BuildableName = "CardDone-tvOSTests.xctest"
+               BlueprintName = "CardDone-tvOSTests"
+               ReferencedContainer = "container:CardDone.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -61,9 +61,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "2D02E48F1E0B4A5D006451C7"
-               BuildableName = "ReactNativeWebApp-tvOSTests.xctest"
-               BlueprintName = "ReactNativeWebApp-tvOSTests"
-               ReferencedContainer = "container:ReactNativeWebApp.xcodeproj">
+               BuildableName = "CardDone-tvOSTests.xctest"
+               BlueprintName = "CardDone-tvOSTests"
+               ReferencedContainer = "container:CardDone.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -71,9 +71,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "2D02E47A1E0B4A5D006451C7"
-            BuildableName = "ReactNativeWebApp-tvOS.app"
-            BlueprintName = "ReactNativeWebApp-tvOS"
-            ReferencedContainer = "container:ReactNativeWebApp.xcodeproj">
+            BuildableName = "CardDone-tvOS.app"
+            BlueprintName = "CardDone-tvOS"
+            ReferencedContainer = "container:CardDone.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
       <AdditionalOptions>
@@ -94,9 +94,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "2D02E47A1E0B4A5D006451C7"
-            BuildableName = "ReactNativeWebApp-tvOS.app"
-            BlueprintName = "ReactNativeWebApp-tvOS"
-            ReferencedContainer = "container:ReactNativeWebApp.xcodeproj">
+            BuildableName = "CardDone-tvOS.app"
+            BlueprintName = "CardDone-tvOS"
+            ReferencedContainer = "container:CardDone.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
       <AdditionalOptions>
@@ -113,9 +113,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "2D02E47A1E0B4A5D006451C7"
-            BuildableName = "ReactNativeWebApp-tvOS.app"
-            BlueprintName = "ReactNativeWebApp-tvOS"
-            ReferencedContainer = "container:ReactNativeWebApp.xcodeproj">
+            BuildableName = "CardDone-tvOS.app"
+            BlueprintName = "CardDone-tvOS"
+            ReferencedContainer = "container:CardDone.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

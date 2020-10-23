@@ -11,7 +11,7 @@ module.exports = {
   },
   output: {
     path: path.resolve(rootDir, '../dist'),
-    filename: 'app-[hash].bundle.js',
+    filename: 'app.bundle.js',
   },
   devtool: 'source-map',
   module: {
@@ -38,7 +38,14 @@ module.exports = {
     }),
     new webpack.HotModuleReplacementPlugin(),
   ],
+  optimization:{
+    minimize: false  
+  },
   resolve: {
+      modules:[
+          'D:\\gitWebApp\\gold_carddone\\gitWebApp\\node_modules'
+          // path.join(__dirname, '../node_modules')
+      ],
     extensions: [
       '.web.tsx',
       '.web.ts',

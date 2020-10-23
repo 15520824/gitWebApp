@@ -88,17 +88,17 @@ theme.formContactEdit = function(params){
 
     if (!params.data.editCompany) company_select.disabled = true;
     var owner_select = absol.buildDom({
-             tag: "mselectbox",
-             style: {
-                 display: "block",
-                 width: "100%"
-             },
-             props: {
-                 items: params.data.listOwnerAll,
-                 values: params.data.ownerList,
-                 enableSearch: true
-             }
-         });
+         tag: "mselectbox",
+         style: {
+             display: "block",
+             width: "100%"
+         },
+         props: {
+             items: params.data.listOwnerAll,
+             values: params.data.ownerList,
+             enableSearch: true
+         }
+     });
     var comment_inputtext = DOMElement.textarea({
        attrs: {
            className: "cardSimpleTextarea",
@@ -118,6 +118,130 @@ theme.formContactEdit = function(params){
             checked: params.data.activemode
         }
     });
+    var dataView = [
+        DOMElement.div({
+            attrs: {
+                className: "card-mobile-label-form-edit-first"
+            },
+            text: LanguageModule.text("txt_firstname")
+        }),
+        firstname_inputtext,
+        DOMElement.div({
+            attrs: {
+                className: "card-mobile-label-form-edit"
+            },
+            text: LanguageModule.text("txt_lastname")
+        }),
+        lastname_inputtext,
+        DOMElement.div({
+            attrs: {
+                className: "card-mobile-label-form-edit"
+            },
+            text: LanguageModule.text("txt_phone_number1")
+        }),
+        phone_inputtext,
+        DOMElement.div({
+            attrs: {
+                className: "card-mobile-label-form-edit"
+            },
+            text: LanguageModule.text("txt_phone_number2")
+        }),
+        phone2_inputtext,
+        DOMElement.div({
+            attrs: {
+                className: "card-mobile-label-form-edit"
+            },
+            text: LanguageModule.text("txt_email1")
+        }),
+        email_inputtext,
+        DOMElement.div({
+            attrs: {
+                className: "card-mobile-label-form-edit"
+            },
+            text: LanguageModule.text("txt_email2")
+        }),
+        email2_inputtext,
+        DOMElement.div({
+            attrs: {
+                className: "card-mobile-label-form-edit"
+            },
+            text: LanguageModule.text("txt_department")
+        }),
+        department_inputtext,
+        DOMElement.div({
+            attrs: {
+                className: "card-mobile-label-form-edit"
+            },
+            text: LanguageModule.text("txt_position")
+        }),
+        position_inputtext,
+        DOMElement.div({
+            attrs: {
+                className: "card-mobile-label-form-edit"
+            },
+            text: LanguageModule.text("txt_company")
+        }),
+        company_select,
+        DOMElement.div({
+            attrs: {
+                className: "card-mobile-label-form-edit"
+            },
+            text: LanguageModule.text("txt_owner")
+        }),
+        owner_select,
+        DOMElement.div({
+            attrs: {
+                className: "card-mobile-label-form-edit"
+            },
+            text: LanguageModule.text("txt_comment")
+        }),
+        comment_inputtext,
+        DOMElement.div({
+            attrs: {
+                className: "card-mobile-label-form-edit",
+                style: {
+                    position: "relative"
+                }
+            },
+            children: [
+                DOMElement.span({
+                    text: LanguageModule.text("txt_active")
+                }),
+                DOMElement.div({
+                    attrs: {
+                        style: {
+                            position: "absolute",
+                            right: 0,
+                            top: 0
+                        }
+                    },
+                    children: [activated_inputselect]
+                })
+            ]
+        })
+    ];
+    if (params.data.id > 0){
+        dataView = dataView.concat([
+            DOMElement.div({
+                attrs: {
+                    className: "card-mobile-label-form-edit"
+                },
+                text: LanguageModule.text("txt_created_time")
+            }),
+            DOMElement.div({
+                text: params.data.createdtime
+            }),
+            DOMElement.div({
+                attrs: {
+                    className: "card-mobile-label-form-edit"
+                },
+                text: LanguageModule.text("txt_createdby")
+            }),
+            DOMElement.div({
+                text: params.data.createdby
+            })
+        ]);
+    }
     var singlePage = absol.buildDom({
         tag: "tabframe",
         child: [
@@ -126,108 +250,7 @@ theme.formContactEdit = function(params){
                 attrs: {
                     className: "card-mobile-content"
                 },
-                children: [
-                    DOMElement.div({
-                        attrs: {
-                            className: "card-mobile-label-form-edit-first"
-                        },
-                        text: LanguageModule.text("txt_firstname")
-                    }),
-                    firstname_inputtext,
-                    DOMElement.div({
-                        attrs: {
-                            className: "card-mobile-label-form-edit"
-                        },
-                        text: LanguageModule.text("txt_lastname")
-                    }),
-                    lastname_inputtext,
-                    DOMElement.div({
-                        attrs: {
-                            className: "card-mobile-label-form-edit"
-                        },
-                        text: LanguageModule.text("txt_phone_number1")
-                    }),
-                    phone_inputtext,
-                    DOMElement.div({
-                        attrs: {
-                            className: "card-mobile-label-form-edit"
-                        },
-                        text: LanguageModule.text("txt_phone_number2")
-                    }),
-                    phone2_inputtext,
-                    DOMElement.div({
-                        attrs: {
-                            className: "card-mobile-label-form-edit"
-                        },
-                        text: LanguageModule.text("txt_email1")
-                    }),
-                    email_inputtext,
-                    DOMElement.div({
-                        attrs: {
-                            className: "card-mobile-label-form-edit"
-                        },
-                        text: LanguageModule.text("txt_email2")
-                    }),
-                    email2_inputtext,
-                    DOMElement.div({
-                        attrs: {
-                            className: "card-mobile-label-form-edit"
-                        },
-                        text: LanguageModule.text("txt_department")
-                    }),
-                    department_inputtext,
-                    DOMElement.div({
-                        attrs: {
-                            className: "card-mobile-label-form-edit"
-                        },
-                        text: LanguageModule.text("txt_position")
-                    }),
-                    position_inputtext,
-                    DOMElement.div({
-                        attrs: {
-                            className: "card-mobile-label-form-edit"
-                        },
-                        text: LanguageModule.text("txt_company")
-                    }),
-                    company_select,
-                    DOMElement.div({
-                        attrs: {
-                            className: "card-mobile-label-form-edit"
-                        },
-                        text: LanguageModule.text("txt_owner")
-                    }),
-                    owner_select,
-                    DOMElement.div({
-                        attrs: {
-                            className: "card-mobile-label-form-edit"
-                        },
-                        text: LanguageModule.text("txt_comment")
-                    }),
-                    comment_inputtext,
-                    DOMElement.div({
-                        attrs: {
-                            className: "card-mobile-label-form-edit",
-                            style: {
-                                position: "relative"
-                            }
-                        },
-                        children: [
-                            DOMElement.span({
-                                text: LanguageModule.text("txt_active")
-                            }),
-                            DOMElement.div({
-                                attrs: {
-                                    style: {
-                                        position: "absolute",
-                                        right: 0,
-                                        top: 0
-                                    }
-                                },
-                                children: [activated_inputselect]
-                            })
-                        ]
-                    })
-                ]
+                children: dataView
             })
         ]
     });
@@ -278,73 +301,54 @@ theme.formContactEdit = function(params){
            available: activated_inputselect.checked
        }
     };
-    setTimeout(function(){
-        firstname_inputtext.focus()
-    },10);
     return singlePage;
  };
 
  theme.formContactGetRow = function(content){
+     var extraDataElt = DOMElement.div({});
+     if (content.phone != ""){
+         extraDataElt.appendChild(DOMElement.span({
+             text: content.phone
+         }));
+         if (content.email != "") extraDataElt.appendChild(DOMElement.span({
+             text: " - "
+         }));
+     }
+     if (content.email != ""){
+         extraDataElt.appendChild(DOMElement.span({
+             text: content.email
+         }));
+     }
      var row = [
          {
+             functionClick: function(event,me,index,parent,data,row){
+                 content.func.edit(function(value){
+                     if (!value){
+                         parent.exactlyDeleteRow(index);
+                     }
+                     else {
+                         var c = theme.formContactGetRow(value);
+                         parent.updateRow(c, index);
+                     }
+                 });
+             },
              value: content.firstname,
              element: DOMElement.div({
                  attrs: {
                      className: "sortTable-cell-view"
                  },
-                 text: content.firstname
-             })
-         },
-         {
-             value: content.lastname,
-             element: DOMElement.div({
-                 attrs: {
-                     className: "sortTable-cell-view"
-                 },
-                 text: content.lastname
-             })
-         },
-         {
-             value: content.phone,
-             element: DOMElement.div({
-                 attrs: {
-                     className: "sortTable-cell-view"
-                 },
-                 text: content.phone
-             })
-         },
-         {
-             value: content.email,
-             element: DOMElement.div({
-                 attrs: {
-                     className: "sortTable-cell-view"
-                 },
-                 text: content.email
+                 children: [
+                     DOMElement.div({
+                         attrs: {
+                             className: "card-table-list-title"
+                         },
+                         text: content.firstname + " " + content.lastname
+                     }),
+                     extraDataElt
+                 ]
              })
          }
      ];
-     if (content.department !== undefined){
-         row.push({
-             value: content.department,
-             element: DOMElement.div({
-                 attrs: {
-                     className: "sortTable-cell-view"
-                 },
-                 text: content.department
-             })
-         });
-     }
-     if (content.position !== undefined){
-        row.push({
-            value: content.position,
-            element: DOMElement.div({
-                attrs: {
-                    className: "sortTable-cell-view"
-                },
-                text: content.position
-            })
-        });
-     }
      if (content.company !== undefined){
          row.push({
              value: (content.company != "")? content.company + "_" + content.companyid : "...",
@@ -356,15 +360,6 @@ theme.formContactEdit = function(params){
              })
          });
      }
-     row.push({
-         value: content.available,
-         element: DOMElement.div({
-             attrs: {
-                 className: "sortTable-cell-view"
-             },
-             text: content.available
-         })
-     });
      row.func = content.func;
      return row;
  };
@@ -375,34 +370,30 @@ theme.formContactEdit = function(params){
          data.push(theme.formContactGetRow(params.data[i]));
      }
      var header = [
-         {value: LanguageModule.text("txt_firstname"), sort: true},
-         {value: LanguageModule.text("txt_lastname"), sort: true},
-         {value: LanguageModule.text("txt_phone_number1"), sort: true},
-         {value: LanguageModule.text("txt_email1"), sort: false, hidden: true}
+         {value: LanguageModule.text("txt_firstname"), sort: false},
      ];
      if (params.fromCompany === undefined){
          header.push(
-             {value: LanguageModule.text("txt_department"), sort: false, hidden: true},
-             {value: LanguageModule.text("txt_position"), sort: false, hidden: true},
              {value: LanguageModule.text("txt_company"), sort: false, hidden: true}
          );
      }
-     header.push({value: LanguageModule.text("txt_active"), sort: false, hidden: true});
      var x = pizo.tableView(
          header,
          data,
-         false,
-         true,
+         undefined,
+         [],
          1
      );
      x.addClass('am-gray-table');
+     x.style.width = "100%";
+     x.realTable.style.width = "100%";
      if (params.inputsearchbox !== undefined){
          x.addInputSearch(params.inputsearchbox);
-         x.addFilter(params.company_select, 6);
+         x.addFilter(params.company_select, 1);
      }
      x.setUpSwipe(true, true);
      x.swipeCompleteRight = function(event, me, index, data, row, parent){
-         data.func.edit().then(function(value){
+         data.func.edit(function(value){
              if (!value){
                  parent.exactlyDeleteRow(index);
              }
@@ -422,50 +413,28 @@ theme.formContactEdit = function(params){
 
 theme.formContactInit = function(params){
     var filterFunc = function(){
-        var header = absol.buildDom({
-            tag: 'mheaderbar',
-            props: {
-                actionIcon: DOMElement.i({
-                    attrs: {
-                        className: "material-icons"
-                    },
-                    text: "arrow_back_ios"
-                }),
-                title: LanguageModule.text("txt_filter")
-            },
-            on: {
-                action: function(){
-                    params.frameList.removeLast();
-                }
-            }
-        });
         params.company_select.style.display = "block";
         params.company_select.style.width = "100%";
-        var filter_container = absol.buildDom({
-            tag: 'tabframe',
-            child:[
-                header,
-                DOMElement.div({
-                    attrs: {
-                        className: "card-mobile-content"
-                    },
-                    children: [
-                        DOMElement.div({
-                            attrs: {
-                                className: "card-mobile-label-form-edit-first"
-                            },
-                            text: LanguageModule.text("txt_company_class")
-                        }),
-                        params.company_select
-                    ]
-                })
-            ]
+        theme.modalFormMobile({
+            title: LanguageModule.text("txt_filter"),
+            bodycontent: DOMElement.div({
+                attrs: {
+                    className: "card-mobile-content"
+                },
+                children: [
+                    DOMElement.div({
+                        attrs: {
+                            className: "card-mobile-label-form-edit-first"
+                        },
+                        text: LanguageModule.text("txt_company_class")
+                    }),
+                    params.company_select
+                ]
+            })
         });
-        params.frameList.addChild(filter_container);
-        filter_container.requestActive();
     };
     var header = absol.buildDom({
-        tag: 'mheaderbar',
+        tag: 'headerbarwithsearch',
         props: {
             actionIcon: DOMElement.i({
                 attrs: {
@@ -481,50 +450,51 @@ theme.formContactInit = function(params){
                             className: "material-icons"
                         },
                         text: "add"
-                    })
+                    }),
+                    cmd: params.cmdbutton.add
+                },
+                {
+                    icon:  DOMElement.i({
+                        attrs: {
+                            className: "material-icons"
+                        },
+                        text: "filter_alt"
+                    }),
+                    cmd: function(){
+                        filterFunc();
+                    }
+                },
+                {
+                    icon:  DOMElement.i({
+                        attrs: {
+                            className: "material-icons"
+                        },
+                        text: "search"
+                    }),
+                    cmd: function(){
+                        header.searchMode(true);
+                    }
                 }
             ]
         },
+        data:{
+            searchInput: params.inputsearchbox
+        },
         on: {
             action: params.cmdbutton.close,
-            command: params.cmdbutton.add
+            command: function(event){
+                event.commandItem.cmd();
+            }
         }
     });
     params.inputsearchbox.style.width = "calc(100vw - var(--tab-padding-left) - var(--tab-padding-right) - 20px)";
-    params.data_container.style.height = "calc(100% - 82px)";
-    params.data_container.style.overflowY = "auto";
     return absol.buildDom({
         tag: 'tabframe',
         child:[
             header,
-            DOMElement.table({
-                attrs: {
-                    style: {
-                        marginLeft: "var(--tab-padding-left)",
-                        marginTop: "var(--control-verticle-distance-2)"
-                    }
-                },
-                data: [[
-                    params.inputsearchbox,
-                    DOMElement.div({
-                        attrs: {
-                            className: "card-icon-edit-message-cover",
-                            onclick: function(){
-                                filterFunc();
-                            }
-                        },
-                        children: [DOMElement.i({
-                            attrs: {
-                                className: "material-icons card-icon-edit-message"
-                            },
-                            text: "filter_alt"
-                        })]
-                    })
-                ]]
-            }),
             DOMElement.div({
                 attrs: {
-                    className: "card-mobile-content-has-search absol-single-page-scroller"
+                    className: "card-mobile-content"
                 },
                 children: [params.data_container]
             })
