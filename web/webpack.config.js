@@ -23,7 +23,7 @@ module.exports = {
             options: { presets: [['@babel/preset-env', { modules: false }]] }
         },
         {
-            test: /\.(tpl|txt|xml|rels|svg|json)$/i,
+            test: /\.(tpl|txt|xml|rels|svg)$/i,
             use: 'raw-loader',
         },
         {
@@ -39,25 +39,11 @@ module.exports = {
     new webpack.HotModuleReplacementPlugin(),
   ],
   optimization:{
-    minimize: false  
+    minimize: false
   },
   resolve: {
-      modules:[
-          'D:\\gitWebApp\\gold_carddone\\gitWebApp\\node_modules'
-          // path.join(__dirname, '../node_modules')
-      ],
-    extensions: [
-      '.web.tsx',
-      '.web.ts',
-      '.tsx',
-      '.ts',
-      '.web.jsx',
-      '.web.js',
-      '.jsx',
-      '.js',
-    ], // read files in fillowing order
-    alias: Object.assign({
-      'react-native$': 'react-native-web',
-    }),
-  },
+        modules: [
+            path.join(__dirname, '../node_modules')
+        ]
+    }
 };
